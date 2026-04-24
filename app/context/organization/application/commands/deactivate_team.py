@@ -1,0 +1,51 @@
+from __future__ import annotations
+
+from app.shared.application.base_command import BaseCommand
+from app.shared.application.base_command_handler import BaseCommandHandler
+from app.shared.application.messaging.domain_event_bus import DomainEventBus
+from app.shared.domain.value_objects.id_vo import Id
+from app.context.organization.application.ports.authorization.org_permission_checker_port import OrgPermissionCheckerPort
+from app.context.organization.domain.exceptions.team_exceptions import TeamNotFoundException
+from app.context.organization.domain.repositories.team_repository import TeamRepository
+
+
+class DeactivateTeamCommand(BaseCommand):
+    """
+    Команда деактивации команды.
+
+    Атрибуты:
+        team_id: ID команды.
+    """
+
+    caller_id: str
+    org_id: str
+    team_id: str
+
+
+class DeactivateTeamHandler(BaseCommandHandler[DeactivateTeamCommand, None]):
+    """
+    Обработчик деактивации команды.
+
+    Загружает Team, вызывает deactivate, сохраняет.
+    """
+
+    REQUIRED_PERMISSION = "teams.write"
+
+    def __init__(self, team_repo: TeamRepository, org_permission_checker: OrgPermissionCheckerPort, event_bus: DomainEventBus) -> None:
+        super().__init__()
+        self._team_repo = team_repo
+        self._org_permission_checker = org_permission_checker
+        self._event_bus = event_bus
+
+    async def handle(self, command: DeactivateTeamCommand) -> None:
+        caller_id = Id.from_string(command.caller_id)
+        org_id = Id.from_string(command.org_id)
+
+        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
+        team = await self._team_repo.get_by_id(Id.from_string(command.team_id))
+        if team is None:
+            raise TeamNotFoundException(command.team_id)
+
+        team.deactivate()
+        await self._team_repo.update(team)
+        await self._event_bus.publish_all(team.clear_domain_events())

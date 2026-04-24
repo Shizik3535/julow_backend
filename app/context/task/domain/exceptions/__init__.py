@@ -1,0 +1,45 @@
+from app.context.task.domain.exceptions.changelog_exceptions import ChangelogNotFoundException
+from app.context.task.domain.exceptions.task_exceptions import (
+    AttachmentNotFoundException,
+    CannotChangeStatusException,
+    CannotRelateTaskToSelfException,
+    ChecklistItemNotFoundException,
+    ChecklistNotFoundException,
+    CircularDependencyException,
+    DuplicateLabelException,
+    DuplicateRelationException,
+    DuplicateWatcherException,
+    EffortUnitMismatchException,
+    InvalidEffortValueException,
+    InvalidTaskRelationException,
+    RecurringTaskConfigurationException,
+    TaskArchivedException,
+    TaskHierarchyDepthExceededException,
+    TaskNotFoundException,
+)
+from app.context.task.domain.exceptions.task_template_exceptions import (
+    CannotDeleteSystemTemplateException,
+    TaskTemplateNotFoundException,
+)
+
+__all__ = [
+    "ChangelogNotFoundException",
+    "AttachmentNotFoundException",
+    "CannotChangeStatusException",
+    "CannotRelateTaskToSelfException",
+    "ChecklistItemNotFoundException",
+    "ChecklistNotFoundException",
+    "CircularDependencyException",
+    "DuplicateLabelException",
+    "DuplicateRelationException",
+    "DuplicateWatcherException",
+    "EffortUnitMismatchException",
+    "InvalidEffortValueException",
+    "InvalidTaskRelationException",
+    "RecurringTaskConfigurationException",
+    "TaskArchivedException",
+    "TaskHierarchyDepthExceededException",
+    "TaskNotFoundException",
+    "CannotDeleteSystemTemplateException",
+    "TaskTemplateNotFoundException",
+]

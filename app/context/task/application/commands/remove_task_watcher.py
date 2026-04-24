@@ -1,0 +1,60 @@
+from __future__ import annotations
+
+from app.shared.application.base_command import BaseCommand
+from app.shared.application.base_command_handler import BaseCommandHandler
+from app.shared.application.messaging.domain_event_bus import DomainEventBus
+from app.shared.domain.value_objects.id_vo import Id
+from app.context.task.application.ports.authorization.task_permission_checker_port import (
+    TaskPermissionCheckerPort,
+)
+from app.context.task.domain.exceptions.task_exceptions import TaskNotFoundException
+from app.context.task.domain.repositories.task_repository import TaskRepository
+
+
+class RemoveTaskWatcherCommand(BaseCommand):
+    """
+    Команда удаления наблюдателя задачи.
+
+    Атрибуты:
+        caller_id: ID пользователя, выполняющего операцию.
+        task_id: ID задачи.
+        user_id: ID наблюдателя, которого удаляют.
+    """
+
+    caller_id: str
+    task_id: str
+    user_id: str
+
+
+class RemoveTaskWatcherHandler(BaseCommandHandler[RemoveTaskWatcherCommand, None]):
+    """Обработчик удаления наблюдателя задачи."""
+
+    REQUIRED_PERMISSION = "tasks.watch"
+
+    def __init__(
+        self,
+        task_repo: TaskRepository,
+        permission_checker: TaskPermissionCheckerPort,
+        event_bus: DomainEventBus,
+    ) -> None:
+        super().__init__()
+        self._task_repo = task_repo
+        self._permission_checker = permission_checker
+        self._event_bus = event_bus
+
+    async def handle(self, command: RemoveTaskWatcherCommand) -> None:
+        task = await self._task_repo.get_by_id(Id.from_string(command.task_id))
+        if task is None:
+            raise TaskNotFoundException(id=command.task_id)
+
+        # Self-unwatch разрешен без отдельного права.
+        if command.caller_id != command.user_id:
+            await self._permission_checker.require_permission(
+                user_id=command.caller_id,
+                project_id=str(task.project_id),
+                permission=self.REQUIRED_PERMISSION,
+            )
+
+        task.remove_watcher(Id.from_string(command.user_id))
+        await self._task_repo.update(task)
+        await self._event_bus.publish_all(task.clear_domain_events())

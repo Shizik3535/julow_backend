@@ -1,0 +1,39 @@
+pydantic
+pydantic-settings
+
+fastapi[standard]
+
+sqlalchemy[asyncio]
+asyncpg
+alembic
+
+dependency-injector
+
+structlog
+
+ruff
+
+# ── Auth ──────────────────────────────────────
+PyJWT
+passlib[argon2]
+pyotp
+
+# ── Cache ──────────────────────────────────────
+redis[hiredis]
+
+# ── File Storage ───────────────────────────────
+aiobotocore
+
+# ── Messaging ──────────────────────────────────
+aiokafka
+
+# ── Notification ───────────────────────────────
+aiosmtplib
+httpx
+Jinja2
+
+# ── Background Tasks ───────────────────────────
+celery
+
+# ── Encription ─────────────────────────────────
+cryptography

@@ -1,0 +1,31 @@
+from app.context.profile.domain.events.profile_events import (
+    AppearanceSettingsChanged,
+    AvatarChanged,
+    HotkeysChanged,
+    LocalizationSettingsChanged,
+    NavigationSettingsChanged,
+    NotificationSettingsChanged,
+    PersonalInfoChanged,
+    PinnedItemAdded,
+    PinnedItemRemoved,
+    PrivacySettingsChanged,
+    ProfileCreated,
+    ProfileDeleted,
+    SidebarConfigUpdated,
+)
+
+__all__ = [
+    "AppearanceSettingsChanged",
+    "AvatarChanged",
+    "HotkeysChanged",
+    "LocalizationSettingsChanged",
+    "NavigationSettingsChanged",
+    "NotificationSettingsChanged",
+    "PersonalInfoChanged",
+    "PinnedItemAdded",
+    "PinnedItemRemoved",
+    "PrivacySettingsChanged",
+    "ProfileCreated",
+    "ProfileDeleted",
+    "SidebarConfigUpdated",
+]

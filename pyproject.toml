@@ -1,0 +1,42 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+markers = [
+    "unit: Unit tests (no external dependencies)",
+    "integration: Integration tests (DB, Redis, etc.)",
+    "e2e: End-to-end tests (full HTTP stack)",
+]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-v",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:dependency_injector",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__",
+    "if TYPE_CHECKING",
+    "raise NotImplementedError",
+    "pass",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true

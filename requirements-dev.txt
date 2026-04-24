@@ -1,0 +1,19 @@
+# ── Testing ───────────────────────────────────
+pytest
+pytest-asyncio
+pytest-xdist
+httpx
+respx
+aiosqlite
+
+# ── Test Factories ─────────────────────────────
+factory-boy
+
+# ── Coverage ───────────────────────────────────
+pytest-cov
+
+# ── Linting ────────────────────────────────────
+ruff
+
+# ── Type Checking ──────────────────────────────
+mypy
