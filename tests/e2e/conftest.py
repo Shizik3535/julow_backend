@@ -118,6 +118,7 @@ async def _db_tables(app):
     from sqlalchemy import text as _sa_text
     from app.context.identity.infrastructure.persistence.seed.system_roles import SYSTEM_ROLES as _ROLES
     from app.context.organization.infrastructure.persistence.seed.org_roles import SYSTEM_ORG_ROLES as _ORG_ROLES
+    from app.context.workspace.infrastructure.persistence.seed.system_workspace_roles import SYSTEM_WORKSPACE_ROLES as _WS_ROLES
     async with engine.begin() as _conn:
         for _role in _ROLES:
             await _conn.execute(
@@ -149,6 +150,24 @@ async def _db_tables(app):
                     "is_system": _role["is_system"],
                     "description": _role["description"],
                     "scope": _role["scope"],
+                },
+            )
+        for _role in _WS_ROLES:
+            await _conn.execute(
+                _sa_text(
+                    "INSERT INTO workspace_roles "
+                    "(id, workspace_id, name, permissions, is_system, description, created_at, updated_at) "
+                    "VALUES (CAST(:id AS uuid), :workspace_id, :name, CAST(:permissions AS jsonb), "
+                    ":is_system, :description, now(), now()) "
+                    "ON CONFLICT (id) DO NOTHING"
+                ),
+                {
+                    "id": str(_role["id"]),
+                    "workspace_id": _role["workspace_id"],
+                    "name": _role["name"],
+                    "permissions": _json.dumps(_role["permissions"]),
+                    "is_system": _role["is_system"],
+                    "description": _role["description"],
                 },
             )
 

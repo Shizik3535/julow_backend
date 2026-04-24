@@ -14,6 +14,10 @@ from app.context.profile.application.messaging import (
     build_profile_event_bus,
     profile_subscriptions,
 )
+from app.context.workspace.application.messaging import (
+    build_workspace_event_bus,
+    workspace_subscriptions,
+)
 from app.core.config.settings import Settings
 from app.core.di.providers.auth_provider import create_auth_token_adapter, create_password_adapter
 from app.core.di.providers.background_tasks_provider import create_celery_app
@@ -73,6 +77,25 @@ from app.core.di.providers.profile_provider import (
 )
 from app.core.di.providers.notification_provider import create_email_adapter, create_push_adapter
 from app.core.di.providers.storage_provider import create_s3_session, get_s3_client_kwargs
+from app.core.di.providers.workspace_provider import (
+    create_ws_identity_user_adapter,
+    create_ws_org_permission_checker_adapter,
+    create_ws_organization_adapter,
+    create_ws_organization_membership_adapter,
+    create_workspace_invitation_mapper,
+    create_workspace_invitation_repository,
+    create_workspace_mapper,
+    create_workspace_membership_mapper,
+    create_workspace_membership_provider_adapter,
+    create_workspace_membership_repository,
+    create_workspace_permission_checker,
+    create_workspace_provider_adapter,
+    create_workspace_repository,
+    create_workspace_role_mapper,
+    create_workspace_role_repository,
+    create_workspace_team_mapper,
+    create_workspace_team_repository,
+)
 from app.shared.application.messaging.subscription import Subscription
 from app.shared.application.messaging.uow_subscriber import subscribe_with_uow
 from app.shared.infrastructure.background_tasks.celery_background_tasks_adapter import (
@@ -388,6 +411,85 @@ class Container(containers.DeclarativeContainer):
         org_membership_provider=org_membership_provider,
     )
 
+    # Workspace BC - Event Bus
+    workspace_event_bus = providers.Singleton(
+        build_workspace_event_bus,
+        broker=message_broker_port,
+    )
+
+    # Workspace BC - Mappers (Singleton)
+    workspace_mapper = providers.Singleton(create_workspace_mapper)
+    workspace_membership_mapper = providers.Singleton(create_workspace_membership_mapper)
+    workspace_role_mapper = providers.Singleton(create_workspace_role_mapper)
+    workspace_team_mapper = providers.Singleton(create_workspace_team_mapper)
+    workspace_invitation_mapper = providers.Singleton(create_workspace_invitation_mapper)
+
+    # Workspace BC - Repositories (Factory with session)
+    workspace_repo = providers.Factory(
+        create_workspace_repository,
+        session=db_session_factory,
+        mapper=workspace_mapper,
+    )
+    workspace_membership_repo = providers.Factory(
+        create_workspace_membership_repository,
+        session=db_session_factory,
+        mapper=workspace_membership_mapper,
+    )
+    workspace_role_repo = providers.Factory(
+        create_workspace_role_repository,
+        session=db_session_factory,
+        mapper=workspace_role_mapper,
+    )
+    workspace_team_repo = providers.Factory(
+        create_workspace_team_repository,
+        session=db_session_factory,
+        mapper=workspace_team_mapper,
+    )
+    workspace_invitation_repo = providers.Factory(
+        create_workspace_invitation_repository,
+        session=db_session_factory,
+        mapper=workspace_invitation_mapper,
+    )
+
+    # Workspace BC - Integration inboard adapters
+    ws_identity_user_port = providers.Factory(
+        create_ws_identity_user_adapter,
+        identity_user_provider=identity_user_provider,
+    )
+    ws_organization_membership_port = providers.Factory(
+        create_ws_organization_membership_adapter,
+        org_membership_provider=org_membership_provider,
+    )
+    ws_organization_port = providers.Factory(
+        create_ws_organization_adapter,
+        organization_provider=org_provider,
+    )
+    ws_org_permission_checker_port = providers.Factory(
+        create_ws_org_permission_checker_adapter,
+        org_permission_provider=org_permission_provider,
+    )
+
+    # Workspace BC - Integration outboard adapters
+    workspace_provider = providers.Factory(
+        create_workspace_provider_adapter,
+        repo=workspace_repo,
+    )
+    workspace_membership_provider = providers.Factory(
+        create_workspace_membership_provider_adapter,
+        membership_repo=workspace_membership_repo,
+        workspace_role_repo=workspace_role_repo,
+        workspace_repo=workspace_repo,
+    )
+
+    # Workspace BC - Authorization
+    workspace_permission_checker = providers.Factory(
+        create_workspace_permission_checker,
+        membership_repo=workspace_membership_repo,
+        workspace_role_repo=workspace_role_repo,
+        ws_repo=workspace_repo,
+        org_permission_checker=ws_org_permission_checker_port,
+    )
+
 
 # ------------------------------------------------------------------
 # Messaging wiring — см. wire_messaging() ниже.
@@ -416,6 +518,7 @@ async def wire_messaging(container: Container) -> None:
         *identity_subscriptions(container),
         *profile_subscriptions(container),
         *organization_subscriptions(container),
+        *workspace_subscriptions(container),
     ]
 
     for sub in subscriptions:

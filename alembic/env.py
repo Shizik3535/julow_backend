@@ -42,6 +42,14 @@ from app.context.organization.infrastructure.persistence.orm_models.department_o
 from app.context.organization.infrastructure.persistence.orm_models.invitation_orm import InvitationORM  # noqa: F401
 from app.context.organization.infrastructure.persistence.orm_models.sso_integration_orm import SSOIntegrationORM  # noqa: F401
 from app.context.organization.infrastructure.persistence.orm_models.storage_integration_orm import StorageIntegrationORM  # noqa: F401
+from app.context.workspace.infrastructure.persistence.orm_models.workspace_orm import WorkspaceORM  # noqa: F401
+from app.context.workspace.infrastructure.persistence.orm_models.workspace_membership_orm import (  # noqa: F401
+    WorkspaceMemberORM,
+    WorkspaceMembershipORM,
+)
+from app.context.workspace.infrastructure.persistence.orm_models.workspace_role_orm import WorkspaceRoleORM  # noqa: F401
+from app.context.workspace.infrastructure.persistence.orm_models.workspace_team_orm import WorkspaceTeamORM  # noqa: F401
+from app.context.workspace.infrastructure.persistence.orm_models.workspace_invitation_orm import WorkspaceInvitationORM  # noqa: F401
 
 # Alembic Config object
 config = context.config

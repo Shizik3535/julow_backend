@@ -1,24 +1,33 @@
 """
-Шаблоны системных ролей workspace (Workspace BC).
+Seed-данные для системных ролей workspace (Workspace BC).
 
-Используются для создания 4 системных `WorkspaceRole` при `Workspace.create`.
-Включают права на уровне проектов (`projects.*`), чтобы workspace-роли
-корректно покрывали каскад Project → Workspace.
+Глобальные системные роли (workspace_id IS NULL) — доступны
+во всех workspace как шаблоны. Включают права на уровне проектов
+(`projects.*`), чтобы workspace-роли корректно покрывали
+каскад Project → Workspace.
+
+Используется в:
+    - scripts/seed_workspace_roles.py
+    - tests/integration/conftest.py
+    - tests/e2e/conftest.py
 """
 from __future__ import annotations
 
-from app.context.workspace.domain.aggregates.workspace_role import WorkspaceRole
-from app.shared.domain.value_objects.id_vo import Id
+from uuid import UUID
 
 
 SYSTEM_WORKSPACE_ROLES: list[dict[str, object]] = [
     {
+        "id": UUID("00000000-0000-0000-0002-000000000001"),
+        "workspace_id": None,
         "name": "owner",
-        # «ws.*» уже покрывает «ws.projects.*» + «projects.*» через wildcard.
         "permissions": ["ws.*"],
+        "is_system": True,
         "description": "Полный доступ к workspace и всем проектам",
     },
     {
+        "id": UUID("00000000-0000-0000-0002-000000000002"),
+        "workspace_id": None,
         "name": "admin",
         "permissions": [
             "ws.settings.*",
@@ -29,9 +38,12 @@ SYSTEM_WORKSPACE_ROLES: list[dict[str, object]] = [
             "ws.projects.*",
             "projects.tasks.*",
         ],
+        "is_system": True,
         "description": "Управление workspace и проектами",
     },
     {
+        "id": UUID("00000000-0000-0000-0002-000000000003"),
+        "workspace_id": None,
         "name": "manager",
         "permissions": [
             "members.read",
@@ -42,9 +54,12 @@ SYSTEM_WORKSPACE_ROLES: list[dict[str, object]] = [
             "projects.workflow.read",
             "projects.tasks.*",
         ],
+        "is_system": True,
         "description": "Управление командами и процессами проектов",
     },
     {
+        "id": UUID("00000000-0000-0000-0002-000000000004"),
+        "workspace_id": None,
         "name": "member",
         "permissions": [
             "members.read",
@@ -56,29 +71,7 @@ SYSTEM_WORKSPACE_ROLES: list[dict[str, object]] = [
             "projects.tasks.assign",
             "projects.tasks.watch",
         ],
+        "is_system": True,
         "description": "Базовый доступ к workspace и проектам",
     },
 ]
-
-
-def build_system_workspace_roles(workspace_id: Id) -> list[WorkspaceRole]:
-    """
-    Создаёт 4 системные роли для workspace по шаблону `SYSTEM_WORKSPACE_ROLES`.
-
-    Аргументы:
-        workspace_id: ID workspace, к которому привязываются роли.
-
-    Возвращает:
-        Список `WorkspaceRole` с `is_system=True`.
-    """
-    roles: list[WorkspaceRole] = []
-    for template in SYSTEM_WORKSPACE_ROLES:
-        role = WorkspaceRole(
-            workspace_id=workspace_id,
-            name=str(template["name"]),
-            permissions=list(template["permissions"]),  # type: ignore[arg-type]
-            is_system=True,
-            description=template["description"],  # type: ignore[arg-type]
-        )
-        roles.append(role)
-    return roles
