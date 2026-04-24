@@ -11,11 +11,13 @@ Core/DI собирает эти описания и регистрирует и�
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.shared.application.messaging.broker_domain_event_bus import BrokerDomainEventBus
 from app.shared.application.messaging.domain_event_bus import DomainEventBus
-from app.shared.application.messaging.subscription import Subscription
+from app.shared.application.messaging.subscription import MessageHandlerFn, Subscription
 from app.shared.application.ports.messaging.message_broker_port import MessageBrokerPort
 
 if TYPE_CHECKING:
@@ -50,28 +52,52 @@ def workspace_subscriptions(container: "Container") -> list[Subscription]:
         OnMembershipPolicyCascade,
     )
 
+    def _build_on_org_member_joined(session: AsyncSession) -> MessageHandlerFn:
+        handler = OnOrgMemberJoinedAutoAdd(
+            ws_repo=container.workspace_repository(session=session),
+            membership_repo=container.workspace_membership_repository(session=session),
+            role_repo=container.workspace_role_repository(session=session),
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_security_policy_cascade(session: AsyncSession) -> MessageHandlerFn:
+        handler = OnSecurityPolicyCascade(
+            ws_repo=container.workspace_repository(session=session),
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_membership_policy_cascade(session: AsyncSession) -> MessageHandlerFn:
+        handler = OnMembershipPolicyCascade(
+            ws_repo=container.workspace_repository(session=session),
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
     return [
         Subscription(
             topic=ORGANIZATION_EVENTS_TOPIC,
-            consumer_group=WORKSPACE_CONSUMER_GROUP,
-            handler=OnOrgMemberJoinedAutoAdd(
-                ws_repo=container.workspace_repository(),
-                membership_repo=container.workspace_membership_repository(),
-                role_repo=container.workspace_role_repository(),
-            ),
+            group_id=WORKSPACE_CONSUMER_GROUP,
+            build_handler=_build_on_org_member_joined,
         ),
         Subscription(
             topic=WORKSPACE_EVENTS_TOPIC,
-            consumer_group=WORKSPACE_CONSUMER_GROUP,
-            handler=OnSecurityPolicyCascade(
-                ws_repo=container.workspace_repository(),
-            ),
+            group_id=WORKSPACE_CONSUMER_GROUP,
+            build_handler=_build_on_security_policy_cascade,
         ),
         Subscription(
             topic=WORKSPACE_EVENTS_TOPIC,
-            consumer_group=WORKSPACE_CONSUMER_GROUP,
-            handler=OnMembershipPolicyCascade(
-                ws_repo=container.workspace_repository(),
-            ),
+            group_id=WORKSPACE_CONSUMER_GROUP,
+            build_handler=_build_on_membership_policy_cascade,
         ),
     ]

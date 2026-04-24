@@ -35,16 +35,15 @@ class InMemoryMessageBrokerAdapter(MessageBrokerPort):
 
     def __init__(self) -> None:
         self.published: list[dict[str, Any]] = []
-        self._handlers: dict[str, MessageHandler] = {}
+        self._handlers: dict[str, list[MessageHandler]] = {}
 
     async def publish(self, topic: str, message: dict[str, Any], key: str | None = None) -> None:
         self.published.append({"topic": topic, "message": message, "key": key})
-        handler = self._handlers.get(topic)
-        if handler is not None:
+        for handler in self._handlers.get(topic, []):
             await handler(topic, message)
 
     async def subscribe(self, topic: str, group_id: str, handler: MessageHandler) -> None:
-        self._handlers[topic] = handler
+        self._handlers.setdefault(topic, []).append(handler)
 
     async def start(self) -> None:  # noqa: D102
         pass
