@@ -48,5 +48,5 @@ class DeleteOrgRoleHandler(BaseCommandHandler[DeleteOrgRoleCommand, None]):
             raise OrgRoleNotFoundException(command.role_id)
 
         role.mark_deleted()
-        await self._role_repo.delete(role)
+        await self._role_repo.delete(role.id)
         await self._event_bus.publish_all(role.clear_domain_events())

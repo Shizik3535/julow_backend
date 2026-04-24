@@ -33,7 +33,7 @@ class AddOrgStorageCommand(BaseCommand):
 
     caller_id: str
     org_id: str
-    provider: str = "LOCAL"
+    provider: str = "local"
     endpoint: str | None = None
     bucket: str = ""
     region: str = ""

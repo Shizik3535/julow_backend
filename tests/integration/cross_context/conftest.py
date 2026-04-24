@@ -34,6 +34,26 @@ from app.context.profile.infrastructure.persistence.repositories.sql_user_profil
     SqlUserProfileRepository,
 )
 
+# ── Organization ────────────────────────────────────────────────────────────
+
+from app.context.organization.domain.aggregates.organization import Organization
+from app.context.organization.domain.aggregates.org_membership import OrgMembership
+from app.context.organization.domain.aggregates.org_role import OrgRole
+from app.context.organization.domain.value_objects.org_role_scope import OrgRoleScope
+from app.context.organization.infrastructure.persistence.mappers.organization_mapper import OrganizationMapper
+from app.context.organization.infrastructure.persistence.mappers.org_membership_mapper import OrgMembershipMapper
+from app.context.organization.infrastructure.persistence.mappers.org_role_mapper import OrgRoleMapper
+from app.context.organization.infrastructure.persistence.repositories.sql_organization_repository import (
+    SqlOrganizationRepository,
+)
+from app.context.organization.infrastructure.persistence.repositories.sql_org_membership_repository import (
+    SqlOrgMembershipRepository,
+)
+from app.context.organization.infrastructure.persistence.repositories.sql_org_role_repository import (
+    SqlOrgRoleRepository,
+)
+from app.context.organization.infrastructure.persistence.seed.org_roles import SYSTEM_ORG_ROLES
+
 
 # ── Identity Mappers & Repos ────────────────────────────────────────────────
 
@@ -149,5 +169,116 @@ def make_profile(profile_repo: SqlUserProfileRepository):
         profile.clear_domain_events()
         await profile_repo.add(profile)
         return profile
+
+    return _make
+
+
+# ── Organization Mappers & Repos ─────────────────────────────────────────────
+
+
+@pytest.fixture
+def organization_mapper() -> OrganizationMapper:
+    return OrganizationMapper()
+
+
+@pytest.fixture
+def org_membership_mapper() -> OrgMembershipMapper:
+    return OrgMembershipMapper()
+
+
+@pytest.fixture
+def org_role_mapper() -> OrgRoleMapper:
+    return OrgRoleMapper()
+
+
+@pytest.fixture
+def org_repo(db_session: AsyncSession, organization_mapper: OrganizationMapper) -> SqlOrganizationRepository:
+    return SqlOrganizationRepository(session=db_session, mapper=organization_mapper)
+
+
+@pytest.fixture
+def membership_repo(
+    db_session: AsyncSession, org_membership_mapper: OrgMembershipMapper
+) -> SqlOrgMembershipRepository:
+    return SqlOrgMembershipRepository(session=db_session, mapper=org_membership_mapper)
+
+
+@pytest.fixture
+def org_role_repo(db_session: AsyncSession, org_role_mapper: OrgRoleMapper) -> SqlOrgRoleRepository:
+    return SqlOrgRoleRepository(session=db_session, mapper=org_role_mapper)
+
+
+# ── Organization Seed Helpers ────────────────────────────────────────────────
+
+
+@pytest.fixture
+def make_org(org_repo: SqlOrganizationRepository, _ensure_user):
+    """Фабрика: создаёт Organization с владельцем и сохраняет в БД."""
+
+    async def _make(
+        name: str | None = None,
+        owner_id: Id | None = None,
+    ) -> Organization:
+        oid = owner_id or Id.generate()
+        await _ensure_user(oid)
+        org_name = name or f"org-{uuid.uuid4().hex[:6]}"
+        org = Organization.create(name=org_name, owner_id=oid)
+        org.clear_domain_events()
+        await org_repo.add(org)
+        return org
+
+    return _make
+
+
+@pytest.fixture
+def make_org_with_membership(
+    org_repo: SqlOrganizationRepository,
+    membership_repo: SqlOrgMembershipRepository,
+    org_role_repo: SqlOrgRoleRepository,
+    _ensure_user,
+):
+    """Фабрика: создаёт Organization + 4 системных OrgRole + OrgMembership."""
+
+    async def _make(
+        name: str | None = None,
+        owner_id: Id | None = None,
+    ) -> dict:
+        oid = owner_id or Id.generate()
+        await _ensure_user(oid)
+        org_name = name or f"org-{uuid.uuid4().hex[:6]}"
+
+        org = Organization.create(name=org_name, owner_id=oid)
+        org.clear_domain_events()
+        await org_repo.add(org)
+
+        owner_role: OrgRole | None = None
+        for seed_role in SYSTEM_ORG_ROLES:
+            role = OrgRole.create_custom(
+                org_id=org.id,
+                name=seed_role["name"],
+                permissions=seed_role["permissions"],
+                scope=OrgRoleScope(seed_role["scope"]),
+                description=seed_role["description"],
+            )
+            role.is_system = True
+            role.clear_domain_events()
+            await org_role_repo.add(role)
+            if seed_role["name"] == "owner":
+                owner_role = role
+
+        membership = OrgMembership.create(
+            org_id=org.id,
+            owner_id=oid,
+            owner_role_id=owner_role.id if owner_role else Id.generate(),
+        )
+        membership.clear_domain_events()
+        await membership_repo.add(membership)
+
+        return {
+            "org": org,
+            "membership": membership,
+            "owner_role": owner_role,
+            "owner_id": oid,
+        }
 
     return _make

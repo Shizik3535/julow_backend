@@ -27,3 +27,7 @@ class OrgMembershipRepository(RepositoryPort[OrgMembership]):
     @abstractmethod
     async def get_members_by_org(self, org_id: Id) -> list[OrgMember]:
         """Получить всех участников организации."""
+
+    @abstractmethod
+    async def get_by_user_id(self, user_id: Id) -> list[OrgMembership]:
+        """Найти все членства пользователя."""

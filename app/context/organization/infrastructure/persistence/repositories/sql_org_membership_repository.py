@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -57,6 +59,16 @@ class SqlOrgMembershipRepository(SqlAlchemyRepository[OrgMembership, OrgMembersh
         result = await self._session.execute(stmt)
         return [self._mapper._member_to_domain(orm) for orm in result.scalars().all()]
 
+    async def get_by_user_id(self, user_id: Id) -> list[OrgMembership]:
+        user_uuid = self._mapper._map_uuid(user_id)
+        stmt = (
+            select(OrgMembershipORM)
+            .join(OrgMemberORM, OrgMemberORM.membership_id == OrgMembershipORM.id)
+            .where(OrgMemberORM.user_id == user_uuid)
+        )
+        result = await self._session.execute(stmt)
+        return [self._mapper.to_domain(orm) for orm in result.scalars().all()]
+
     # ------------------------------------------------------------------
     # Override update для синхронизации дочерних OrgMember
     # ------------------------------------------------------------------
@@ -73,14 +85,36 @@ class SqlOrgMembershipRepository(SqlAlchemyRepository[OrgMembership, OrgMembersh
         orm_model.org_id = self._mapper._map_uuid(aggregate.org_id)
         orm_model.updated_at = aggregate.updated_at
 
-        # Синхронизация дочерних: delete old + insert new
-        await self._session.execute(
-            OrgMemberORM.__table__.delete().where(OrgMemberORM.membership_id == uuid_val)
-        )
-        updated_orm = self._mapper.to_orm(aggregate)
-        for member_orm in updated_orm.members:
-            member_orm.membership_id = uuid_val
-            self._session.add(member_orm)
+        # Синхронизация дочерних: diff по id → update / delete / insert
+        existing_by_id: dict[uuid.UUID, OrgMemberORM] = {
+            m.id: m for m in list(orm_model.members)
+        }
+        desired_ids = {self._mapper._map_uuid(m.id) for m in aggregate.members}
+
+        # Удаление убранных участников через delete-orphan cascade
+        for orm_member in list(orm_model.members):
+            if orm_member.id not in desired_ids:
+                orm_model.members.remove(orm_member)
+
+        # Обновление существующих + вставка новых
+        for member in aggregate.members:
+            member_uuid = self._mapper._map_uuid(member.id)
+            if member_uuid in existing_by_id:
+                orm_member = existing_by_id[member_uuid]
+                orm_member.user_id = self._mapper._map_uuid(member.user_id)
+                orm_member.display_name = member.display_name
+                orm_member.role_id = self._mapper._map_uuid(member.role_id)
+                orm_member.joined_at = member.joined_at
+                orm_member.is_active = member.is_active
+                orm_member.invited_by = (
+                    self._mapper._map_uuid(member.invited_by)
+                    if member.invited_by
+                    else None
+                )
+            else:
+                member_orm = self._mapper._member_to_orm(member, aggregate.id)
+                member_orm.membership_id = uuid_val
+                orm_model.members.append(member_orm)
 
         await self._session.flush()
         return aggregate

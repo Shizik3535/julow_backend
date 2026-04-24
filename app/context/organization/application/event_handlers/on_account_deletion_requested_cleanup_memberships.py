@@ -38,20 +38,16 @@ class OnAccountDeletionRequestedCleanupMemberships(BaseEventHandler[dict[str, An
             return
 
         user_id = Id.from_string(user_id_str)
-        members = await self._membership_repo.get_members_by_org(user_id)
+        memberships = await self._membership_repo.get_by_user_id(user_id)
 
-        if not members:
+        if not memberships:
             self._logger.info(
                 "User has no memberships to cleanup",
                 user_id=user_id_str,
             )
             return
 
-        for member in members:
-            membership = await self._membership_repo.get_by_org_id(member.user_id)
-            if membership is None:
-                continue
-
+        for membership in memberships:
             try:
                 membership.remove_member(user_id=user_id, is_owner=False)
                 await self._membership_repo.update(membership)
@@ -59,7 +55,7 @@ class OnAccountDeletionRequestedCleanupMemberships(BaseEventHandler[dict[str, An
                 self._logger.warning(
                     "Failed to remove member from org during account deletion cleanup",
                     user_id=user_id_str,
-                    org_member_id=str(member.id),
+                    org_id=str(membership.org_id),
                     exc_info=True,
                 )
 

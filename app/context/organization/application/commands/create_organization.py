@@ -62,6 +62,9 @@ class CreateOrganizationHandler(BaseCommandHandler[CreateOrganizationCommand, Or
 
         org = Organization.create(name=command.name, owner_id=owner_id)
 
+        # Сначала сохраняем организацию (FK-зависимость для org_roles)
+        await self._org_repo.add(org)
+
         # Создаём 4 системных орг-ролей для данной организации
         owner_role: OrgRole | None = None
         for seed_role in SYSTEM_ORG_ROLES:
@@ -84,7 +87,6 @@ class CreateOrganizationHandler(BaseCommandHandler[CreateOrganizationCommand, Or
             owner_role_id=owner_role.id if owner_role else Id.generate(),
         )
 
-        await self._org_repo.add(org)
         await self._membership_repo.add(membership)
 
         await self._event_bus.publish_all(org.clear_domain_events())
