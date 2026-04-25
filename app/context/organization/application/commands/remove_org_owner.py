@@ -43,10 +43,10 @@ class RemoveOrgOwnerHandler(BaseCommandHandler[RemoveOrgOwnerCommand, None]):
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
-        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
         org = await self._org_repo.get_by_id(Id.from_string(command.org_id))
         if org is None:
             raise OrganizationNotFoundException(command.org_id)
+        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
 
         org.remove_owner(Id.from_string(command.user_id))
         await self._org_repo.update(org)

@@ -322,6 +322,298 @@
 
 ---
 
+## Project BC — Мои проекты и поиск
+
+Контроллер: `MyProjectsController` | Префикс: `/projects`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/projects/mine` | Проекты текущего пользователя |
+| GET | `/projects/` | Глобальный поиск проектов (фильтры: query, workspace_id) |
+
+---
+
+## Project BC — Проекты
+
+Контроллер: `ProjectController` | Префикс: `/workspaces/{ws_id}/projects`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| POST | `/workspaces/{ws_id}/projects/` | Создать проект |
+| GET | `/workspaces/{ws_id}/projects/` | Список проектов workspace |
+| GET | `/workspaces/{ws_id}/projects/archived` | Архивированные проекты |
+| GET | `/workspaces/{ws_id}/projects/{project_id}` | Получить проект |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}` | Обновить информацию (название, описание, иконка, цвет, категория, даты) |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/archive` | Архивировать проект |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/restore` | Восстановить проект из архива |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/suspend` | Приостановить проект (с указанием причины) |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/reactivate` | Реактивировать проект |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/request-deletion` | Запросить удаление проекта |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/transfer-ownership` | Передать владение проектом |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/owners` | Добавить со-владельца |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/owners/{user_id}` | Удалить со-владельца |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/methodology` | Сменить методологию (kanban, scrum, waterfall, hybrid, shape_up) |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/visibility` | Сменить видимость (private, workspace, organization, public) |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/custom-fields` | Добавить кастомное поле |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/custom-fields/{field_name}` | Обновить кастомное поле |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/custom-fields/{field_name}` | Удалить кастомное поле |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/milestones` | Добавить milestone |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/milestones/{milestone_id}` | Обновить milestone |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/milestones/{milestone_id}/change-status` | Изменить статус milestone |
+
+---
+
+## Project BC — Участники проекта
+
+Контроллер: `ProjectMemberController` | Префикс: `/workspaces/{ws_id}/projects`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/projects/{project_id}/members` | Список участников проекта |
+| GET | `/workspaces/{ws_id}/projects/{project_id}/members/{user_id}` | Получить участника проекта |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/members` | Добавить участника в проект |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/members/{user_id}/role` | Изменить роль участника |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/members/{user_id}` | Удалить участника из проекта |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/members/{user_id}/deactivate` | Деактивировать участника |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/members/{user_id}/reactivate` | Реактивировать участника |
+
+---
+
+## Project BC — Роли проекта
+
+Контроллер: `ProjectRoleController` | Префикс: `/workspaces/{ws_id}/projects`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/projects/{project_id}/roles` | Список ролей проекта |
+| GET | `/workspaces/{ws_id}/projects/{project_id}/roles/{role_id}` | Получить роль проекта |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/roles` | Создать кастомную роль |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/roles/{role_id}` | Обновить роль (разрешения, описание) |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/roles/{role_id}` | Удалить кастомную роль |
+
+---
+
+## Project BC — Спринты
+
+Контроллер: `SprintController` | Префикс: `/workspaces/{ws_id}/projects`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/projects/{project_id}/sprints` | Список спринтов проекта |
+| GET | `/workspaces/{ws_id}/projects/{project_id}/sprints/active` | Активный спринт |
+| GET | `/workspaces/{ws_id}/projects/{project_id}/sprints/{sprint_id}` | Получить спринт |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/sprints` | Создать спринт |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/sprints/{sprint_id}/start` | Запустить спринт |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/sprints/{sprint_id}/goal` | Обновить цель спринта |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/sprints/{sprint_id}/date-range` | Обновить даты спринта |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/sprints/{sprint_id}/retro` | Создать ретроспективу спринта |
+
+---
+
+## Project BC — Эпики
+
+Контроллер: `EpicController` | Префикс: `/workspaces/{ws_id}/projects`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/projects/{project_id}/epics` | Список эпиков проекта |
+| GET | `/workspaces/{ws_id}/projects/{project_id}/epics/{epic_id}` | Получить эпик |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/epics` | Создать эпик |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/epics/{epic_id}` | Обновить эпик |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/epics/{epic_id}/change-status` | Изменить статус эпика |
+
+---
+
+## Project BC — Доска
+
+Контроллер: `ProjectBoardController` | Префикс: `/workspaces/{ws_id}/projects`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/projects/{project_id}/board` | Получить доску проекта |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/board/columns` | Добавить колонку |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/board/columns/{column_id}` | Удалить колонку |
+| PUT | `/workspaces/{ws_id}/projects/{project_id}/board/columns/reorder` | Переупорядочить колонки |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/board/columns/{column_id}/wip-limit` | Изменить WIP-лимит колонки |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/board/swimlanes` | Добавить swimlane |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/board/swimlanes/{swimlane_id}` | Удалить swimlane |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/board/workflow/statuses` | Добавить статус workflow |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/board/workflow/statuses/{status_id}` | Удалить статус workflow |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/board/workflow/transitions` | Добавить переход workflow |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/board/workflow/transitions/{transition_id}` | Удалить переход workflow |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/board/views/{view_id}` | Обновить представление |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/board/views/{view_id}` | Удалить представление |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/board/automations/{rule_id}` | Обновить правило автоматизации |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/board/automations/{rule_id}` | Удалить правило автоматизации |
+
+---
+
+## Project BC — Системные шаблоны ретроспектив
+
+Контроллер: `RetroTemplateController` | Префикс: `/retro-templates`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/retro-templates/` | Список системных шаблонов ретроспектив |
+
+---
+
+## Project BC — Кастомные шаблоны ретроспектив workspace
+
+Контроллер: `WorkspaceRetroTemplateController` | Префикс: `/workspaces/{ws_id}/retro-templates`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/retro-templates/` | Список шаблонов ретроспектив workspace |
+| POST | `/workspaces/{ws_id}/retro-templates/` | Создать кастомный шаблон |
+| PATCH | `/workspaces/{ws_id}/retro-templates/{template_id}` | Обновить шаблон |
+| DELETE | `/workspaces/{ws_id}/retro-templates/{template_id}` | Удалить шаблон |
+
+---
+
+## Task BC — Мои задачи
+
+Контроллер: `MyTasksController` | Префикс: `/tasks`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/tasks/mine` | Мои задачи (кросс-проектный поиск с фильтрацией) |
+| GET | `/tasks/mine/overdue` | Мои просроченные задачи |
+
+---
+
+## Task BC — Задачи проекта
+
+Контроллер: `TaskController` | Префикс: `/workspaces/{ws_id}/projects`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| POST | `/workspaces/{ws_id}/projects/{project_id}/tasks` | Создать задачу |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/tasks/from-template` | Создать задачу из шаблона |
+| GET | `/workspaces/{ws_id}/projects/{project_id}/tasks` | Поиск задач проекта (пагинация, фильтры) |
+| GET | `/workspaces/{ws_id}/projects/{project_id}/tasks/count` | Счётчик задач проекта |
+| GET | `/workspaces/{ws_id}/projects/{project_id}/tasks/count-by-status/{status_id}` | Счётчик задач по статусу |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/tasks/bulk` | Массовое обновление задач |
+
+---
+
+## Task BC — Операции с задачей
+
+Контроллер: `TaskDetailController` | Префикс: `/tasks`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/tasks/{task_id}` | Получить задачу |
+| PATCH | `/tasks/{task_id}` | Обновить информацию (заголовок, описание, даты) |
+| DELETE | `/tasks/{task_id}` | Удалить задачу |
+| POST | `/tasks/{task_id}/archive` | Архивировать задачу |
+| POST | `/tasks/{task_id}/restore` | Восстановить из архива |
+| POST | `/tasks/{task_id}/change-status` | Сменить workflow-статус |
+| POST | `/tasks/{task_id}/change-priority` | Сменить приоритет |
+| POST | `/tasks/{task_id}/change-type` | Сменить тип задачи |
+| POST | `/tasks/{task_id}/move` | Переместить на доске (drag-n-drop) |
+| PATCH | `/tasks/{task_id}/effort-estimate` | Установить оценку усилия |
+| PATCH | `/tasks/{task_id}/actual-effort` | Установить фактическое усилие |
+| PATCH | `/tasks/{task_id}/progress` | Обновить прогресс (0–100) |
+| POST | `/tasks/{task_id}/compute-progress` | Вычислить прогресс из чек-листов |
+
+---
+
+## Task BC — Исполнители, спринты, эпики
+
+Контроллер: `TaskAssigneeController` | Префикс: `/tasks`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| POST | `/tasks/{task_id}/assignees` | Назначить исполнителя |
+| DELETE | `/tasks/{task_id}/assignees/{assignee_id}` | Снять исполнителя |
+| POST | `/tasks/{task_id}/sprint` | Привязать к спринту |
+| DELETE | `/tasks/{task_id}/sprint` | Убрать из спринта |
+| POST | `/tasks/{task_id}/epic` | Привязать к эпику |
+| DELETE | `/tasks/{task_id}/epic` | Убрать из эпика |
+
+---
+
+## Task BC — Чек-листы
+
+Контроллер: `TaskChecklistController` | Префикс: `/tasks`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| POST | `/tasks/{task_id}/checklists` | Добавить чек-лист |
+| DELETE | `/tasks/{task_id}/checklists/{checklist_id}` | Удалить чек-лист |
+| POST | `/tasks/{task_id}/checklists/{checklist_id}/items` | Добавить пункт |
+| POST | `/tasks/{task_id}/checklists/{checklist_id}/items/{item_id}/toggle` | Переключить пункт |
+| POST | `/tasks/{task_id}/checklists/{checklist_id}/items/{item_id}/assign` | Назначить исполнителя пункта |
+
+---
+
+## Task BC — Связи между задачами
+
+Контроллер: `TaskRelationController` | Префикс: `/tasks`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| POST | `/tasks/{task_id}/relations` | Добавить связь |
+| DELETE | `/tasks/{task_id}/relations/{related_task_id}` | Удалить связь |
+
+---
+
+## Task BC — Метаданные
+
+Контроллер: `TaskMetadataController` | Префикс: `/tasks`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| POST | `/tasks/{task_id}/labels` | Добавить метку |
+| DELETE | `/tasks/{task_id}/labels/{label}` | Удалить метку |
+| POST | `/tasks/{task_id}/watchers` | Добавить наблюдателя |
+| DELETE | `/tasks/{task_id}/watchers/{user_id}` | Удалить наблюдателя |
+| POST | `/tasks/{task_id}/attachments` | Загрузить вложение |
+| DELETE | `/tasks/{task_id}/attachments/{file_id}` | Удалить вложение |
+| POST | `/tasks/{task_id}/custom-fields` | Установить кастомное поле |
+| DELETE | `/tasks/{task_id}/custom-fields/{field_name}` | Удалить кастомное поле |
+| POST | `/tasks/{task_id}/recurrence` | Установить повторение |
+| DELETE | `/tasks/{task_id}/recurrence` | Удалить повторение |
+
+---
+
+## Task BC — История и подзадачи
+
+Контроллер: `TaskHistoryController` | Префикс: `/tasks`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/tasks/{task_id}/subtasks` | Подзадачи |
+| GET | `/tasks/{task_id}/changelog` | История изменений задачи |
+| GET | `/tasks/{task_id}/changelog/{field_name}` | История изменений поля |
+
+---
+
+## Task BC — Системные шаблоны задач
+
+Контроллер: `TaskTemplateController` | Префикс: `/task-templates`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/task-templates/` | Список системных шаблонов |
+| GET | `/task-templates/{template_id}` | Получить шаблон по UUID |
+
+---
+
+## Task BC — Шаблоны задач проекта
+
+Контроллер: `ProjectTaskTemplateController` | Префикс: `/workspaces/{ws_id}/projects`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/projects/{project_id}/task-templates` | Список шаблонов проекта |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/task-templates` | Создать шаблон |
+| PATCH | `/workspaces/{ws_id}/projects/{project_id}/task-templates/{template_id}` | Обновить шаблон |
+| DELETE | `/workspaces/{ws_id}/projects/{project_id}/task-templates/{template_id}` | Удалить шаблон |
+
+---
+
 ## Сводка по Bounded Context'ам
 
 | BC | Контроллер | Кол-во endpoint'ов |
@@ -344,4 +636,23 @@
 | Workspace | WorkspaceTeamController | 8 |
 | Workspace | WorkspaceRoleController | 5 |
 | Workspace | OrgWorkspaceController | 1 |
-| **Итого** | | **153** |
+| Project | MyProjectsController | 2 |
+| Project | ProjectController | 21 |
+| Project | ProjectMemberController | 7 |
+| Project | ProjectRoleController | 5 |
+| Project | SprintController | 8 |
+| Project | EpicController | 5 |
+| Project | ProjectBoardController | 15 |
+| Project | RetroTemplateController | 1 |
+| Project | WorkspaceRetroTemplateController | 4 |
+| Task | MyTasksController | 2 |
+| Task | TaskController | 6 |
+| Task | TaskDetailController | 13 |
+| Task | TaskAssigneeController | 6 |
+| Task | TaskChecklistController | 5 |
+| Task | TaskRelationController | 2 |
+| Task | TaskMetadataController | 10 |
+| Task | TaskHistoryController | 3 |
+| Task | TaskTemplateController | 2 |
+| Task | ProjectTaskTemplateController | 4 |
+| **Итого** | | **266** |

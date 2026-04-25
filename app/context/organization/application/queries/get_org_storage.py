@@ -5,6 +5,7 @@ from app.shared.application.base_query_handler import BaseQueryHandler
 from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.exceptions import EntityNotFoundException
 from app.context.organization.application.dto.storage_integration_dto import StorageIntegrationDTO
+from app.context.organization.application.ports.authorization.org_permission_checker_port import OrgPermissionCheckerPort
 from app.context.organization.domain.repositories.storage_integration_repository import StorageIntegrationRepository
 
 
@@ -16,20 +17,28 @@ class GetOrgStorageQuery(BaseQuery):
         org_id: ID организации.
     """
 
+    caller_id: str
     org_id: str
 
 
 class GetOrgStorageHandler(BaseQueryHandler[GetOrgStorageQuery, StorageIntegrationDTO]):
     """Обработчик запроса хранилища организации."""
 
-    def __init__(self, storage_repo: StorageIntegrationRepository) -> None:
+    REQUIRED_PERMISSION = "org.settings.read"
+
+    def __init__(self, storage_repo: StorageIntegrationRepository, org_permission_checker: OrgPermissionCheckerPort) -> None:
         super().__init__()
         self._storage_repo = storage_repo
+        self._org_permission_checker = org_permission_checker
 
     async def handle(self, query: GetOrgStorageQuery) -> StorageIntegrationDTO:
         storage = await self._storage_repo.get_by_org_id(Id.from_string(query.org_id))
         if storage is None:
             raise EntityNotFoundException(entity_type="StorageIntegration", id=query.org_id)
+
+        await self._org_permission_checker.require_permission(
+            Id.from_string(query.caller_id), Id.from_string(query.org_id), self.REQUIRED_PERMISSION,
+        )
 
         return StorageIntegrationDTO(
             id=str(storage.id),

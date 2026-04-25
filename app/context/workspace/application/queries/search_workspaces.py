@@ -33,8 +33,8 @@ class SearchWorkspacesHandler(BaseQueryHandler[SearchWorkspacesQuery, WorkspaceL
     """
     Обработчик поиска workspace.
 
-    После выборки результаты фильтруются: остаются только те workspace,
-    к которым у caller есть разрешение `ws.read` (включая каскад орг-роли).
+    Результаты ограничиваются workspace, в которых caller является участником.
+    Дополнительно фильтруются по разрешению `ws.read`.
     """
 
     REQUIRED_PERMISSION = "ws.read"
@@ -50,6 +50,11 @@ class SearchWorkspacesHandler(BaseQueryHandler[SearchWorkspacesQuery, WorkspaceL
 
     async def handle(self, query: SearchWorkspacesQuery) -> WorkspaceListDTO:
         caller_id = Id.from_string(query.caller_id)
+
+        # Получаем только workspace, в которых пользователь является участником.
+        member_workspaces = await self._ws_repo.get_by_member(caller_id)
+        member_ws_ids = {ws.id for ws in member_workspaces}
+
         workspaces = await self._ws_repo.search(
             offset=query.offset,
             limit=query.limit,
@@ -57,6 +62,9 @@ class SearchWorkspacesHandler(BaseQueryHandler[SearchWorkspacesQuery, WorkspaceL
         )
         items: list[WorkspaceDTO] = []
         for ws in workspaces:
+            # Пропускаем workspace, в которых пользователь не является участником.
+            if ws.id not in member_ws_ids:
+                continue
             allowed = await self._permission_checker.has_permission(
                 user_id=caller_id,
                 workspace_id=ws.id,

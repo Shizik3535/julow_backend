@@ -70,6 +70,20 @@ class SqlWorkspaceRepository(SqlAlchemyRepository[Workspace, WorkspaceORM], Work
     async def get_children(self, workspace_id: Id) -> list[Workspace]:
         return await self.get_by_parent(workspace_id)
 
+    async def get_by_member(self, user_id: Id) -> list[Workspace]:
+        user_uuid = self._mapper._map_uuid(user_id)
+        stmt = (
+            select(WorkspaceORM)
+            .join(WorkspaceMembershipORM, WorkspaceMembershipORM.workspace_id == WorkspaceORM.id)
+            .join(WorkspaceMemberORM, WorkspaceMemberORM.membership_id == WorkspaceMembershipORM.id)
+            .where(
+                WorkspaceMemberORM.user_id == user_uuid,
+                WorkspaceMemberORM.is_active.is_(True),
+            )
+        )
+        result = await self._session.execute(stmt)
+        return [self._mapper.to_domain(orm) for orm in result.scalars().all()]
+
     async def get_root_workspaces(self) -> list[Workspace]:
         stmt = select(WorkspaceORM).where(WorkspaceORM.parent_workspace_id.is_(None))
         result = await self._session.execute(stmt)

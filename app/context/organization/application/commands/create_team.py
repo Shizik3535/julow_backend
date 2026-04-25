@@ -7,6 +7,8 @@ from app.shared.domain.value_objects.id_vo import Id
 from app.context.organization.application.dto.team_dto import TeamDTO
 from app.context.organization.application.ports.authorization.org_permission_checker_port import OrgPermissionCheckerPort
 from app.context.organization.domain.aggregates.team import Team
+from app.context.organization.domain.exceptions.organization_exceptions import OrganizationNotFoundException
+from app.context.organization.domain.repositories.organization_repository import OrganizationRepository
 from app.context.organization.domain.repositories.team_repository import TeamRepository
 
 
@@ -35,9 +37,10 @@ class CreateTeamHandler(BaseCommandHandler[CreateTeamCommand, TeamDTO]):
 
     REQUIRED_PERMISSION = "teams.write"
 
-    def __init__(self, team_repo: TeamRepository, org_permission_checker: OrgPermissionCheckerPort, event_bus: DomainEventBus) -> None:
+    def __init__(self, team_repo: TeamRepository, org_repo: OrganizationRepository, org_permission_checker: OrgPermissionCheckerPort, event_bus: DomainEventBus) -> None:
         super().__init__()
         self._team_repo = team_repo
+        self._org_repo = org_repo
         self._org_permission_checker = org_permission_checker
         self._event_bus = event_bus
 
@@ -45,6 +48,9 @@ class CreateTeamHandler(BaseCommandHandler[CreateTeamCommand, TeamDTO]):
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
+        org = await self._org_repo.get_by_id(org_id)
+        if org is None:
+            raise OrganizationNotFoundException(command.org_id)
         await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
         team = Team.create(
             org_id=Id.from_string(command.org_id),

@@ -43,14 +43,14 @@ class UpdateProjectRoleHandler(BaseCommandHandler[UpdateProjectRoleCommand, None
         self._permission_checker = permission_checker
 
     async def handle(self, command: UpdateProjectRoleCommand) -> None:
-        await self._permission_checker.require_permission(
-            user_id=Id.from_string(command.caller_id),
-            project_id=Id.from_string(command.project_id),
-            permission=self.REQUIRED_PERMISSION,
-        )
         role = await self._role_repo.get_by_id(Id.from_string(command.role_id))
         if role is None:
             raise ProjectRoleNotFoundException(command.role_id)
+        await self._permission_checker.require_permission(
+            user_id=Id.from_string(command.caller_id),
+            project_id=role.project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
 
         role.update(permissions=command.permissions, description=command.description)
         await self._role_repo.update(role)

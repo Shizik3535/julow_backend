@@ -28,7 +28,7 @@ class SendBulkInvitationsRequest(BaseModel):
         examples=[["user1@example.com", "user2@example.com"]],
     )
     role_id: str = Field(
-        default="",
+        ...,
         description="UUID роли для всех приглашений",
         examples=["770e8400-e29b-41d4-a716-446655440002"],
     )

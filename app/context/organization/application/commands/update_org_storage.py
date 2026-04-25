@@ -69,10 +69,10 @@ class UpdateOrgStorageHandler(BaseCommandHandler[UpdateOrgStorageCommand, None])
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
-        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
         storage = await self._storage_repo.get_by_id(Id.from_string(command.storage_id))
         if storage is None:
             raise EntityNotFoundException(entity_type="StorageIntegration", id=command.storage_id)
+        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
 
         has_config_change = any([
             command.provider is not None,

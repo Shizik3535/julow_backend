@@ -9,7 +9,9 @@ from app.context.workspace.application.ports.authorization.workspace_permission_
     WorkspacePermissionCheckerPort,
 )
 from app.context.workspace.domain.aggregates.workspace_team import WorkspaceTeam
+from app.context.workspace.domain.exceptions.workspace_exceptions import WorkspaceNotFoundException
 from app.context.workspace.domain.repositories.workspace_team_repository import WorkspaceTeamRepository
+from app.context.workspace.domain.repositories.workspace_repository import WorkspaceRepository
 
 
 class CreateWorkspaceTeamCommand(BaseCommand):
@@ -37,18 +39,25 @@ class CreateWorkspaceTeamHandler(BaseCommandHandler[CreateWorkspaceTeamCommand, 
     def __init__(
         self,
         team_repo: WorkspaceTeamRepository,
+        ws_repo: WorkspaceRepository,
         permission_checker: WorkspacePermissionCheckerPort,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
         self._team_repo = team_repo
+        self._ws_repo = ws_repo
         self._permission_checker = permission_checker
         self._event_bus = event_bus
 
     async def handle(self, command: CreateWorkspaceTeamCommand) -> WorkspaceTeamDTO:
+        ws_id = Id.from_string(command.workspace_id)
+
+        ws = await self._ws_repo.get_by_id(ws_id)
+        if ws is None:
+            raise WorkspaceNotFoundException(command.workspace_id)
         await self._permission_checker.require_permission(
             user_id=Id.from_string(command.caller_id),
-            workspace_id=Id.from_string(command.workspace_id),
+            workspace_id=ws_id,
             permission=self.REQUIRED_PERMISSION,
         )
         team = WorkspaceTeam.create(

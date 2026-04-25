@@ -53,12 +53,11 @@ class AddTeamMemberHandler(BaseCommandHandler[AddTeamMemberCommand, None]):
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
-        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
-        user_id = Id.from_string(command.user_id)
-
         team = await self._team_repo.get_by_id(Id.from_string(command.team_id))
         if team is None:
             raise TeamNotFoundException(command.team_id)
+        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
+        user_id = Id.from_string(command.user_id)
 
         member = await self._membership_repo.get_member_by_org_and_user(team.org_id, user_id)
         if member is None:

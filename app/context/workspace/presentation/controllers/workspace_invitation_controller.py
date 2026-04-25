@@ -48,6 +48,7 @@ from app.context.workspace.presentation.dependencies import (
     get_workspace_invitation_repository,
     get_workspace_membership_repository,
     get_workspace_permission_checker,
+    get_workspace_repository,
     get_ws_identity_user_port,
 )
 from app.context.workspace.presentation.schemas.requests.generate_workspace_invitation_link_request import (
@@ -210,11 +211,13 @@ class WorkspaceInvitationController(BaseController):
         limit: int = Query(default=100, ge=1, le=500, description="Размер страницы"),
         caller_id: str = Depends(get_current_user_id),
         invitation_repo=Depends(get_workspace_invitation_repository),
+        ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
     ) -> PaginatedResponse[WorkspaceInvitationResponse]:
         """Список приглашений workspace."""
         handler = GetWorkspaceInvitationsHandler(
             invitation_repo=invitation_repo,
+            ws_repo=ws_repo,
             permission_checker=permission_checker,
         )
         query = GetWorkspaceInvitationsQuery(caller_id=caller_id, workspace_id=ws_id)
@@ -229,12 +232,14 @@ class WorkspaceInvitationController(BaseController):
         body: SendWorkspaceInvitationRequest,
         caller_id: str = Depends(get_current_user_id),
         invitation_repo=Depends(get_workspace_invitation_repository),
+        ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
         event_bus=Depends(get_workspace_event_bus),
     ) -> SuccessResponse[WorkspaceInvitationResponse]:
         """Отправить email-приглашение."""
         handler = SendWorkspaceInvitationHandler(
             invitation_repo=invitation_repo,
+            ws_repo=ws_repo,
             permission_checker=permission_checker,
             event_bus=event_bus,
         )
@@ -254,12 +259,14 @@ class WorkspaceInvitationController(BaseController):
         body: SendBulkWorkspaceInvitationsRequest,
         caller_id: str = Depends(get_current_user_id),
         invitation_repo=Depends(get_workspace_invitation_repository),
+        ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
         event_bus=Depends(get_workspace_event_bus),
     ) -> PaginatedResponse[WorkspaceInvitationResponse]:
         """Массовая отправка приглашений."""
         handler = SendBulkWorkspaceInvitationsHandler(
             invitation_repo=invitation_repo,
+            ws_repo=ws_repo,
             permission_checker=permission_checker,
             event_bus=event_bus,
         )
@@ -280,12 +287,14 @@ class WorkspaceInvitationController(BaseController):
         body: GenerateWorkspaceInvitationLinkRequest,
         caller_id: str = Depends(get_current_user_id),
         invitation_repo=Depends(get_workspace_invitation_repository),
+        ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
         event_bus=Depends(get_workspace_event_bus),
     ) -> SuccessResponse[WorkspaceInvitationResponse]:
         """Сгенерировать ссылку-приглашение."""
         handler = GenerateWorkspaceInvitationLinkHandler(
             invitation_repo=invitation_repo,
+            ws_repo=ws_repo,
             permission_checker=permission_checker,
             event_bus=event_bus,
         )

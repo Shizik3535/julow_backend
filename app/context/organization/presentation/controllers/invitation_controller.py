@@ -210,10 +210,12 @@ class InvitationController(BaseController):
         org_id: str,
         caller_id: str = Depends(get_current_user_id),
         invitation_repo=Depends(get_invitation_repository),
+        org_repo=Depends(get_organization_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[list[InvitationResponse]]:
         """Получить список приглашений организации."""
-        handler = GetInvitationsByOrgHandler(invitation_repo=invitation_repo)
-        query = GetInvitationsByOrgQuery(org_id=org_id)
+        handler = GetInvitationsByOrgHandler(invitation_repo=invitation_repo, org_repo=org_repo, org_permission_checker=org_permission_checker)
+        query = GetInvitationsByOrgQuery(caller_id=caller_id, org_id=org_id)
         dto = await handler.handle(query)
         items = [InvitationResponse.model_validate(item.model_dump()) for item in dto.items]
         return SuccessResponse(data=items)

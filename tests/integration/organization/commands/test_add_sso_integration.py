@@ -13,9 +13,10 @@ from app.context.organization.application.dto.sso_integration_dto import SSOInte
 @pytest.mark.integration
 class TestAddSSOIntegrationHandler:
     @pytest.fixture
-    def handler(self, sso_repo, encryption_stub, permission_checker_stub, event_bus_stub):
+    def handler(self, sso_repo, org_repo, encryption_stub, permission_checker_stub, event_bus_stub):
         return AddSSOIntegrationHandler(
             sso_repo=sso_repo,
+            org_repo=org_repo,
             encryption_port=encryption_stub,
             org_permission_checker=permission_checker_stub,
             event_bus=event_bus_stub,

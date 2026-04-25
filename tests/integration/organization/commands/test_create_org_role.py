@@ -13,9 +13,10 @@ from app.context.organization.application.dto.org_role_dto import OrgRoleDTO
 @pytest.mark.integration
 class TestCreateOrgRoleHandler:
     @pytest.fixture
-    def handler(self, org_role_repo, permission_checker_stub, event_bus_stub):
+    def handler(self, org_role_repo, org_repo, permission_checker_stub, event_bus_stub):
         return CreateOrgRoleHandler(
             role_repo=org_role_repo,
+            org_repo=org_repo,
             org_permission_checker=permission_checker_stub,
             event_bus=event_bus_stub,
         )

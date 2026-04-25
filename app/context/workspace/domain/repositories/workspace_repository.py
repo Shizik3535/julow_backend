@@ -49,6 +49,10 @@ class WorkspaceRepository(RepositoryPort[Workspace]):
         """Получить все корневые workspace (без родителя)."""
 
     @abstractmethod
+    async def get_by_member(self, user_id: Id) -> list[Workspace]:
+        """Найти все workspace, в которых пользователь является участником."""
+
+    @abstractmethod
     async def search(
         self,
         offset: int = 0,

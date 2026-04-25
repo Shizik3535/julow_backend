@@ -47,13 +47,12 @@ class ReactivateOrgMemberHandler(BaseCommandHandler[ReactivateOrgMemberCommand, 
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
-        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
-
         user_id = Id.from_string(command.user_id)
 
         membership = await self._membership_repo.get_by_org_id(org_id)
         if membership is None:
             raise OrganizationNotFoundException(command.org_id)
+        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
 
         membership.reactivate_member(user_id=user_id)
         await self._membership_repo.update(membership)

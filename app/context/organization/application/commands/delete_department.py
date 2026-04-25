@@ -41,10 +41,10 @@ class DeleteDepartmentHandler(BaseCommandHandler[DeleteDepartmentCommand, None])
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
-        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
         department = await self._department_repo.get_by_id(Id.from_string(command.department_id))
         if department is None:
             raise EntityNotFoundException(entity_type="Department", id=command.department_id)
+        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
 
         department.deactivate()
         await self._department_repo.update(department)

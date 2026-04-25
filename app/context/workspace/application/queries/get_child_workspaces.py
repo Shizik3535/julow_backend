@@ -7,6 +7,7 @@ from app.context.workspace.application.dto.workspace_dto import WorkspaceDTO, Wo
 from app.context.workspace.application.ports.authorization.workspace_permission_checker_port import (
     WorkspacePermissionCheckerPort,
 )
+from app.context.workspace.domain.exceptions.workspace_exceptions import WorkspaceNotFoundException
 from app.context.workspace.domain.repositories.workspace_repository import WorkspaceRepository
 
 
@@ -39,6 +40,10 @@ class GetChildWorkspacesHandler(BaseQueryHandler[GetChildWorkspacesQuery, Worksp
 
     async def handle(self, query: GetChildWorkspacesQuery) -> WorkspaceListDTO:
         parent_id = Id.from_string(query.parent_workspace_id)
+
+        parent = await self._ws_repo.get_by_id(parent_id)
+        if parent is None:
+            raise WorkspaceNotFoundException(query.parent_workspace_id)
         await self._permission_checker.require_permission(
             user_id=Id.from_string(query.caller_id),
             workspace_id=parent_id,

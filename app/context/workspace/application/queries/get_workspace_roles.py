@@ -7,7 +7,9 @@ from app.context.workspace.application.dto.workspace_role_dto import WorkspaceRo
 from app.context.workspace.application.ports.authorization.workspace_permission_checker_port import (
     WorkspacePermissionCheckerPort,
 )
+from app.context.workspace.domain.exceptions.workspace_exceptions import WorkspaceNotFoundException
 from app.context.workspace.domain.repositories.workspace_role_repository import WorkspaceRoleRepository
+from app.context.workspace.domain.repositories.workspace_repository import WorkspaceRepository
 
 
 class GetWorkspaceRolesQuery(BaseQuery):
@@ -33,16 +35,23 @@ class GetWorkspaceRolesHandler(BaseQueryHandler[GetWorkspaceRolesQuery, Workspac
     def __init__(
         self,
         role_repo: WorkspaceRoleRepository,
+        ws_repo: WorkspaceRepository,
         permission_checker: WorkspacePermissionCheckerPort,
     ) -> None:
         super().__init__()
         self._role_repo = role_repo
+        self._ws_repo = ws_repo
         self._permission_checker = permission_checker
 
     async def handle(self, query: GetWorkspaceRolesQuery) -> WorkspaceRoleListDTO:
+        ws_id = Id.from_string(query.workspace_id)
+
+        ws = await self._ws_repo.get_by_id(ws_id)
+        if ws is None:
+            raise WorkspaceNotFoundException(query.workspace_id)
         await self._permission_checker.require_permission(
             user_id=Id.from_string(query.caller_id),
-            workspace_id=Id.from_string(query.workspace_id),
+            workspace_id=ws_id,
             permission=self.REQUIRED_PERMISSION,
         )
         if query.system_only:

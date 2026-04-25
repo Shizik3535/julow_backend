@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from app.shared.domain.base_aggregate import AggregateRoot
 from app.shared.domain.value_objects.id_vo import Id
+from app.context.organization.domain.exceptions.department_exceptions import DepartmentMemberAlreadyExistsException
 from app.context.organization.domain.events.department_events import (
     DepartmentCreated,
     DepartmentUpdated,
@@ -83,16 +84,19 @@ class Department(AggregateRoot):
 
     def add_member(self, user_id: Id) -> None:
         """Добавляет участника в подразделение."""
-        if user_id not in self.member_ids:
-            self.member_ids.append(user_id)
-            self.updated_at = datetime.now(tz=timezone.utc)
-            self._register_event(
-                DepartmentMemberAdded(
-                    org_id=str(self.org_id),
-                    department_id=str(self.id),
-                    user_id=str(user_id),
-                )
+        if user_id in self.member_ids:
+            raise DepartmentMemberAlreadyExistsException(
+                user_id=str(user_id), department_id=str(self.id)
             )
+        self.member_ids.append(user_id)
+        self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            DepartmentMemberAdded(
+                org_id=str(self.org_id),
+                department_id=str(self.id),
+                user_id=str(user_id),
+            )
+        )
 
     def remove_member(self, user_id: Id) -> None:
         """Удаляет участника из подразделения."""

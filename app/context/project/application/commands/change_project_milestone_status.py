@@ -42,14 +42,15 @@ class ChangeProjectMilestoneStatusHandler(BaseCommandHandler[ChangeProjectMilest
         self._permission_checker = permission_checker
 
     async def handle(self, command: ChangeProjectMilestoneStatusCommand) -> None:
-        await self._permission_checker.require_permission(
-            user_id=Id.from_string(command.caller_id),
-            project_id=Id.from_string(command.project_id),
-            permission=self.REQUIRED_PERMISSION,
-        )
-        project = await self._project_repo.get_by_id(Id.from_string(command.project_id))
+        project_id = Id.from_string(command.project_id)
+        project = await self._project_repo.get_by_id(project_id)
         if project is None:
             raise ProjectNotFoundException(command.project_id)
+        await self._permission_checker.require_permission(
+            user_id=Id.from_string(command.caller_id),
+            project_id=project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
 
         new_status = MilestoneStatus(command.new_status)
         project.change_milestone_status(Id.from_string(command.milestone_id), new_status)

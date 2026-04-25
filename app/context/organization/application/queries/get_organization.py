@@ -4,6 +4,7 @@ from app.shared.application.base_query import BaseQuery
 from app.shared.application.base_query_handler import BaseQueryHandler
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.organization.application.dto.organization_dto import OrganizationDTO
+from app.context.organization.application.ports.authorization.org_permission_checker_port import OrgPermissionCheckerPort
 from app.context.organization.domain.exceptions.organization_exceptions import OrganizationNotFoundException
 from app.context.organization.domain.repositories.organization_repository import OrganizationRepository
 
@@ -16,20 +17,30 @@ class GetOrganizationQuery(BaseQuery):
         org_id: Идентификатор организации.
     """
 
+    caller_id: str
     org_id: str
 
 
 class GetOrganizationHandler(BaseQueryHandler[GetOrganizationQuery, OrganizationDTO]):
     """Обработчик запроса организации по ID."""
 
-    def __init__(self, org_repo: OrganizationRepository) -> None:
+    REQUIRED_PERMISSION = "org.read"
+
+    def __init__(self, org_repo: OrganizationRepository, org_permission_checker: OrgPermissionCheckerPort) -> None:
         super().__init__()
         self._org_repo = org_repo
+        self._org_permission_checker = org_permission_checker
 
     async def handle(self, query: GetOrganizationQuery) -> OrganizationDTO:
-        org = await self._org_repo.get_by_id(Id.from_string(query.org_id))
+        org_id = Id.from_string(query.org_id)
+
+        org = await self._org_repo.get_by_id(org_id)
         if org is None:
             raise OrganizationNotFoundException(query.org_id)
+
+        await self._org_permission_checker.require_permission(
+            Id.from_string(query.caller_id), org_id, self.REQUIRED_PERMISSION,
+        )
 
         return OrganizationDTO(
             id=str(org.id),

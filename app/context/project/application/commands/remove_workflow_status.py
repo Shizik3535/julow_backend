@@ -39,14 +39,14 @@ class RemoveWorkflowStatusHandler(BaseCommandHandler[RemoveWorkflowStatusCommand
         self._permission_checker = permission_checker
 
     async def handle(self, command: RemoveWorkflowStatusCommand) -> None:
-        await self._permission_checker.require_permission(
-            user_id=Id.from_string(command.caller_id),
-            project_id=Id.from_string(command.project_id),
-            permission=self.REQUIRED_PERMISSION,
-        )
         board = await self._board_repo.get_by_project_id(Id.from_string(command.project_id))
         if board is None:
             raise BoardNotFoundException(command.project_id)
+        await self._permission_checker.require_permission(
+            user_id=Id.from_string(command.caller_id),
+            project_id=board.project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
 
         board.remove_workflow_status(Id.from_string(command.status_id))
         await self._board_repo.update(board)

@@ -39,14 +39,14 @@ class ReorderBoardColumnsHandler(BaseCommandHandler[ReorderBoardColumnsCommand, 
         self._permission_checker = permission_checker
 
     async def handle(self, command: ReorderBoardColumnsCommand) -> None:
-        await self._permission_checker.require_permission(
-            user_id=Id.from_string(command.caller_id),
-            project_id=Id.from_string(command.project_id),
-            permission=self.REQUIRED_PERMISSION,
-        )
         board = await self._board_repo.get_by_project_id(Id.from_string(command.project_id))
         if board is None:
             raise BoardNotFoundException(command.project_id)
+        await self._permission_checker.require_permission(
+            user_id=Id.from_string(command.caller_id),
+            project_id=board.project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
 
         board.reorder_columns([Id.from_string(cid) for cid in command.column_ids])
         await self._board_repo.update(board)

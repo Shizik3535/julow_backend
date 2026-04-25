@@ -42,14 +42,15 @@ class RequestWorkspaceDeletionHandler(BaseCommandHandler[RequestWorkspaceDeletio
 
     async def handle(self, command: RequestWorkspaceDeletionCommand) -> None:
         ws_id = Id.from_string(command.workspace_id)
+
+        ws = await self._ws_repo.get_by_id(ws_id)
+        if ws is None:
+            raise WorkspaceNotFoundException(command.workspace_id)
         await self._permission_checker.require_permission(
             user_id=Id.from_string(command.caller_id),
             workspace_id=ws_id,
             permission=self.REQUIRED_PERMISSION,
         )
-        ws = await self._ws_repo.get_by_id(ws_id)
-        if ws is None:
-            raise WorkspaceNotFoundException(command.workspace_id)
 
         ws.request_deletion()
         await self._ws_repo.update(ws)

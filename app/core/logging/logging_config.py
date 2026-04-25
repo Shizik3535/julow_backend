@@ -82,6 +82,7 @@ def setup_logging() -> None:
         processors=[
             _rename_event_key,
             structlog.stdlib.ExtraAdder(),
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
             log_renderer,
         ],
         foreign_pre_chain=shared_processors,

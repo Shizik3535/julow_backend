@@ -42,6 +42,7 @@ from app.context.organization.presentation.dependencies import (
     get_encryption_port,
     get_org_permission_checker,
     get_organization_event_bus,
+    get_organization_repository,
     get_sso_integration_repository,
     get_storage_integration_repository,
 )
@@ -198,10 +199,12 @@ class IntegrationController(BaseController):
         org_id: str,
         caller_id: str = Depends(get_current_user_id),
         sso_repo=Depends(get_sso_integration_repository),
+        org_repo=Depends(get_organization_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[list[SSOIntegrationResponse]]:
         """Получить список SSO-интеграций."""
-        handler = GetSSOIntegrationsHandler(sso_repo=sso_repo)
-        query = GetSSOIntegrationsQuery(org_id=org_id)
+        handler = GetSSOIntegrationsHandler(sso_repo=sso_repo, org_repo=org_repo, org_permission_checker=org_permission_checker)
+        query = GetSSOIntegrationsQuery(caller_id=caller_id, org_id=org_id)
         dto = await handler.handle(query)
         items = [SSOIntegrationResponse.model_validate(item.model_dump()) for item in dto.items]
         return SuccessResponse(data=items)
@@ -212,6 +215,7 @@ class IntegrationController(BaseController):
         body: AddSSOIntegrationRequest,
         caller_id: str = Depends(get_current_user_id),
         sso_repo=Depends(get_sso_integration_repository),
+        org_repo=Depends(get_organization_repository),
         encryption_port=Depends(get_encryption_port),
         org_permission_checker=Depends(get_org_permission_checker),
         event_bus=Depends(get_organization_event_bus),
@@ -219,6 +223,7 @@ class IntegrationController(BaseController):
         """Добавить SSO-интеграцию."""
         handler = AddSSOIntegrationHandler(
             sso_repo=sso_repo,
+            org_repo=org_repo,
             encryption_port=encryption_port,
             org_permission_checker=org_permission_checker,
             event_bus=event_bus,
@@ -300,10 +305,11 @@ class IntegrationController(BaseController):
         org_id: str,
         caller_id: str = Depends(get_current_user_id),
         storage_repo=Depends(get_storage_integration_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[StorageIntegrationResponse]:
         """Получить хранилище организации."""
-        handler = GetOrgStorageHandler(storage_repo=storage_repo)
-        query = GetOrgStorageQuery(org_id=org_id)
+        handler = GetOrgStorageHandler(storage_repo=storage_repo, org_permission_checker=org_permission_checker)
+        query = GetOrgStorageQuery(caller_id=caller_id, org_id=org_id)
         dto = await handler.handle(query)
         return SuccessResponse(data=StorageIntegrationResponse.model_validate(dto.model_dump()))
 
@@ -313,6 +319,7 @@ class IntegrationController(BaseController):
         body: AddOrgStorageRequest,
         caller_id: str = Depends(get_current_user_id),
         storage_repo=Depends(get_storage_integration_repository),
+        org_repo=Depends(get_organization_repository),
         encryption_port=Depends(get_encryption_port),
         org_permission_checker=Depends(get_org_permission_checker),
         event_bus=Depends(get_organization_event_bus),
@@ -320,6 +327,7 @@ class IntegrationController(BaseController):
         """Добавить хранилище."""
         handler = AddOrgStorageHandler(
             storage_repo=storage_repo,
+            org_repo=org_repo,
             encryption_port=encryption_port,
             org_permission_checker=org_permission_checker,
             event_bus=event_bus,

@@ -14,18 +14,18 @@ from app.context.organization.domain.exceptions.organization_exceptions import O
 @pytest.mark.integration
 class TestGetOrganizationHandler:
     @pytest.fixture
-    def handler(self, org_repo) -> GetOrganizationHandler:
-        return GetOrganizationHandler(org_repo=org_repo)
+    def handler(self, org_repo, permission_checker_stub) -> GetOrganizationHandler:
+        return GetOrganizationHandler(org_repo=org_repo, org_permission_checker=permission_checker_stub)
 
     async def test_returns_dto(self, handler, make_org) -> None:
         org = await make_org(name="TestOrg")
-        query = GetOrganizationQuery(org_id=str(org.id))
+        query = GetOrganizationQuery(caller_id=str(Id.generate()), org_id=str(org.id))
         result = await handler.handle(query)
         assert isinstance(result, OrganizationDTO)
         assert result.name == "TestOrg"
         assert result.status == "active"
 
     async def test_not_found_raises(self, handler) -> None:
-        query = GetOrganizationQuery(org_id=str(Id.generate()))
+        query = GetOrganizationQuery(caller_id=str(Id.generate()), org_id=str(Id.generate()))
         with pytest.raises(OrganizationNotFoundException):
             await handler.handle(query)

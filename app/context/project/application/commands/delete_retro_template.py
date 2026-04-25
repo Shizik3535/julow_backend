@@ -37,14 +37,14 @@ class DeleteRetroTemplateHandler(BaseCommandHandler[DeleteRetroTemplateCommand, 
         self._event_bus = event_bus
 
     async def handle(self, command: DeleteRetroTemplateCommand) -> None:
+        template = await self._retro_template_repo.get_by_id(Id.from_string(command.template_id))
+        if template is None:
+            raise ValueError(f"Шаблон ретроспективы не найден: {command.template_id}")
         await self._workspace_permission_checker.require_permission(
             user_id=command.caller_id,
             workspace_id=command.workspace_id,
             permission=self.REQUIRED_PERMISSION,
         )
-        template = await self._retro_template_repo.get_by_id(Id.from_string(command.template_id))
-        if template is None:
-            raise ValueError(f"Шаблон ретроспективы не найден: {command.template_id}")
 
         template.mark_deleted()
         await self._retro_template_repo.delete(template.id)

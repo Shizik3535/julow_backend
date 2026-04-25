@@ -6,6 +6,8 @@ from app.shared.application.messaging.domain_event_bus import DomainEventBus
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.project.application.dto.project_role_dto import ProjectRoleDTO
 from app.context.project.domain.aggregates.project_role import ProjectRole
+from app.context.project.domain.exceptions.project_exceptions import ProjectNotFoundException
+from app.context.project.domain.repositories.project_repository import ProjectRepository
 from app.context.project.domain.repositories.project_role_repository import ProjectRoleRepository
 from app.context.project.application.ports.authorization.project_permission_checker_port import (
     ProjectPermissionCheckerPort,
@@ -37,16 +39,21 @@ class CreateProjectRoleHandler(BaseCommandHandler[CreateProjectRoleCommand, Proj
 
     REQUIRED_PERMISSION = "roles.*"
 
-    def __init__(self, role_repo: ProjectRoleRepository, permission_checker: ProjectPermissionCheckerPort, event_bus: DomainEventBus) -> None:
+    def __init__(self, project_repo: ProjectRepository, role_repo: ProjectRoleRepository, permission_checker: ProjectPermissionCheckerPort, event_bus: DomainEventBus) -> None:
         super().__init__()
+        self._project_repo = project_repo
         self._role_repo = role_repo
         self._event_bus = event_bus
         self._permission_checker = permission_checker
 
     async def handle(self, command: CreateProjectRoleCommand) -> ProjectRoleDTO:
+        project_id = Id.from_string(command.project_id)
+        project = await self._project_repo.get_by_id(project_id)
+        if project is None:
+            raise ProjectNotFoundException(command.project_id)
         await self._permission_checker.require_permission(
             user_id=Id.from_string(command.caller_id),
-            project_id=Id.from_string(command.project_id),
+            project_id=project_id,
             permission=self.REQUIRED_PERMISSION,
         )
         role = ProjectRole.create_custom(

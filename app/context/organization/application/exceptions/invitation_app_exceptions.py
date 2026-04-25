@@ -14,6 +14,9 @@ class InvitationAlreadyProcessedException(ApplicationException):
 class DuplicateInvitationForEmailException(ApplicationException):
     """Активное приглашение для этого email уже существует."""
 
+    http_status_code = 409
+    error_code = "DUPLICATE_INVITATION"
+
     def __init__(self, email: str, org_id: str) -> None:
         super().__init__(
             f"Активное приглашение для {email} в организации {org_id} уже существует"

@@ -14,17 +14,17 @@ from app.context.organization.application.queries.get_department import (
 @pytest.mark.integration
 class TestGetDepartmentHandler:
     @pytest.fixture
-    def handler(self, department_repo) -> GetDepartmentHandler:
-        return GetDepartmentHandler(department_repo=department_repo)
+    def handler(self, department_repo, permission_checker_stub) -> GetDepartmentHandler:
+        return GetDepartmentHandler(department_repo=department_repo, org_permission_checker=permission_checker_stub)
 
     async def test_returns_department_dto(self, handler, make_department) -> None:
         dept = await make_department(name="Engineering")
-        query = GetDepartmentQuery(department_id=str(dept.id))
+        query = GetDepartmentQuery(caller_id=str(Id.generate()), org_id=str(dept.org_id), department_id=str(dept.id))
         result = await handler.handle(query)
         assert isinstance(result, DepartmentDTO)
         assert result.name == "Engineering"
 
     async def test_not_found_raises(self, handler) -> None:
-        query = GetDepartmentQuery(department_id=str(Id.generate()))
+        query = GetDepartmentQuery(caller_id=str(Id.generate()), org_id=str(Id.generate()), department_id=str(Id.generate()))
         with pytest.raises(EntityNotFoundException):
             await handler.handle(query)

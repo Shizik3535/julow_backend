@@ -254,10 +254,12 @@ class MemberController(BaseController):
         org_id: str,
         caller_id: str = Depends(get_current_user_id),
         membership_repo=Depends(get_org_membership_repository),
+        org_repo=Depends(get_organization_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[list[OrgMemberResponse]]:
         """Получить список участников организации."""
-        handler = GetOrgMembersHandler(membership_repo=membership_repo)
-        query = GetOrgMembersQuery(org_id=org_id)
+        handler = GetOrgMembersHandler(membership_repo=membership_repo, org_repo=org_repo, org_permission_checker=org_permission_checker)
+        query = GetOrgMembersQuery(caller_id=caller_id, org_id=org_id)
         dto = await handler.handle(query)
         items = [OrgMemberResponse.model_validate(item.model_dump()) for item in dto.items]
         return SuccessResponse(data=items)
@@ -268,10 +270,11 @@ class MemberController(BaseController):
         user_id: str,
         caller_id: str = Depends(get_current_user_id),
         membership_repo=Depends(get_org_membership_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[OrgMemberResponse]:
         """Получить данные конкретного участника."""
-        handler = GetOrgMemberHandler(membership_repo=membership_repo)
-        query = GetOrgMemberQuery(org_id=org_id, user_id=user_id)
+        handler = GetOrgMemberHandler(membership_repo=membership_repo, org_permission_checker=org_permission_checker)
+        query = GetOrgMemberQuery(caller_id=caller_id, org_id=org_id, user_id=user_id)
         dto = await handler.handle(query)
         return SuccessResponse(data=OrgMemberResponse.model_validate(dto.model_dump()))
 

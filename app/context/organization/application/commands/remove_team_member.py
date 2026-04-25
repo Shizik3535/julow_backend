@@ -43,10 +43,10 @@ class RemoveTeamMemberHandler(BaseCommandHandler[RemoveTeamMemberCommand, None])
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
-        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
         team = await self._team_repo.get_by_id(Id.from_string(command.team_id))
         if team is None:
             raise TeamNotFoundException(command.team_id)
+        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
 
         team.remove_member(Id.from_string(command.user_id))
         await self._team_repo.update(team)

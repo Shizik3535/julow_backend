@@ -59,19 +59,19 @@ class AddWorkspaceMemberHandler(BaseCommandHandler[AddWorkspaceMemberCommand, No
         self._event_bus = event_bus
 
     async def handle(self, command: AddWorkspaceMemberCommand) -> None:
+        ws_id = Id.from_string(command.workspace_id)
+
+        membership = await self._membership_repo.get_by_workspace_id(ws_id)
+        if membership is None:
+            raise WorkspaceNotFoundException(command.workspace_id)
         await self._permission_checker.require_permission(
             user_id=Id.from_string(command.caller_id),
-            workspace_id=Id.from_string(command.workspace_id),
+            workspace_id=ws_id,
             permission=self.REQUIRED_PERMISSION,
         )
 
         if not await self._identity_port.user_exists(command.user_id):
             raise UserNotFoundException(command.user_id)
-
-        ws_id = Id.from_string(command.workspace_id)
-        membership = await self._membership_repo.get_by_workspace_id(ws_id)
-        if membership is None:
-            raise WorkspaceNotFoundException(command.workspace_id)
 
         user_id = Id.from_string(command.user_id)
         existing = membership._find_member(user_id)

@@ -40,14 +40,15 @@ class GetWorkspaceSettingsHandler(BaseQueryHandler[GetWorkspaceSettingsQuery, Wo
 
     async def handle(self, query: GetWorkspaceSettingsQuery) -> WorkspaceSettingsDTO:
         ws_id = Id.from_string(query.workspace_id)
+
+        ws = await self._ws_repo.get_by_id(ws_id)
+        if ws is None:
+            raise WorkspaceNotFoundException(query.workspace_id)
         await self._permission_checker.require_permission(
             user_id=Id.from_string(query.caller_id),
             workspace_id=ws_id,
             permission=self.REQUIRED_PERMISSION,
         )
-        ws = await self._ws_repo.get_by_id(ws_id)
-        if ws is None:
-            raise WorkspaceNotFoundException(query.workspace_id)
 
         return WorkspaceSettingsDTO(
             workspace_id=str(ws.id),

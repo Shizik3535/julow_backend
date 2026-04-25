@@ -283,10 +283,11 @@ class OrganizationController(BaseController):
         limit: int = Query(default=100, ge=1, le=500, description="Размер страницы"),
         caller_id: str = Depends(get_current_user_id),
         org_repo=Depends(get_organization_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> PaginatedResponse[OrganizationResponse]:
         """Поиск организаций с пагинацией."""
-        handler = SearchOrganizationsHandler(org_repo=org_repo)
-        query = SearchOrganizationsQuery(offset=offset, limit=limit)
+        handler = SearchOrganizationsHandler(org_repo=org_repo, org_permission_checker=org_permission_checker)
+        query = SearchOrganizationsQuery(caller_id=caller_id, offset=offset, limit=limit)
         dto = await handler.handle(query)
         items = [OrganizationResponse.model_validate(item.model_dump()) for item in dto.items]
         page = (offset // max(limit, 1)) + 1
@@ -297,10 +298,11 @@ class OrganizationController(BaseController):
         org_id: str,
         caller_id: str = Depends(get_current_user_id),
         org_repo=Depends(get_organization_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[OrganizationResponse]:
         """Получить организацию по ID."""
-        handler = GetOrganizationHandler(org_repo=org_repo)
-        query = GetOrganizationQuery(org_id=org_id)
+        handler = GetOrganizationHandler(org_repo=org_repo, org_permission_checker=org_permission_checker)
+        query = GetOrganizationQuery(caller_id=caller_id, org_id=org_id)
         dto = await handler.handle(query)
         return SuccessResponse(data=OrganizationResponse.model_validate(dto.model_dump()))
 

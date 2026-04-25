@@ -13,7 +13,9 @@ from app.context.workspace.application.ports.authorization.workspace_permission_
     WorkspacePermissionCheckerPort,
 )
 from app.context.workspace.domain.aggregates.workspace_invitation import WorkspaceInvitation
+from app.context.workspace.domain.exceptions.workspace_exceptions import WorkspaceNotFoundException
 from app.context.workspace.domain.repositories.workspace_invitation_repository import WorkspaceInvitationRepository
+from app.context.workspace.domain.repositories.workspace_repository import WorkspaceRepository
 from app.context.workspace.domain.value_objects.invitation_status import InvitationStatus
 
 
@@ -46,16 +48,22 @@ class SendBulkWorkspaceInvitationsHandler(
     def __init__(
         self,
         invitation_repo: WorkspaceInvitationRepository,
+        ws_repo: WorkspaceRepository,
         permission_checker: WorkspacePermissionCheckerPort,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
         self._invitation_repo = invitation_repo
+        self._ws_repo = ws_repo
         self._permission_checker = permission_checker
         self._event_bus = event_bus
 
     async def handle(self, command: SendBulkWorkspaceInvitationsCommand) -> WorkspaceInvitationListDTO:
         ws_id = Id.from_string(command.workspace_id)
+
+        ws = await self._ws_repo.get_by_id(ws_id)
+        if ws is None:
+            raise WorkspaceNotFoundException(command.workspace_id)
         await self._permission_checker.require_permission(
             user_id=Id.from_string(command.caller_id),
             workspace_id=ws_id,

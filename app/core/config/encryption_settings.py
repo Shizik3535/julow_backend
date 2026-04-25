@@ -9,4 +9,4 @@ class EncryptionSettings(BaseSettings):
         extra="ignore",
     )
 
-    key: str = "change-me-in-production-base64-fernet-key=="
+    key: str = "AAmioAjwB55kaBoOrZYZHrbnv21GCNdcPAxCgwJDs8s="

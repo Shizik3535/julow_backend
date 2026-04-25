@@ -70,14 +70,13 @@ class AddOrgMemberHandler(BaseCommandHandler[AddOrgMemberCommand, None]):
         org_id = Id.from_string(command.org_id)
         user_id = Id.from_string(command.user_id)
 
+        membership = await self._membership_repo.get_by_org_id(org_id)
+        if membership is None:
+            raise OrganizationNotFoundException(command.org_id)
         await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
 
         if not await self._identity_port.user_exists(command.user_id):
             raise UserNotFoundException(command.user_id)
-
-        membership = await self._membership_repo.get_by_org_id(org_id)
-        if membership is None:
-            raise OrganizationNotFoundException(command.org_id)
 
         existing = membership._find_member(user_id)
         if existing is not None:

@@ -13,9 +13,10 @@ from app.context.organization.application.dto.department_dto import DepartmentDT
 @pytest.mark.integration
 class TestCreateDepartmentHandler:
     @pytest.fixture
-    def handler(self, department_repo, permission_checker_stub, event_bus_stub):
+    def handler(self, department_repo, org_repo, permission_checker_stub, event_bus_stub):
         return CreateDepartmentHandler(
             department_repo=department_repo,
+            org_repo=org_repo,
             org_permission_checker=permission_checker_stub,
             event_bus=event_bus_stub,
         )

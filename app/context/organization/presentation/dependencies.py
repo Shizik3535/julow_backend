@@ -120,7 +120,12 @@ async def get_org_permission_checker(
     container: Container = Depends(get_container),
 ):
     """Получить OrgPermissionCheckerPort из DI-контейнера."""
-    return container.org_permission_checker(session=session)
+    membership_repo = container.org_membership_repo(session=session)
+    org_role_repo = container.org_role_repo(session=session)
+    return container.org_permission_checker(
+        membership_repo=membership_repo,
+        org_role_repo=org_role_repo,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -128,9 +133,14 @@ async def get_org_permission_checker(
 # ---------------------------------------------------------------------------
 
 
-async def get_org_identity_user_port(container: Container = Depends(get_container)):
+async def get_org_identity_user_port(
+    session: AsyncSession = Depends(get_db_session),
+    container: Container = Depends(get_container),
+):
     """Получить IdentityUserPort (inbound) из DI-контейнера."""
-    return container.org_identity_user_port()
+    user_repo = container.user_repo(session=session)
+    identity_user_provider = container.identity_user_provider(user_repo=user_repo)
+    return container.org_identity_user_port(identity_user_provider=identity_user_provider)
 
 
 # ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import pytest
 from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.value_objects.url_vo import Url
 from app.context.organization.domain.aggregates.team import Team
+from app.context.organization.domain.exceptions.team_exceptions import TeamMemberAlreadyExistsException
 from app.context.organization.domain.events.team_events import (
     TeamCreated,
     TeamUpdated,
@@ -99,13 +100,12 @@ class TestTeamMembers:
         events = team.clear_domain_events()
         assert any(isinstance(e, TeamMemberAdded) for e in events)
 
-    def test_add_duplicate_member_ignored(self, team: Team) -> None:
+    def test_add_duplicate_member_raises(self, team: Team) -> None:
         user_id = IdFactory()
         team.add_member(user_id)
         team.clear_domain_events()
-        team.add_member(user_id)
-        events = team.clear_domain_events()
-        assert not any(isinstance(e, TeamMemberAdded) for e in events)
+        with pytest.raises(TeamMemberAlreadyExistsException):
+            team.add_member(user_id)
 
     def test_add_member_to_inactive_team_raises(self, inactive_team: Team) -> None:
         with pytest.raises(ValueError):

@@ -27,7 +27,7 @@ class SendInvitationRequest(BaseModel):
         examples=["user@example.com"],
     )
     role_id: str = Field(
-        default="",
+        ...,
         description="UUID роли",
         examples=["770e8400-e29b-41d4-a716-446655440002"],
     )

@@ -13,9 +13,10 @@ from app.context.organization.application.dto.storage_integration_dto import Sto
 @pytest.mark.integration
 class TestAddOrgStorageHandler:
     @pytest.fixture
-    def handler(self, storage_repo, encryption_stub, permission_checker_stub, event_bus_stub):
+    def handler(self, storage_repo, org_repo, encryption_stub, permission_checker_stub, event_bus_stub):
         return AddOrgStorageHandler(
             storage_repo=storage_repo,
+            org_repo=org_repo,
             encryption_port=encryption_stub,
             org_permission_checker=permission_checker_stub,
             event_bus=event_bus_stub,

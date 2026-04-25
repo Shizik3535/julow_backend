@@ -5,6 +5,7 @@ from app.shared.application.base_query_handler import BaseQueryHandler
 from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.exceptions import EntityNotFoundException
 from app.context.organization.application.dto.department_dto import DepartmentDTO
+from app.context.organization.application.ports.authorization.org_permission_checker_port import OrgPermissionCheckerPort
 from app.context.organization.domain.repositories.department_repository import DepartmentRepository
 
 
@@ -16,20 +17,29 @@ class GetDepartmentQuery(BaseQuery):
         department_id: Идентификатор подразделения.
     """
 
+    caller_id: str
+    org_id: str
     department_id: str
 
 
 class GetDepartmentHandler(BaseQueryHandler[GetDepartmentQuery, DepartmentDTO]):
     """Обработчик запроса подразделения по ID."""
 
-    def __init__(self, department_repo: DepartmentRepository) -> None:
+    REQUIRED_PERMISSION = "departments.read"
+
+    def __init__(self, department_repo: DepartmentRepository, org_permission_checker: OrgPermissionCheckerPort) -> None:
         super().__init__()
         self._department_repo = department_repo
+        self._org_permission_checker = org_permission_checker
 
     async def handle(self, query: GetDepartmentQuery) -> DepartmentDTO:
         department = await self._department_repo.get_by_id(Id.from_string(query.department_id))
         if department is None:
             raise EntityNotFoundException(entity_type="Department", id=query.department_id)
+
+        await self._org_permission_checker.require_permission(
+            Id.from_string(query.caller_id), Id.from_string(query.org_id), self.REQUIRED_PERMISSION,
+        )
 
         return DepartmentDTO(
             id=str(department.id),

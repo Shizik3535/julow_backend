@@ -4,6 +4,7 @@ import pytest
 
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.organization.domain.aggregates.department import Department
+from app.context.organization.domain.exceptions.department_exceptions import DepartmentMemberAlreadyExistsException
 from app.context.organization.domain.events.department_events import (
     DepartmentCreated,
     DepartmentUpdated,
@@ -89,13 +90,12 @@ class TestDepartmentMembers:
         events = department.clear_domain_events()
         assert any(isinstance(e, DepartmentMemberAdded) for e in events)
 
-    def test_add_duplicate_member_ignored(self, department: Department) -> None:
+    def test_add_duplicate_member_raises(self, department: Department) -> None:
         user_id = IdFactory()
         department.add_member(user_id)
         department.clear_domain_events()
-        department.add_member(user_id)
-        events = department.clear_domain_events()
-        assert not any(isinstance(e, DepartmentMemberAdded) for e in events)
+        with pytest.raises(DepartmentMemberAlreadyExistsException):
+            department.add_member(user_id)
 
     def test_remove_member(self, department: Department) -> None:
         user_id = IdFactory()

@@ -12,13 +12,13 @@ from app.context.organization.application.commands.update_security_policy import
 @pytest.mark.integration
 class TestUpdateSecurityPolicyHandler:
     @pytest.fixture
-    def handler(self, org_repo, event_bus_stub):
-        return UpdateSecurityPolicyHandler(org_repo=org_repo, event_bus=event_bus_stub)
+    def handler(self, org_repo, permission_checker_stub, event_bus_stub):
+        return UpdateSecurityPolicyHandler(org_repo=org_repo, org_permission_checker=permission_checker_stub, event_bus=event_bus_stub)
 
     async def test_update_policy(self, handler, make_org, org_repo) -> None:
         org = await make_org()
         cmd = UpdateSecurityPolicyCommand(
-            org_id=str(org.id), require_2fa=True, password_min_length=12
+            caller_id=str(org.owner_ids[0]), org_id=str(org.id), require_2fa=True, password_min_length=12
         )
         await handler.handle(cmd)
         found = await org_repo.get_by_id(org.id)

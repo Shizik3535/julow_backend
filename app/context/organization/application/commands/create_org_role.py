@@ -7,7 +7,9 @@ from app.shared.domain.value_objects.id_vo import Id
 from app.context.organization.application.dto.org_role_dto import OrgRoleDTO
 from app.context.organization.application.ports.authorization.org_permission_checker_port import OrgPermissionCheckerPort
 from app.context.organization.domain.aggregates.org_role import OrgRole
+from app.context.organization.domain.exceptions.organization_exceptions import OrganizationNotFoundException
 from app.context.organization.domain.repositories.org_role_repository import OrgRoleRepository
+from app.context.organization.domain.repositories.organization_repository import OrganizationRepository
 from app.context.organization.domain.value_objects.org_role_scope import OrgRoleScope
 
 
@@ -40,9 +42,10 @@ class CreateOrgRoleHandler(BaseCommandHandler[CreateOrgRoleCommand, OrgRoleDTO])
 
     REQUIRED_PERMISSION = "roles.write"
 
-    def __init__(self, role_repo: OrgRoleRepository, org_permission_checker: OrgPermissionCheckerPort, event_bus: DomainEventBus) -> None:
+    def __init__(self, role_repo: OrgRoleRepository, org_repo: OrganizationRepository, org_permission_checker: OrgPermissionCheckerPort, event_bus: DomainEventBus) -> None:
         super().__init__()
         self._role_repo = role_repo
+        self._org_repo = org_repo
         self._org_permission_checker = org_permission_checker
         self._event_bus = event_bus
 
@@ -50,6 +53,9 @@ class CreateOrgRoleHandler(BaseCommandHandler[CreateOrgRoleCommand, OrgRoleDTO])
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
+        org = await self._org_repo.get_by_id(org_id)
+        if org is None:
+            raise OrganizationNotFoundException(command.org_id)
         await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
         role = OrgRole.create_custom(
             org_id=Id.from_string(command.org_id),

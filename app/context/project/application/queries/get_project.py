@@ -6,6 +6,9 @@ from app.shared.application.base_query import BaseQuery
 from app.shared.application.base_query_handler import BaseQueryHandler
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.project.application.dto.project_dto import ProjectDTO
+from app.context.project.application.ports.authorization.project_permission_checker_port import (
+    ProjectPermissionCheckerPort,
+)
 from app.context.project.domain.aggregates.project import Project
 from app.context.project.domain.exceptions.project_exceptions import ProjectNotFoundException
 from app.context.project.domain.repositories.project_repository import ProjectRepository
@@ -14,20 +17,30 @@ from app.context.project.domain.repositories.project_repository import ProjectRe
 class GetProjectQuery(BaseQuery):
     """Запрос получения проекта по ID."""
 
+    caller_id: str
     project_id: str
 
 
 class GetProjectHandler(BaseQueryHandler[GetProjectQuery, ProjectDTO]):
     """Обработчик получения проекта по ID."""
 
-    def __init__(self, project_repo: ProjectRepository) -> None:
+    REQUIRED_PERMISSION = "project.read"
+
+    def __init__(self, project_repo: ProjectRepository, permission_checker: ProjectPermissionCheckerPort) -> None:
         super().__init__()
         self._project_repo = project_repo
+        self._permission_checker = permission_checker
 
     async def handle(self, query: GetProjectQuery) -> ProjectDTO:
-        project = await self._project_repo.get_by_id(Id.from_string(query.project_id))
+        project_id = Id.from_string(query.project_id)
+        project = await self._project_repo.get_by_id(project_id)
         if project is None:
             raise ProjectNotFoundException(query.project_id)
+        await self._permission_checker.require_permission(
+            user_id=Id.from_string(query.caller_id),
+            project_id=project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
         return self._to_dto(project)
 
     @staticmethod

@@ -7,6 +7,9 @@ from app.shared.application.base_query_handler import BaseQueryHandler
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.project.application.dto.board_dto import BoardDTO
 from app.context.project.application.exceptions.board_app_exceptions import BoardNotFoundException
+from app.context.project.application.ports.authorization.project_permission_checker_port import (
+    ProjectPermissionCheckerPort,
+)
 from app.context.project.domain.aggregates.board import Board
 from app.context.project.domain.repositories.board_repository import BoardRepository
 
@@ -14,20 +17,29 @@ from app.context.project.domain.repositories.board_repository import BoardReposi
 class GetBoardQuery(BaseQuery):
     """Запрос получения доски проекта."""
 
+    caller_id: str
     project_id: str
 
 
 class GetBoardHandler(BaseQueryHandler[GetBoardQuery, BoardDTO]):
     """Обработчик получения доски проекта."""
 
-    def __init__(self, board_repo: BoardRepository) -> None:
+    REQUIRED_PERMISSION = "project.read"
+
+    def __init__(self, board_repo: BoardRepository, permission_checker: ProjectPermissionCheckerPort) -> None:
         super().__init__()
         self._board_repo = board_repo
+        self._permission_checker = permission_checker
 
     async def handle(self, query: GetBoardQuery) -> BoardDTO:
         board = await self._board_repo.get_by_project_id(Id.from_string(query.project_id))
         if board is None:
             raise BoardNotFoundException(query.project_id)
+        await self._permission_checker.require_permission(
+            user_id=Id.from_string(query.caller_id),
+            project_id=board.project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
         return self._to_dto(board)
 
     @staticmethod

@@ -43,6 +43,7 @@ from app.context.organization.presentation.dependencies import (
     get_org_membership_repository,
     get_org_permission_checker,
     get_organization_event_bus,
+    get_organization_repository,
 )
 from app.context.organization.presentation.schemas.requests.create_department_request import (
     CreateDepartmentRequest,
@@ -183,10 +184,12 @@ class DepartmentController(BaseController):
         org_id: str,
         caller_id: str = Depends(get_current_user_id),
         department_repo=Depends(get_department_repository),
+        org_repo=Depends(get_organization_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[list[DepartmentResponse]]:
         """Получить список подразделений."""
-        handler = GetDepartmentsByOrgHandler(department_repo=department_repo)
-        query = GetDepartmentsByOrgQuery(org_id=org_id)
+        handler = GetDepartmentsByOrgHandler(department_repo=department_repo, org_repo=org_repo, org_permission_checker=org_permission_checker)
+        query = GetDepartmentsByOrgQuery(caller_id=caller_id, org_id=org_id)
         dto = await handler.handle(query)
         items = [DepartmentResponse.model_validate(item.model_dump()) for item in dto.items]
         return SuccessResponse(data=items)
@@ -197,10 +200,11 @@ class DepartmentController(BaseController):
         department_id: str,
         caller_id: str = Depends(get_current_user_id),
         department_repo=Depends(get_department_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[DepartmentResponse]:
         """Получить подразделение по ID."""
-        handler = GetDepartmentHandler(department_repo=department_repo)
-        query = GetDepartmentQuery(department_id=department_id)
+        handler = GetDepartmentHandler(department_repo=department_repo, org_permission_checker=org_permission_checker)
+        query = GetDepartmentQuery(caller_id=caller_id, org_id=org_id, department_id=department_id)
         dto = await handler.handle(query)
         return SuccessResponse(data=DepartmentResponse.model_validate(dto.model_dump()))
 
@@ -210,12 +214,14 @@ class DepartmentController(BaseController):
         body: CreateDepartmentRequest,
         caller_id: str = Depends(get_current_user_id),
         department_repo=Depends(get_department_repository),
+        org_repo=Depends(get_organization_repository),
         org_permission_checker=Depends(get_org_permission_checker),
         event_bus=Depends(get_organization_event_bus),
     ) -> SuccessResponse[DepartmentResponse]:
         """Создать подразделение."""
         handler = CreateDepartmentHandler(
             department_repo=department_repo,
+            org_repo=org_repo,
             org_permission_checker=org_permission_checker,
             event_bus=event_bus,
         )

@@ -24,6 +24,8 @@ from app.context.organization.domain.events.organization_events import (
 from app.context.organization.domain.exceptions.organization_exceptions import (
     CannotRemoveLastOwnerException,
     CannotTransferOwnershipException,
+    OrganizationAlreadyActiveException,
+    OrganizationAlreadySuspendedException,
     OrganizationSuspendedException,
 )
 from tests.factories import IdFactory
@@ -160,10 +162,9 @@ class TestOrganizationStatus:
         events = organization.clear_domain_events()
         assert any(isinstance(e, OrganizationSuspended) for e in events)
 
-    def test_suspend_already_suspended_is_noop(self, suspended_organization: Organization) -> None:
-        suspended_organization.suspend("again")
-        events = suspended_organization.clear_domain_events()
-        assert not any(isinstance(e, OrganizationSuspended) for e in events)
+    def test_suspend_already_suspended_raises(self, suspended_organization: Organization) -> None:
+        with pytest.raises(OrganizationAlreadySuspendedException):
+            suspended_organization.suspend("again")
 
     def test_suspend_when_pending_deletion_raises(self, pending_deletion_organization: Organization) -> None:
         with pytest.raises(OrganizationSuspendedException):
@@ -178,10 +179,9 @@ class TestOrganizationStatus:
         events = suspended_organization.clear_domain_events()
         assert any(isinstance(e, OrganizationReactivated) for e in events)
 
-    def test_reactivate_not_suspended_is_noop(self, organization: Organization) -> None:
-        organization.reactivate()
-        events = organization.clear_domain_events()
-        assert not any(isinstance(e, OrganizationReactivated) for e in events)
+    def test_reactivate_not_suspended_raises(self, organization: Organization) -> None:
+        with pytest.raises(OrganizationAlreadyActiveException):
+            organization.reactivate()
 
     def test_request_deletion(self, organization: Organization) -> None:
         organization.request_deletion()

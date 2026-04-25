@@ -46,14 +46,15 @@ class UpdateWorkspaceMemberDisplayNameHandler(BaseCommandHandler[UpdateWorkspace
 
     async def handle(self, command: UpdateWorkspaceMemberDisplayNameCommand) -> None:
         ws_id = Id.from_string(command.workspace_id)
+
+        membership = await self._membership_repo.get_by_workspace_id(ws_id)
+        if membership is None:
+            raise WorkspaceNotFoundException(command.workspace_id)
         await self._permission_checker.require_permission(
             user_id=Id.from_string(command.caller_id),
             workspace_id=ws_id,
             permission=self.REQUIRED_PERMISSION,
         )
-        membership = await self._membership_repo.get_by_workspace_id(ws_id)
-        if membership is None:
-            raise WorkspaceNotFoundException(command.workspace_id)
 
         membership.update_member_display_name(
             user_id=Id.from_string(command.user_id),

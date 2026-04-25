@@ -77,16 +77,85 @@ from app.context.workspace.presentation.controllers import (
     WorkspaceTeamController,
 )
 
+_org_workspace_controller = OrgWorkspaceController()
 _workspace_controller = WorkspaceController()
 _workspace_member_controller = WorkspaceMemberController()
 _workspace_invitation_controller = WorkspaceInvitationController()
 _workspace_team_controller = WorkspaceTeamController()
 _workspace_role_controller = WorkspaceRoleController()
-_org_workspace_controller = OrgWorkspaceController()
 
+api_v1_router.include_router(_org_workspace_controller.router)
 api_v1_router.include_router(_workspace_controller.router)
 api_v1_router.include_router(_workspace_member_controller.router)
 api_v1_router.include_router(_workspace_invitation_controller.router)
 api_v1_router.include_router(_workspace_team_controller.router)
 api_v1_router.include_router(_workspace_role_controller.router)
-api_v1_router.include_router(_org_workspace_controller.router)
+
+# Project BC
+from app.context.project.presentation.controllers import (
+    EpicController,
+    MyProjectsController,
+    ProjectBoardController,
+    ProjectController,
+    ProjectMemberController,
+    ProjectRoleController,
+    RetroTemplateController,
+    SprintController,
+    WorkspaceRetroTemplateController,
+)
+
+_my_projects_controller = MyProjectsController()
+_project_controller = ProjectController()
+_project_member_controller = ProjectMemberController()
+_project_role_controller = ProjectRoleController()
+_sprint_controller = SprintController()
+_epic_controller = EpicController()
+_project_board_controller = ProjectBoardController()
+_retro_template_controller = RetroTemplateController()
+_workspace_retro_template_controller = WorkspaceRetroTemplateController()
+
+api_v1_router.include_router(_my_projects_controller.router)
+api_v1_router.include_router(_project_controller.router)
+api_v1_router.include_router(_project_member_controller.router)
+api_v1_router.include_router(_project_role_controller.router)
+api_v1_router.include_router(_sprint_controller.router)
+api_v1_router.include_router(_epic_controller.router)
+api_v1_router.include_router(_project_board_controller.router)
+api_v1_router.include_router(_retro_template_controller.router)
+api_v1_router.include_router(_workspace_retro_template_controller.router)
+
+# Task BC
+from app.context.task.presentation.controllers import (
+    MyTasksController,
+    ProjectTaskTemplateController,
+    TaskAssigneeController,
+    TaskChecklistController,
+    TaskController,
+    TaskDetailController,
+    TaskHistoryController,
+    TaskMetadataController,
+    TaskRelationController,
+    TaskTemplateController,
+)
+
+_my_tasks_controller = MyTasksController()
+_task_controller = TaskController()
+_task_detail_controller = TaskDetailController()
+_task_assignee_controller = TaskAssigneeController()
+_task_checklist_controller = TaskChecklistController()
+_task_relation_controller = TaskRelationController()
+_task_metadata_controller = TaskMetadataController()
+_task_history_controller = TaskHistoryController()
+_task_template_controller = TaskTemplateController()
+_project_task_template_controller = ProjectTaskTemplateController()
+
+api_v1_router.include_router(_my_tasks_controller.router)
+api_v1_router.include_router(_task_controller.router)
+api_v1_router.include_router(_task_detail_controller.router)
+api_v1_router.include_router(_task_assignee_controller.router)
+api_v1_router.include_router(_task_checklist_controller.router)
+api_v1_router.include_router(_task_relation_controller.router)
+api_v1_router.include_router(_task_metadata_controller.router)
+api_v1_router.include_router(_task_history_controller.router)
+api_v1_router.include_router(_task_template_controller.router)
+api_v1_router.include_router(_project_task_template_controller.router)

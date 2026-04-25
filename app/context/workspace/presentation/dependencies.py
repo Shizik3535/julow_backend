@@ -96,7 +96,27 @@ async def get_workspace_permission_checker(
     container: Container = Depends(get_container),
 ):
     """Получить WorkspacePermissionCheckerPort из DI-контейнера."""
-    return container.workspace_permission_checker(session=session)
+    # Workspace-level repos
+    membership_repo = container.workspace_membership_repo(session=session)
+    workspace_role_repo = container.workspace_role_repo(session=session)
+    ws_repo = container.workspace_repo(session=session)
+    # Organization-level chain (for org_permission_checker)
+    org_membership_repo = container.org_membership_repo(session=session)
+    org_role_repo = container.org_role_repo(session=session)
+    org_permission_checker = container.org_permission_checker(
+        membership_repo=org_membership_repo,
+        org_role_repo=org_role_repo,
+    )
+    org_permission_provider = container.org_permission_provider(permission_checker=org_permission_checker)
+    ws_org_permission_checker = container.ws_org_permission_checker_port(
+        org_permission_provider=org_permission_provider,
+    )
+    return container.workspace_permission_checker(
+        membership_repo=membership_repo,
+        workspace_role_repo=workspace_role_repo,
+        ws_repo=ws_repo,
+        org_permission_checker=ws_org_permission_checker,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -104,19 +124,49 @@ async def get_workspace_permission_checker(
 # ---------------------------------------------------------------------------
 
 
-async def get_ws_identity_user_port(container: Container = Depends(get_container)):
+async def get_ws_identity_user_port(
+    session: AsyncSession = Depends(get_db_session),
+    container: Container = Depends(get_container),
+):
     """Получить IdentityUserPort (inboard) из DI-контейнера."""
-    return container.ws_identity_user_port()
+    user_repo = container.user_repo(session=session)
+    identity_user_provider = container.identity_user_provider(user_repo=user_repo)
+    return container.ws_identity_user_port(identity_user_provider=identity_user_provider)
 
 
-async def get_ws_org_permission_checker_port(container: Container = Depends(get_container)):
+async def get_ws_org_permission_checker_port(
+    session: AsyncSession = Depends(get_db_session),
+    container: Container = Depends(get_container),
+):
     """Получить OrganizationPermissionCheckerPort (inboard) из DI-контейнера."""
-    return container.ws_org_permission_checker_port()
+    org_membership_repo = container.org_membership_repo(session=session)
+    org_role_repo = container.org_role_repo(session=session)
+    org_permission_checker = container.org_permission_checker(
+        membership_repo=org_membership_repo,
+        org_role_repo=org_role_repo,
+    )
+    org_permission_provider = container.org_permission_provider(permission_checker=org_permission_checker)
+    return container.ws_org_permission_checker_port(org_permission_provider=org_permission_provider)
 
 
-async def get_ws_organization_membership_port(container: Container = Depends(get_container)):
+async def get_ws_organization_membership_port(
+    session: AsyncSession = Depends(get_db_session),
+    container: Container = Depends(get_container),
+):
     """Получить OrganizationMembershipPort (inboard) из DI-контейнера."""
-    return container.ws_organization_membership_port()
+    org_membership_repo = container.org_membership_repo(session=session)
+    org_membership_provider = container.org_membership_provider(repo=org_membership_repo)
+    return container.ws_organization_membership_port(org_membership_provider=org_membership_provider)
+
+
+async def get_ws_organization_port(
+    session: AsyncSession = Depends(get_db_session),
+    container: Container = Depends(get_container),
+):
+    """Получить OrganizationPort (inboard) из DI-контейнера."""
+    organization_repo = container.organization_repo(session=session)
+    organization_provider = container.org_provider(repo=organization_repo)
+    return container.ws_organization_port(organization_provider=organization_provider)
 
 
 # ---------------------------------------------------------------------------

@@ -8,6 +8,8 @@ from app.context.organization.application.ports.authorization.org_permission_che
 from app.context.organization.application.dto.sso_integration_dto import SSOIntegrationDTO
 from app.context.organization.application.ports.encryption.encryption_port import EncryptionPort
 from app.context.organization.domain.aggregates.sso_integration import SSOIntegration
+from app.context.organization.domain.exceptions.organization_exceptions import OrganizationNotFoundException
+from app.context.organization.domain.repositories.organization_repository import OrganizationRepository
 from app.context.organization.domain.repositories.sso_integration_repository import SSOIntegrationRepository
 from app.context.organization.domain.value_objects.sso_provider import SSOProvider
 
@@ -50,12 +52,14 @@ class AddSSOIntegrationHandler(BaseCommandHandler[AddSSOIntegrationCommand, SSOI
     def __init__(
         self,
         sso_repo: SSOIntegrationRepository,
+        org_repo: OrganizationRepository,
         encryption_port: EncryptionPort,
         org_permission_checker: OrgPermissionCheckerPort,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
         self._sso_repo = sso_repo
+        self._org_repo = org_repo
         self._encryption_port = encryption_port
         self._org_permission_checker = org_permission_checker
         self._event_bus = event_bus
@@ -64,6 +68,9 @@ class AddSSOIntegrationHandler(BaseCommandHandler[AddSSOIntegrationCommand, SSOI
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
+        org = await self._org_repo.get_by_id(org_id)
+        if org is None:
+            raise OrganizationNotFoundException(command.org_id)
         await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
         encrypted_cert = await self._encryption_port.encrypt(command.certificate)
 

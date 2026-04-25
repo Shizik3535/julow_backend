@@ -47,6 +47,7 @@ from app.context.workspace.presentation.dependencies import (
     get_workspace_event_bus,
     get_workspace_membership_repository,
     get_workspace_permission_checker,
+    get_workspace_repository,
     get_workspace_team_repository,
 )
 from app.context.workspace.presentation.schemas.requests.create_workspace_team_request import CreateWorkspaceTeamRequest
@@ -205,11 +206,13 @@ class WorkspaceTeamController(BaseController):
         limit: int = Query(default=100, ge=1, le=500, description="Размер страницы"),
         caller_id: str = Depends(get_current_user_id),
         team_repo=Depends(get_workspace_team_repository),
+        ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
     ) -> PaginatedResponse[WorkspaceTeamResponse]:
         """Список команд workspace."""
         handler = GetWorkspaceTeamsHandler(
             team_repo=team_repo,
+            ws_repo=ws_repo,
             permission_checker=permission_checker,
         )
         query = GetWorkspaceTeamsQuery(caller_id=caller_id, workspace_id=ws_id)
@@ -241,12 +244,14 @@ class WorkspaceTeamController(BaseController):
         body: CreateWorkspaceTeamRequest,
         caller_id: str = Depends(get_current_user_id),
         team_repo=Depends(get_workspace_team_repository),
+        ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
         event_bus=Depends(get_workspace_event_bus),
     ) -> SuccessResponse[WorkspaceTeamResponse]:
         """Создать команду в workspace."""
         handler = CreateWorkspaceTeamHandler(
             team_repo=team_repo,
+            ws_repo=ws_repo,
             permission_checker=permission_checker,
             event_bus=event_bus,
         )

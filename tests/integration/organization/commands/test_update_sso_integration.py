@@ -12,16 +12,19 @@ from app.context.organization.application.commands.update_sso_integration import
 @pytest.mark.integration
 class TestUpdateSSOIntegrationHandler:
     @pytest.fixture
-    def handler(self, sso_repo, encryption_stub, event_bus_stub):
+    def handler(self, sso_repo, encryption_stub, permission_checker_stub, event_bus_stub):
         return UpdateSSOIntegrationHandler(
             sso_repo=sso_repo,
             encryption_port=encryption_stub,
+            org_permission_checker=permission_checker_stub,
             event_bus=event_bus_stub,
         )
 
     async def test_update_entity_id(self, handler, make_sso_integration, sso_repo) -> None:
         sso = await make_sso_integration()
         cmd = UpdateSSOIntegrationCommand(
+            caller_id=str(sso.added_by),
+            org_id=str(sso.org_id),
             integration_id=str(sso.id),
             entity_id="new-entity-id",
         )
@@ -33,6 +36,8 @@ class TestUpdateSSOIntegrationHandler:
     async def test_update_certificate_encrypts(self, handler, make_sso_integration, sso_repo) -> None:
         sso = await make_sso_integration()
         cmd = UpdateSSOIntegrationCommand(
+            caller_id=str(sso.added_by),
+            org_id=str(sso.org_id),
             integration_id=str(sso.id),
             certificate="new-secret-cert",
         )

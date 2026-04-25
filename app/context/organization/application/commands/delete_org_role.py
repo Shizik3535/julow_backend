@@ -42,10 +42,10 @@ class DeleteOrgRoleHandler(BaseCommandHandler[DeleteOrgRoleCommand, None]):
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
-        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
         role = await self._role_repo.get_by_id(Id.from_string(command.role_id))
         if role is None:
             raise OrgRoleNotFoundException(command.role_id)
+        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
 
         role.mark_deleted()
         await self._role_repo.delete(role.id)

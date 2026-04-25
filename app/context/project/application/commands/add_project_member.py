@@ -65,17 +65,18 @@ class AddProjectMemberHandler(BaseCommandHandler[AddProjectMemberCommand, None])
         self._event_bus = event_bus
         self._permission_checker = permission_checker
     async def handle(self, command: AddProjectMemberCommand) -> None:
-        await self._permission_checker.require_permission(
-            user_id=Id.from_string(command.caller_id),
-            project_id=Id.from_string(command.project_id),
-            permission=self.REQUIRED_PERMISSION,
-        )
         if not await self._identity_port.user_exists(command.user_id):
             raise UserNotFoundException(command.user_id)
 
-        project = await self._project_repo.get_by_id(Id.from_string(command.project_id))
+        project_id = Id.from_string(command.project_id)
+        project = await self._project_repo.get_by_id(project_id)
         if project is None:
             raise ProjectNotFoundException(command.project_id)
+        await self._permission_checker.require_permission(
+            user_id=Id.from_string(command.caller_id),
+            project_id=project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
 
         workspace_id = str(project.workspace_id) if project.workspace_id else ""
         if workspace_id and not await self._workspace_membership_port.is_workspace_member(workspace_id, command.user_id):

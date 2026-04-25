@@ -15,6 +15,7 @@ from app.context.workspace.application.ports.integration.inboard.organization_pe
 )
 from app.context.workspace.domain.aggregates.workspace import Workspace
 from app.context.workspace.domain.aggregates.workspace_membership import WorkspaceMembership
+from app.context.workspace.domain.exceptions.workspace_exceptions import WorkspaceNotFoundException
 from app.context.workspace.domain.repositories.workspace_repository import WorkspaceRepository
 from app.context.workspace.domain.repositories.workspace_membership_repository import WorkspaceMembershipRepository
 from app.context.workspace.domain.value_objects.workspace_type import WorkspaceType
@@ -88,6 +89,13 @@ class CreateWorkspaceHandler(BaseCommandHandler[CreateWorkspaceCommand, Workspac
             raise UserNotFoundException(command.owner_id)
 
         owner_id = Id.from_string(command.owner_id)
+
+        # Проверка существования родительского workspace, если указан.
+        if command.parent_workspace_id is not None:
+            parent_id = Id.from_string(command.parent_workspace_id)
+            parent = await self._ws_repo.get_by_id(parent_id)
+            if parent is None:
+                raise WorkspaceNotFoundException(command.parent_workspace_id)
 
         try:
             ws_type = WorkspaceType(command.workspace_type)

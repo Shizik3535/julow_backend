@@ -34,6 +34,7 @@ from app.context.organization.presentation.dependencies import (
     get_org_permission_checker,
     get_org_role_repository,
     get_organization_event_bus,
+    get_organization_repository,
 )
 from app.context.organization.presentation.schemas.requests.create_org_role_request import (
     CreateOrgRoleRequest,
@@ -146,10 +147,12 @@ class RoleController(BaseController):
         system_only: bool = Query(default=False, description="Только системные роли"),
         caller_id: str = Depends(get_current_user_id),
         role_repo=Depends(get_org_role_repository),
+        org_repo=Depends(get_organization_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[list[OrgRoleResponse]]:
         """Получить список ролей организации."""
-        handler = GetOrgRolesHandler(role_repo=role_repo)
-        query = GetOrgRolesQuery(org_id=org_id, system_only=system_only)
+        handler = GetOrgRolesHandler(role_repo=role_repo, org_repo=org_repo, org_permission_checker=org_permission_checker)
+        query = GetOrgRolesQuery(caller_id=caller_id, org_id=org_id, system_only=system_only)
         dto = await handler.handle(query)
         items = [OrgRoleResponse.model_validate(item.model_dump()) for item in dto.items]
         return SuccessResponse(data=items)
@@ -160,10 +163,11 @@ class RoleController(BaseController):
         role_id: str,
         caller_id: str = Depends(get_current_user_id),
         role_repo=Depends(get_org_role_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[OrgRoleResponse]:
         """Получить роль по ID."""
-        handler = GetOrgRoleHandler(role_repo=role_repo)
-        query = GetOrgRoleQuery(role_id=role_id)
+        handler = GetOrgRoleHandler(role_repo=role_repo, org_permission_checker=org_permission_checker)
+        query = GetOrgRoleQuery(caller_id=caller_id, org_id=org_id, role_id=role_id)
         dto = await handler.handle(query)
         return SuccessResponse(data=OrgRoleResponse.model_validate(dto.model_dump()))
 
@@ -173,12 +177,14 @@ class RoleController(BaseController):
         body: CreateOrgRoleRequest,
         caller_id: str = Depends(get_current_user_id),
         role_repo=Depends(get_org_role_repository),
+        org_repo=Depends(get_organization_repository),
         org_permission_checker=Depends(get_org_permission_checker),
         event_bus=Depends(get_organization_event_bus),
     ) -> SuccessResponse[OrgRoleResponse]:
         """Создать кастомную роль."""
         handler = CreateOrgRoleHandler(
             role_repo=role_repo,
+            org_repo=org_repo,
             org_permission_checker=org_permission_checker,
             event_bus=event_bus,
         )

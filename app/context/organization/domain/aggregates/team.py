@@ -6,6 +6,11 @@ from datetime import datetime, timezone
 from app.shared.domain.base_aggregate import AggregateRoot
 from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.value_objects.url_vo import Url
+from app.context.organization.domain.exceptions.team_exceptions import (
+    TeamAlreadyActiveException,
+    TeamAlreadyDeactivatedException,
+    TeamMemberAlreadyExistsException,
+)
 from app.context.organization.domain.events.team_events import (
     TeamCreated,
     TeamUpdated,
@@ -111,16 +116,19 @@ class Team(AggregateRoot):
     def add_member(self, user_id: Id) -> None:
         """Добавляет участника в команду."""
         self._assert_active()
-        if user_id not in self.member_ids:
-            self.member_ids.append(user_id)
-            self.updated_at = datetime.now(tz=timezone.utc)
-            self._register_event(
-                TeamMemberAdded(
-                    org_id=str(self.org_id),
-                    team_id=str(self.id),
-                    user_id=str(user_id),
-                )
+        if user_id in self.member_ids:
+            raise TeamMemberAlreadyExistsException(
+                user_id=str(user_id), team_id=str(self.id)
             )
+        self.member_ids.append(user_id)
+        self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            TeamMemberAdded(
+                org_id=str(self.org_id),
+                team_id=str(self.id),
+                user_id=str(user_id),
+            )
+        )
 
     def remove_member(self, user_id: Id) -> None:
         """Удаляет участника из команды."""
@@ -139,6 +147,8 @@ class Team(AggregateRoot):
 
     def deactivate(self) -> None:
         """Деактивирует команду."""
+        if not self.is_active:
+            raise TeamAlreadyDeactivatedException(team_id=str(self.id))
         self.is_active = False
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(
@@ -147,5 +157,7 @@ class Team(AggregateRoot):
 
     def reactivate(self) -> None:
         """Реактивирует команду."""
+        if self.is_active:
+            raise TeamAlreadyActiveException(team_id=str(self.id))
         self.is_active = True
         self.updated_at = datetime.now(tz=timezone.utc)

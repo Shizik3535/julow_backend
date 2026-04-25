@@ -16,6 +16,8 @@ from app.context.organization.domain.events.org_membership_events import (
 )
 from app.context.organization.domain.exceptions.org_membership_exceptions import (
     CannotRemoveOwnerAsMemberException,
+    OrgMemberAlreadyActiveException,
+    OrgMemberAlreadyDeactivatedException,
     OrgMemberNotFoundException,
 )
 
@@ -113,6 +115,8 @@ class OrgMembership(AggregateRoot):
         if is_owner:
             raise CannotRemoveOwnerAsMemberException(user_id=str(user_id))
         member = self._get_member(user_id)
+        if not member.is_active:
+            raise OrgMemberAlreadyDeactivatedException(user_id=str(user_id))
         member.is_active = False
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(
@@ -122,6 +126,8 @@ class OrgMembership(AggregateRoot):
     def reactivate_member(self, user_id: Id) -> None:
         """Реактивирует участника."""
         member = self._get_member(user_id)
+        if member.is_active:
+            raise OrgMemberAlreadyActiveException(user_id=str(user_id))
         member.is_active = True
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(

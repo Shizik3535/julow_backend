@@ -46,10 +46,10 @@ class RevokeInvitationHandler(BaseCommandHandler[RevokeInvitationCommand, None])
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
-        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
         invitation = await self._invitation_repo.get_by_id(Id.from_string(command.invitation_id))
         if invitation is None:
             raise InvitationNotFoundException(command.invitation_id)
+        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
 
         invitation.revoke()
         await self._invitation_repo.update(invitation)

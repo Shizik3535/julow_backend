@@ -34,6 +34,7 @@ from app.context.workspace.presentation.dependencies import (
     get_current_user_id,
     get_workspace_event_bus,
     get_workspace_permission_checker,
+    get_workspace_repository,
     get_workspace_role_repository,
 )
 from app.context.workspace.presentation.schemas.requests.create_workspace_role_request import CreateWorkspaceRoleRequest
@@ -145,11 +146,13 @@ class WorkspaceRoleController(BaseController):
         limit: int = Query(default=100, ge=1, le=500, description="Размер страницы"),
         caller_id: str = Depends(get_current_user_id),
         role_repo=Depends(get_workspace_role_repository),
+        ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
     ) -> PaginatedResponse[WorkspaceRoleResponse]:
         """Список ролей workspace."""
         handler = GetWorkspaceRolesHandler(
             role_repo=role_repo,
+            ws_repo=ws_repo,
             permission_checker=permission_checker,
         )
         query = GetWorkspaceRolesQuery(
@@ -185,12 +188,14 @@ class WorkspaceRoleController(BaseController):
         body: CreateWorkspaceRoleRequest,
         caller_id: str = Depends(get_current_user_id),
         role_repo=Depends(get_workspace_role_repository),
+        ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
         event_bus=Depends(get_workspace_event_bus),
     ) -> SuccessResponse[WorkspaceRoleResponse]:
         """Создать кастомную роль."""
         handler = CreateWorkspaceRoleHandler(
             role_repo=role_repo,
+            ws_repo=ws_repo,
             permission_checker=permission_checker,
             event_bus=event_bus,
         )

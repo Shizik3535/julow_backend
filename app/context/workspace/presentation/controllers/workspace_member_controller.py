@@ -212,11 +212,13 @@ class WorkspaceMemberController(BaseController):
         limit: int = Query(default=100, ge=1, le=500, description="Размер страницы"),
         caller_id: str = Depends(get_current_user_id),
         membership_repo=Depends(get_workspace_membership_repository),
+        ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
     ) -> PaginatedResponse[WorkspaceMemberResponse]:
         """Список участников workspace."""
         handler = GetWorkspaceMembersHandler(
             membership_repo=membership_repo,
+            ws_repo=ws_repo,
             permission_checker=permission_checker,
         )
         query = GetWorkspaceMembersQuery(caller_id=caller_id, workspace_id=ws_id)
@@ -231,11 +233,13 @@ class WorkspaceMemberController(BaseController):
         user_id: str,
         caller_id: str = Depends(get_current_user_id),
         membership_repo=Depends(get_workspace_membership_repository),
+        ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
     ) -> SuccessResponse[WorkspaceMemberResponse]:
         """Получить участника workspace."""
         handler = GetWorkspaceMemberHandler(
             membership_repo=membership_repo,
+            ws_repo=ws_repo,
             permission_checker=permission_checker,
         )
         query = GetWorkspaceMemberQuery(caller_id=caller_id, workspace_id=ws_id, user_id=user_id)

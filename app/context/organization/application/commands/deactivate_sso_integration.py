@@ -41,10 +41,10 @@ class DeactivateSSOIntegrationHandler(BaseCommandHandler[DeactivateSSOIntegratio
         caller_id = Id.from_string(command.caller_id)
         org_id = Id.from_string(command.org_id)
 
-        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
         integration = await self._sso_repo.get_by_id(Id.from_string(command.integration_id))
         if integration is None:
             raise EntityNotFoundException(entity_type="SSOIntegration", id=command.integration_id)
+        await self._org_permission_checker.require_permission(caller_id, org_id, self.REQUIRED_PERMISSION)
 
         integration.deactivate()
         await self._sso_repo.update(integration)

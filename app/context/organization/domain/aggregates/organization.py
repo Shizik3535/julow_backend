@@ -23,6 +23,9 @@ from app.context.organization.domain.events.organization_events import (
 from app.context.organization.domain.exceptions.organization_exceptions import (
     CannotRemoveLastOwnerException,
     CannotTransferOwnershipException,
+    OrganizationAlreadyActiveException,
+    OrganizationAlreadySuspendedException,
+    OrganizationDeletionAlreadyRequestedException,
     OrganizationSuspendedException,
 )
 
@@ -163,7 +166,7 @@ class Organization(AggregateRoot):
         """Приостанавливает организацию."""
         self._assert_not_pending_deletion()
         if self.status == OrgStatus.SUSPENDED:
-            return
+            raise OrganizationAlreadySuspendedException()
         self.status = OrgStatus.SUSPENDED
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(
@@ -173,7 +176,7 @@ class Organization(AggregateRoot):
     def reactivate(self) -> None:
         """Реактивирует организацию."""
         if self.status != OrgStatus.SUSPENDED:
-            return
+            raise OrganizationAlreadyActiveException()
         self.status = OrgStatus.ACTIVE
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(
@@ -182,6 +185,8 @@ class Organization(AggregateRoot):
 
     def request_deletion(self) -> None:
         """Запрашивает удаление организации."""
+        if self.status == OrgStatus.PENDING_DELETION:
+            raise OrganizationDeletionAlreadyRequestedException()
         self._assert_can_modify()
         self.status = OrgStatus.PENDING_DELETION
         self.updated_at = datetime.now(tz=timezone.utc)

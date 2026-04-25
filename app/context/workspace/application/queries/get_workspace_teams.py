@@ -7,7 +7,9 @@ from app.context.workspace.application.dto.workspace_team_dto import WorkspaceTe
 from app.context.workspace.application.ports.authorization.workspace_permission_checker_port import (
     WorkspacePermissionCheckerPort,
 )
+from app.context.workspace.domain.exceptions.workspace_exceptions import WorkspaceNotFoundException
 from app.context.workspace.domain.repositories.workspace_team_repository import WorkspaceTeamRepository
+from app.context.workspace.domain.repositories.workspace_repository import WorkspaceRepository
 
 
 class GetWorkspaceTeamsQuery(BaseQuery):
@@ -31,14 +33,20 @@ class GetWorkspaceTeamsHandler(BaseQueryHandler[GetWorkspaceTeamsQuery, Workspac
     def __init__(
         self,
         team_repo: WorkspaceTeamRepository,
+        ws_repo: WorkspaceRepository,
         permission_checker: WorkspacePermissionCheckerPort,
     ) -> None:
         super().__init__()
         self._team_repo = team_repo
+        self._ws_repo = ws_repo
         self._permission_checker = permission_checker
 
     async def handle(self, query: GetWorkspaceTeamsQuery) -> WorkspaceTeamListDTO:
         ws_id = Id.from_string(query.workspace_id)
+
+        ws = await self._ws_repo.get_by_id(ws_id)
+        if ws is None:
+            raise WorkspaceNotFoundException(query.workspace_id)
         await self._permission_checker.require_permission(
             user_id=Id.from_string(query.caller_id),
             workspace_id=ws_id,

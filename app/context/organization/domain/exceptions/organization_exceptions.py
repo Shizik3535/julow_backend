@@ -18,6 +18,36 @@ class OrganizationSuspendedException(DomainException):
         super().__init__("Организация приостановлена")
 
 
+class OrganizationAlreadySuspendedException(BusinessRuleViolationException):
+    """Организация уже приостановлена."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="OrganizationAlreadySuspended",
+            message="Организация уже приостановлена",
+        )
+
+
+class OrganizationAlreadyActiveException(BusinessRuleViolationException):
+    """Организация уже активна."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="OrganizationAlreadyActive",
+            message="Организация уже активна",
+        )
+
+
+class OrganizationDeletionAlreadyRequestedException(BusinessRuleViolationException):
+    """Запрос удаления организации уже отправлен."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="OrganizationDeletionAlreadyRequested",
+            message="Запрос удаления организации уже отправлен",
+        )
+
+
 class CannotRemoveOwnerException(BusinessRuleViolationException):
     """Нельзя удалить владельца из организации."""
 

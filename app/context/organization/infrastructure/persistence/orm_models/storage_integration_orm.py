@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import BigInteger, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.shared.infrastructure.persistence.sqlalchemy_base_orm_model import BaseORMModel
@@ -26,7 +26,7 @@ class StorageIntegrationORM(BaseORMModel):
     sc_access_key: Mapped[str] = mapped_column(Text, nullable=False, default="")
 
     # --- Embedded StorageQuota VO ---
-    sq_max_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    sq_used_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    sq_max_file_size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sq_max_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    sq_used_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    sq_max_file_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     sq_allowed_extensions: Mapped[list | None] = mapped_column(JSON, nullable=True)

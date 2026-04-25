@@ -13,6 +13,7 @@ from app.context.organization.domain.events.org_role_events import (
 )
 from app.context.organization.domain.exceptions.org_role_exceptions import (
     CannotDeleteSystemRoleException,
+    CannotUpdateSystemRoleException,
 )
 
 
@@ -95,6 +96,8 @@ class OrgRole(AggregateRoot):
 
     def update(self, permissions: list[str] | None = None, description: str | None = None) -> None:
         """Обновляет роль."""
+        if self.is_system:
+            raise CannotUpdateSystemRoleException(role_name=self.name)
         if permissions is not None:
             self.permissions = permissions
         if description is not None:

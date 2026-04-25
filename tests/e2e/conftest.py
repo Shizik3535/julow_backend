@@ -347,6 +347,65 @@ async def register_admin_and_login(
     }
 
 
+async def create_organization(
+    client: AsyncClient,
+    *,
+    token: str,
+    name: str | None = None,
+) -> dict:
+    """
+    Создаёт организацию через API.
+
+    Возвращает:
+        {"org_id": ..., "org_name": ..., "response": ...}
+    """
+    name = name or f"e2e-org-{uuid.uuid4().hex[:8]}"
+    resp = await client.post(
+        f"{API}/orgs/",
+        json={"name": name},
+        headers=auth_headers(token),
+    )
+    data = resp.json().get("data", {})
+    return {"org_id": data.get("id", ""), "org_name": name, "response": resp}
+
+
+async def create_org_with_owner(client: AsyncClient) -> dict:
+    """
+    Регистрирует пользователя, логинит, создаёт организацию.
+
+    Возвращает:
+        {"email", "password", "user_id", "access_token", "refresh_token", "org_id", "org_name"}
+    """
+    user = await register_and_login(client)
+    org = await create_organization(client, token=user["access_token"])
+    return {**user, "org_id": org["org_id"], "org_name": org["org_name"]}
+
+
+async def add_member_to_org(
+    client: AsyncClient,
+    *,
+    org_id: str,
+    owner_token: str,
+    new_member_user_id: str,
+    role_id: str | None = None,
+) -> dict:
+    """
+    Добавляет участника в организацию через API.
+
+    Возвращает:
+        {"response": ...}
+    """
+    body: dict[str, Any] = {"user_id": new_member_user_id}
+    if role_id:
+        body["role_id"] = role_id
+    resp = await client.post(
+        f"{API}/orgs/{org_id}/members",
+        json=body,
+        headers=auth_headers(owner_token),
+    )
+    return {"response": resp}
+
+
 # ── Fixtures ─────────────────────────────────────────────────────────────────
 
 

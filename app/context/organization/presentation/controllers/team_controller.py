@@ -46,6 +46,7 @@ from app.context.organization.presentation.dependencies import (
     get_org_membership_repository,
     get_org_permission_checker,
     get_organization_event_bus,
+    get_organization_repository,
     get_team_repository,
 )
 from app.context.organization.presentation.schemas.requests.create_team_request import (
@@ -204,10 +205,12 @@ class TeamController(BaseController):
         org_id: str,
         caller_id: str = Depends(get_current_user_id),
         team_repo=Depends(get_team_repository),
+        org_repo=Depends(get_organization_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[list[TeamResponse]]:
         """Получить список команд."""
-        handler = GetTeamsByOrgHandler(team_repo=team_repo)
-        query = GetTeamsByOrgQuery(org_id=org_id)
+        handler = GetTeamsByOrgHandler(team_repo=team_repo, org_repo=org_repo, org_permission_checker=org_permission_checker)
+        query = GetTeamsByOrgQuery(caller_id=caller_id, org_id=org_id)
         dto = await handler.handle(query)
         items = [TeamResponse.model_validate(item.model_dump()) for item in dto.items]
         return SuccessResponse(data=items)
@@ -218,10 +221,11 @@ class TeamController(BaseController):
         team_id: str,
         caller_id: str = Depends(get_current_user_id),
         team_repo=Depends(get_team_repository),
+        org_permission_checker=Depends(get_org_permission_checker),
     ) -> SuccessResponse[TeamResponse]:
         """Получить команду по ID."""
-        handler = GetTeamHandler(team_repo=team_repo)
-        query = GetTeamQuery(team_id=team_id)
+        handler = GetTeamHandler(team_repo=team_repo, org_permission_checker=org_permission_checker)
+        query = GetTeamQuery(caller_id=caller_id, org_id=org_id, team_id=team_id)
         dto = await handler.handle(query)
         return SuccessResponse(data=TeamResponse.model_validate(dto.model_dump()))
 
@@ -231,12 +235,14 @@ class TeamController(BaseController):
         body: CreateTeamRequest,
         caller_id: str = Depends(get_current_user_id),
         team_repo=Depends(get_team_repository),
+        org_repo=Depends(get_organization_repository),
         org_permission_checker=Depends(get_org_permission_checker),
         event_bus=Depends(get_organization_event_bus),
     ) -> SuccessResponse[TeamResponse]:
         """Создать команду."""
         handler = CreateTeamHandler(
             team_repo=team_repo,
+            org_repo=org_repo,
             org_permission_checker=org_permission_checker,
             event_bus=event_bus,
         )

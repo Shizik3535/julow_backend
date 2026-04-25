@@ -28,3 +28,13 @@ class CannotDeleteSystemRoleException(BusinessRuleViolationException):
             rule="SystemRoleCannotBeDeleted",
             message=f"Нельзя удалить системную роль{f': {role_name}' if role_name else ''}",
         )
+
+
+class CannotUpdateSystemRoleException(BusinessRuleViolationException):
+    """Нельзя обновить системную роль."""
+
+    def __init__(self, role_name: str = "") -> None:
+        super().__init__(
+            rule="SystemRoleCannotBeUpdated",
+            message=f"Нельзя обновить системную роль{f': {role_name}' if role_name else ''}",
+        )

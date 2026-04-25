@@ -7,6 +7,7 @@ from app.context.task.application.dto.changelog_entry_dto import ChangelogEntryD
 from app.context.task.application.ports.authorization.task_permission_checker_port import (
     TaskPermissionCheckerPort,
 )
+from app.context.task.domain.exceptions.task_exceptions import TaskNotFoundException
 from app.context.task.domain.repositories.changelog_repository import ChangelogRepository
 from app.context.task.domain.repositories.task_repository import TaskRepository
 
@@ -38,12 +39,13 @@ class GetTaskChangelogByFieldHandler(BaseQueryHandler[GetTaskChangelogByFieldQue
 
     async def handle(self, query: GetTaskChangelogByFieldQuery) -> ChangelogListDTO:
         task = await self._task_repo.get_by_id(Id.from_string(query.task_id))
-        if task is not None:
-            await self._permission_checker.require_permission(
-                user_id=query.caller_id,
-                project_id=str(task.project_id),
-                permission=self.REQUIRED_PERMISSION,
-            )
+        if task is None:
+            raise TaskNotFoundException(id=query.task_id)
+        await self._permission_checker.require_permission(
+            user_id=query.caller_id,
+            project_id=str(task.project_id),
+            permission=self.REQUIRED_PERMISSION,
+        )
 
         entries = await self._changelog_repo.get_by_task_and_field(
             task_id=Id.from_string(query.task_id),

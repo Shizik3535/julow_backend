@@ -13,9 +13,10 @@ from app.context.organization.application.dto.team_dto import TeamDTO
 @pytest.mark.integration
 class TestCreateTeamHandler:
     @pytest.fixture
-    def handler(self, team_repo, permission_checker_stub, event_bus_stub):
+    def handler(self, team_repo, org_repo, permission_checker_stub, event_bus_stub):
         return CreateTeamHandler(
             team_repo=team_repo,
+            org_repo=org_repo,
             org_permission_checker=permission_checker_stub,
             event_bus=event_bus_stub,
         )

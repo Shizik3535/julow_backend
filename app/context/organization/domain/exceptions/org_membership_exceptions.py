@@ -30,6 +30,26 @@ class MembershipLimitExceededException(BusinessRuleViolationException):
         )
 
 
+class OrgMemberAlreadyDeactivatedException(BusinessRuleViolationException):
+    """Участник уже деактивирован."""
+
+    def __init__(self, user_id: str = "") -> None:
+        super().__init__(
+            rule="MemberAlreadyDeactivated",
+            message=f"Участник уже деактивирован{f': {user_id}' if user_id else ''}",
+        )
+
+
+class OrgMemberAlreadyActiveException(BusinessRuleViolationException):
+    """Участник уже активен."""
+
+    def __init__(self, user_id: str = "") -> None:
+        super().__init__(
+            rule="MemberAlreadyActive",
+            message=f"Участник уже активен{f': {user_id}' if user_id else ''}",
+        )
+
+
 class EmailDomainNotAllowedException(BusinessRuleViolationException):
     """Домен email не разрешён политикой."""
 

@@ -54,9 +54,9 @@ def workspace_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_org_member_joined(session: AsyncSession) -> MessageHandlerFn:
         handler = OnOrgMemberJoinedAutoAdd(
-            ws_repo=container.workspace_repository(session=session),
-            membership_repo=container.workspace_membership_repository(session=session),
-            role_repo=container.workspace_role_repository(session=session),
+            ws_repo=container.workspace_repo(session=session),
+            membership_repo=container.workspace_membership_repo(session=session),
+            role_repo=container.workspace_role_repo(session=session),
         )
 
         async def _run(message: dict[str, Any]) -> None:
@@ -66,7 +66,7 @@ def workspace_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_security_policy_cascade(session: AsyncSession) -> MessageHandlerFn:
         handler = OnSecurityPolicyCascade(
-            ws_repo=container.workspace_repository(session=session),
+            ws_repo=container.workspace_repo(session=session),
         )
 
         async def _run(message: dict[str, Any]) -> None:
@@ -76,7 +76,7 @@ def workspace_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_membership_policy_cascade(session: AsyncSession) -> MessageHandlerFn:
         handler = OnMembershipPolicyCascade(
-            ws_repo=container.workspace_repository(session=session),
+            ws_repo=container.workspace_repo(session=session),
         )
 
         async def _run(message: dict[str, Any]) -> None:

@@ -4,6 +4,9 @@ from app.shared.application.base_query import BaseQuery
 from app.shared.application.base_query_handler import BaseQueryHandler
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.project.application.dto.epic_dto import EpicDTO, EpicListDTO
+from app.context.project.application.ports.authorization.project_permission_checker_port import (
+    ProjectPermissionCheckerPort,
+)
 from app.context.project.domain.aggregates.epic import Epic
 from app.context.project.domain.repositories.epic_repository import EpicRepository
 
@@ -11,18 +14,28 @@ from app.context.project.domain.repositories.epic_repository import EpicReposito
 class GetEpicsByProjectQuery(BaseQuery):
     """Запрос получения эпиков проекта."""
 
+    caller_id: str
     project_id: str
 
 
 class GetEpicsByProjectHandler(BaseQueryHandler[GetEpicsByProjectQuery, EpicListDTO]):
     """Обработчик получения эпиков проекта."""
 
-    def __init__(self, epic_repo: EpicRepository) -> None:
+    REQUIRED_PERMISSION = "epics.read"
+
+    def __init__(self, epic_repo: EpicRepository, permission_checker: ProjectPermissionCheckerPort) -> None:
         super().__init__()
         self._epic_repo = epic_repo
+        self._permission_checker = permission_checker
 
     async def handle(self, query: GetEpicsByProjectQuery) -> EpicListDTO:
-        epics = await self._epic_repo.get_by_project(Id.from_string(query.project_id))
+        project_id = Id.from_string(query.project_id)
+        await self._permission_checker.require_permission(
+            user_id=Id.from_string(query.caller_id),
+            project_id=project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
+        epics = await self._epic_repo.get_by_project(project_id)
         items = [self._to_dto(e) for e in epics]
         return EpicListDTO(items=items, total=len(items))
 

@@ -41,14 +41,15 @@ class TransferProjectOwnershipHandler(BaseCommandHandler[TransferProjectOwnershi
         self._permission_checker = permission_checker
 
     async def handle(self, command: TransferProjectOwnershipCommand) -> None:
-        await self._permission_checker.require_permission(
-            user_id=Id.from_string(command.caller_id),
-            project_id=Id.from_string(command.project_id),
-            permission=self.REQUIRED_PERMISSION,
-        )
-        project = await self._project_repo.get_by_id(Id.from_string(command.project_id))
+        project_id = Id.from_string(command.project_id)
+        project = await self._project_repo.get_by_id(project_id)
         if project is None:
             raise ProjectNotFoundException(command.project_id)
+        await self._permission_checker.require_permission(
+            user_id=Id.from_string(command.caller_id),
+            project_id=project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
 
         project.transfer_ownership(
             from_id=Id.from_string(command.from_owner_id),

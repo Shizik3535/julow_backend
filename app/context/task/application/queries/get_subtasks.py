@@ -8,6 +8,7 @@ from app.context.task.application.queries.get_task import _map_task_to_dto
 from app.context.task.application.ports.authorization.task_permission_checker_port import (
     TaskPermissionCheckerPort,
 )
+from app.context.task.domain.exceptions.task_exceptions import TaskNotFoundException
 from app.context.task.domain.repositories.task_repository import TaskRepository
 
 
@@ -40,12 +41,13 @@ class GetSubtasksHandler(BaseQueryHandler[GetSubtasksQuery, TaskListDTO]):
 
     async def handle(self, query: GetSubtasksQuery) -> TaskListDTO:
         parent_task = await self._task_repo.get_by_id(Id.from_string(query.parent_task_id))
-        if parent_task is not None:
-            await self._permission_checker.require_permission(
-                user_id=query.caller_id,
-                project_id=str(parent_task.project_id),
-                permission=self.REQUIRED_PERMISSION,
-            )
+        if parent_task is None:
+            raise TaskNotFoundException(id=query.parent_task_id)
+        await self._permission_checker.require_permission(
+            user_id=query.caller_id,
+            project_id=str(parent_task.project_id),
+            permission=self.REQUIRED_PERMISSION,
+        )
 
         tasks = await self._task_repo.get_subtasks(Id.from_string(query.parent_task_id))
         items = [_map_task_to_dto(t) for t in tasks]
