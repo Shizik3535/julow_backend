@@ -66,3 +66,27 @@ api_v1_router.include_router(_department_controller.router)
 api_v1_router.include_router(_team_controller.router)
 api_v1_router.include_router(_role_controller.router)
 api_v1_router.include_router(_integration_controller.router)
+
+# Workspace BC
+from app.context.workspace.presentation.controllers import (
+    OrgWorkspaceController,
+    WorkspaceController,
+    WorkspaceInvitationController,
+    WorkspaceMemberController,
+    WorkspaceRoleController,
+    WorkspaceTeamController,
+)
+
+_workspace_controller = WorkspaceController()
+_workspace_member_controller = WorkspaceMemberController()
+_workspace_invitation_controller = WorkspaceInvitationController()
+_workspace_team_controller = WorkspaceTeamController()
+_workspace_role_controller = WorkspaceRoleController()
+_org_workspace_controller = OrgWorkspaceController()
+
+api_v1_router.include_router(_workspace_controller.router)
+api_v1_router.include_router(_workspace_member_controller.router)
+api_v1_router.include_router(_workspace_invitation_controller.router)
+api_v1_router.include_router(_workspace_team_controller.router)
+api_v1_router.include_router(_workspace_role_controller.router)
+api_v1_router.include_router(_org_workspace_controller.router)

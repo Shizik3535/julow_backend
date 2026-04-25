@@ -220,6 +220,108 @@
 
 ---
 
+## Workspace BC — Workspace
+
+Контроллер: `WorkspaceController` | Префикс: `/workspaces`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| POST | `/workspaces` | Создать workspace (текущий пользователь — владелец) |
+| GET | `/workspaces` | Пагинированный поиск workspace с фильтрацией |
+| GET | `/workspaces/{ws_id}` | Получить workspace по UUID |
+| PATCH | `/workspaces/{ws_id}` | Обновить информацию (название, персонализация, брендинг) |
+| PATCH | `/workspaces/{ws_id}/security-policy` | Обновить политику безопасности (PIN, пароль, IP-whitelist, SSO, 2FA) |
+| PATCH | `/workspaces/{ws_id}/membership-policy` | Обновить политику членства (приглашения, роли, лимиты участников) |
+| PATCH | `/workspaces/{ws_id}/limits` | Обновить лимиты (проекты, участники, хранилище, файлы, команды) |
+| POST | `/workspaces/{ws_id}/archive` | Архивировать workspace (проекты → read-only) |
+| POST | `/workspaces/{ws_id}/restore` | Восстановить архивированный workspace |
+| POST | `/workspaces/{ws_id}/suspend` | Приостановить workspace с указанием причины |
+| POST | `/workspaces/{ws_id}/reactivate` | Реактивировать приостановленный workspace |
+| POST | `/workspaces/{ws_id}/request-deletion` | Запросить удаление workspace. Статус → `pending_deletion` |
+| POST | `/workspaces/{ws_id}/transfer-ownership` | Передать владение другому пользователю |
+| POST | `/workspaces/{ws_id}/move` | Переместить в иерархии (под нового родителя или отсоединить) |
+| GET | `/workspaces/{ws_id}/settings` | Получить настройки (политики безопасности, членства, лимиты) |
+| GET | `/workspaces/{ws_id}/children` | Список дочерних workspace |
+| POST | `/workspaces/{ws_id}/owners` | Добавить со-владельца |
+| DELETE | `/workspaces/{ws_id}/owners/{user_id}` | Удалить со-владельца (минимум один владелец остаётся) |
+
+---
+
+## Workspace BC — Участники
+
+Контроллер: `WorkspaceMemberController` | Префикс: `/workspaces`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/members` | Список участников workspace |
+| GET | `/workspaces/{ws_id}/members/{user_id}` | Получить данные участника |
+| POST | `/workspaces/{ws_id}/members` | Добавить участника с указанной ролью |
+| PATCH | `/workspaces/{ws_id}/members/{user_id}/role` | Изменить роль участника |
+| PATCH | `/workspaces/{ws_id}/members/{user_id}/display-name` | Изменить отображаемое имя участника |
+| DELETE | `/workspaces/{ws_id}/members/{user_id}` | Удалить участника из workspace |
+| POST | `/workspaces/{ws_id}/members/{user_id}/deactivate` | Деактивировать участника без удаления |
+| POST | `/workspaces/{ws_id}/members/{user_id}/reactivate` | Реактивировать деактивированного участника |
+
+---
+
+## Workspace BC — Приглашения
+
+Контроллер: `WorkspaceInvitationController` | Префикс: `/workspaces`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/invitations` | Список приглашений workspace |
+| POST | `/workspaces/{ws_id}/invitations/email` | Отправить приглашение на email |
+| POST | `/workspaces/{ws_id}/invitations/bulk` | Массовая отправка приглашений (дубликаты пропускаются) |
+| POST | `/workspaces/{ws_id}/invitations/link` | Сгенерировать ссылку-приглашение (с ограничениями по использованию/времени) |
+| POST | `/workspaces/{ws_id}/invitations/{invitation_id}/revoke` | Отозвать приглашение |
+| GET | `/workspaces/invitations/token/{token}` | Получить приглашение по токену ссылки |
+| POST | `/workspaces/invitations/{invitation_id}/accept` | Принять приглашение (пользователь добавляется в workspace) |
+| POST | `/workspaces/invitations/{invitation_id}/decline` | Отклонить приглашение |
+
+---
+
+## Workspace BC — Команды
+
+Контроллер: `WorkspaceTeamController` | Префикс: `/workspaces`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/teams` | Список команд workspace |
+| GET | `/workspaces/{ws_id}/teams/{team_id}` | Получить команду по UUID |
+| POST | `/workspaces/{ws_id}/teams` | Создать команду |
+| PATCH | `/workspaces/{ws_id}/teams/{team_id}` | Обновить команду (название, описание, лидер, иконка) |
+| POST | `/workspaces/{ws_id}/teams/{team_id}/deactivate` | Деактивировать команду без удаления |
+| POST | `/workspaces/{ws_id}/teams/{team_id}/reactivate` | Реактивировать деактивированную команду |
+| POST | `/workspaces/{ws_id}/teams/{team_id}/members/{user_id}` | Добавить участника в команду |
+| DELETE | `/workspaces/{ws_id}/teams/{team_id}/members/{user_id}` | Удалить участника из команды |
+
+---
+
+## Workspace BC — Роли
+
+Контроллер: `WorkspaceRoleController` | Префикс: `/workspaces`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{ws_id}/roles` | Список ролей workspace (фильтр `system_only`) |
+| GET | `/workspaces/{ws_id}/roles/{role_id}` | Получить роль по UUID |
+| POST | `/workspaces/{ws_id}/roles` | Создать кастомную роль с разрешениями |
+| PATCH | `/workspaces/{ws_id}/roles/{role_id}` | Обновить разрешения/описание кастомной роли |
+| DELETE | `/workspaces/{ws_id}/roles/{role_id}` | Удалить кастомную роль (системные удалить нельзя) |
+
+---
+
+## Organization BC — Workspace (read-only)
+
+Контроллер: `OrgWorkspaceController` | Префикс: `/orgs`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/orgs/{org_id}/workspaces` | Список workspace организации (только те, где пользователь — участник, или все при орг-разрешении `workspaces.read`) |
+
+---
+
 ## Сводка по Bounded Context'ам
 
 | BC | Контроллер | Кол-во endpoint'ов |
@@ -236,4 +338,10 @@
 | Organization | TeamController | 8 |
 | Organization | RoleController | 5 |
 | Organization | IntegrationController | 7 |
-| **Итого** | | **105** |
+| Workspace | WorkspaceController | 18 |
+| Workspace | WorkspaceMemberController | 8 |
+| Workspace | WorkspaceInvitationController | 8 |
+| Workspace | WorkspaceTeamController | 8 |
+| Workspace | WorkspaceRoleController | 5 |
+| Workspace | OrgWorkspaceController | 1 |
+| **Итого** | | **153** |
