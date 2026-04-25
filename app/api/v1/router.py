@@ -39,3 +39,30 @@ from app.context.profile.presentation.controllers import ProfileController
 _profile_controller = ProfileController()
 
 api_v1_router.include_router(_profile_controller.router)
+
+# Organization BC
+from app.context.organization.presentation.controllers import (
+    DepartmentController,
+    IntegrationController,
+    InvitationController,
+    MemberController,
+    OrganizationController,
+    RoleController,
+    TeamController,
+)
+
+_organization_controller = OrganizationController()
+_member_controller = MemberController()
+_invitation_controller = InvitationController()
+_department_controller = DepartmentController()
+_team_controller = TeamController()
+_role_controller = RoleController()
+_integration_controller = IntegrationController()
+
+api_v1_router.include_router(_organization_controller.router)
+api_v1_router.include_router(_member_controller.router)
+api_v1_router.include_router(_invitation_controller.router)
+api_v1_router.include_router(_department_controller.router)
+api_v1_router.include_router(_team_controller.router)
+api_v1_router.include_router(_role_controller.router)
+api_v1_router.include_router(_integration_controller.router)

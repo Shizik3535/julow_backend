@@ -64,7 +64,7 @@ def create_app() -> FastAPI:
         openapi_url=f"{settings.app.api_prefix}/openapi.json",
         redoc_url=f"{settings.app.api_prefix}/redoc",
         swagger_ui_parameters={
-            "defaultModelsExpandDepth": -1,
+            "defaultModelsExpandDepth": 1,
             "docExpansion": "list",
             "filter": True,
             "showCommonExtensions": True,

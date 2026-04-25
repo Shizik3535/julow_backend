@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,7 +22,7 @@ class SuccessResponse(BaseModel, Generic[T]):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
     success: bool = True
-    data: Any = Field(default=None)
+    data: T = Field(default=None)
 
 
 class MessageData(BaseModel):

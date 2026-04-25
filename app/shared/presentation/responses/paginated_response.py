@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
@@ -31,7 +31,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
     success: bool = True
-    items: list[Any] = Field(default_factory=list)
+    items: list[T] = Field(default_factory=list)
     total: int = Field(..., description="Общее количество элементов")
     page: int = Field(..., description="Номер текущей страницы")
     page_size: int = Field(..., description="Размер страницы")

@@ -106,6 +106,19 @@ def setup_logging() -> None:
         logging.INFO if settings.db.echo else logging.WARNING
     )
 
+    # Подавление шумных сторонних логгеров
+    for name in [
+        "aiokafka",
+        "kafka",
+        "kafka.coordinator",
+        "urllib3",
+        "httpcore",
+        "httpx",
+        "celery",
+        "asyncio",
+    ]:
+        logging.getLogger(name).setLevel(logging.WARNING)
+
 
 def get_logger(name: str | None = None) -> Any:
     return structlog.get_logger(name)
