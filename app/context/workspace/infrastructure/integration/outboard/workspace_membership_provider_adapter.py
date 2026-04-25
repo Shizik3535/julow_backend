@@ -82,8 +82,6 @@ class WorkspaceMembershipProviderAdapter(WorkspaceMembershipProvider):
     @staticmethod
     def _permission_grants(permissions: list[str], required: str) -> bool:
         for perm in permissions:
-            if perm == "ws.*":
-                return True
             if perm == required:
                 return True
             if perm.endswith(".*"):

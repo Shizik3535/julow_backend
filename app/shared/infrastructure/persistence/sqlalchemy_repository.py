@@ -138,10 +138,14 @@ class SqlAlchemyRepository(RepositoryPort[TAggregate], Generic[TAggregate, TORMM
         stmt = select(self._orm_model_class).where(self._orm_model_class.id == uuid_value)
         result = await self._session.execute(stmt)
         orm_model = result.scalar_one_or_none()
-        if orm_model is not None:
-            await self._session.delete(orm_model)
-            await self._session.flush()
-            logger.debug("Aggregate deleted", id=str(uuid_value))
+        if orm_model is None:
+            raise EntityNotFoundException(
+                entity_type=self._orm_model_class.__name__,
+                id=id,
+            )
+        await self._session.delete(orm_model)
+        await self._session.flush()
+        logger.debug("Aggregate deleted", id=str(uuid_value))
 
 
 class SoftDeleteSqlAlchemyRepository(

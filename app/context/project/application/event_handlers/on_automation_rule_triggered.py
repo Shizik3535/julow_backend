@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 
 from app.shared.application.base_event_handler import BaseEventHandler
-from app.shared.domain.base_event import BaseDomainEvent
+from app.shared.domain.base_domain_event import BaseDomainEvent
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.project.domain.repositories.board_repository import BoardRepository
 

@@ -4,6 +4,9 @@ from app.shared.application.base_query import BaseQuery
 from app.shared.application.base_query_handler import BaseQueryHandler
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.task.application.dto.task_template_dto import TaskTemplateDTO
+from app.context.task.application.ports.authorization.task_permission_checker_port import (
+    TaskPermissionCheckerPort,
+)
 from app.context.task.domain.exceptions.task_template_exceptions import TaskTemplateNotFoundException
 from app.context.task.domain.repositories.task_template_repository import TaskTemplateRepository
 
@@ -16,20 +19,31 @@ class GetTaskTemplateQuery(BaseQuery):
         template_id: Идентификатор шаблона.
     """
 
+    caller_id: str
     template_id: str
 
 
 class GetTaskTemplateHandler(BaseQueryHandler[GetTaskTemplateQuery, TaskTemplateDTO]):
     """Обработчик получения шаблона задачи по ID."""
 
-    def __init__(self, template_repo: TaskTemplateRepository) -> None:
+    REQUIRED_PERMISSION = "tasks.read"
+
+    def __init__(self, template_repo: TaskTemplateRepository, permission_checker: TaskPermissionCheckerPort) -> None:
         super().__init__()
         self._template_repo = template_repo
+        self._permission_checker = permission_checker
 
     async def handle(self, query: GetTaskTemplateQuery) -> TaskTemplateDTO:
         template = await self._template_repo.get_by_id(Id.from_string(query.template_id))
         if template is None:
             raise TaskTemplateNotFoundException(id=query.template_id)
+
+        if template.project_id is not None:
+            await self._permission_checker.require_permission(
+                user_id=query.caller_id,
+                project_id=str(template.project_id),
+                permission=self.REQUIRED_PERMISSION,
+            )
 
         return TaskTemplateDTO(
             id=str(template.id),

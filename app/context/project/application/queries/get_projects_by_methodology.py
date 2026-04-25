@@ -22,6 +22,7 @@ class GetProjectsByMethodologyHandler(BaseQueryHandler[GetProjectsByMethodologyQ
         self._project_repo = project_repo
 
     async def handle(self, query: GetProjectsByMethodologyQuery) -> ProjectListDTO:
-        projects = await self._project_repo.get_by_methodology(Methodology(query.methodology))
+        methodology = Methodology(query.methodology)
+        projects = await self._project_repo.get_by_methodology(methodology.value)
         items = [GetProjectHandler._to_dto(p) for p in projects]
         return ProjectListDTO(items=items, total=len(items))

@@ -61,8 +61,8 @@ class ChangeProjectMethodologyHandler(BaseCommandHandler[ChangeProjectMethodolog
         if project is None:
             raise ProjectNotFoundException(command.project_id)
 
-        active_sprint = await self._sprint_repo.get_active_by_project(project_id)
-        has_active = active_sprint is not None
+        active_sprints = await self._sprint_repo.get_active_by_project(project_id)
+        has_active = len(active_sprints) > 0
 
         new_methodology = Methodology(command.new_methodology)
         project.change_methodology(new_methodology, has_active_sprints=has_active)

@@ -1,25 +1,34 @@
 """
-Шаблоны системных ролей проекта (Project BC).
+Seed-данные для системных ролей проекта (Project BC).
 
-Используются для:
-- Создания 5 системных `ProjectRole` при `Project.create` (в CreateProjectHandler).
-- Тестовых фикстур.
+Глобальные системные роли (project_id IS NULL) — доступны
+во всех проектах как шаблоны.
+
+Используется в:
+    - scripts/seed_project_roles.py
+    - app/context/project/application/commands/create_project.py
+    - tests/integration/conftest.py
+    - tests/e2e/conftest.py
 
 Соответствуют спецификации §5.7 (docs/domain-spec/05-project.md).
 """
 from __future__ import annotations
 
-from app.context.project.domain.aggregates.project_role import ProjectRole
-from app.shared.domain.value_objects.id_vo import Id
+from uuid import UUID
 
 
 SYSTEM_PROJECT_ROLES: list[dict[str, object]] = [
     {
+        "id": UUID("00000000-0000-0000-0003-000000000001"),
+        "project_id": None,
         "name": "owner",
         "permissions": ["project.*"],
+        "is_system": True,
         "description": "Полный доступ, управление владельцами",
     },
     {
+        "id": UUID("00000000-0000-0000-0003-000000000002"),
+        "project_id": None,
         "name": "admin",
         "permissions": [
             "project.settings.*",
@@ -32,9 +41,12 @@ SYSTEM_PROJECT_ROLES: list[dict[str, object]] = [
             "content.*",
             "tasks.*",
         ],
+        "is_system": True,
         "description": "Управление проектом",
     },
     {
+        "id": UUID("00000000-0000-0000-0003-000000000003"),
+        "project_id": None,
         "name": "manager",
         "permissions": [
             "members.read",
@@ -46,9 +58,12 @@ SYSTEM_PROJECT_ROLES: list[dict[str, object]] = [
             "views.read",
             "tasks.*",
         ],
+        "is_system": True,
         "description": "Управление процессами",
     },
     {
+        "id": UUID("00000000-0000-0000-0003-000000000004"),
+        "project_id": None,
         "name": "member",
         "permissions": [
             "content.*",
@@ -60,38 +75,19 @@ SYSTEM_PROJECT_ROLES: list[dict[str, object]] = [
             "tasks.assign",
             "tasks.watch",
         ],
+        "is_system": True,
         "description": "Работа с задачами",
     },
     {
+        "id": UUID("00000000-0000-0000-0003-000000000005"),
+        "project_id": None,
         "name": "guest",
         "permissions": [
             "content.read",
             "views.read",
             "tasks.read",
         ],
+        "is_system": True,
         "description": "Только просмотр",
     },
 ]
-
-
-def build_system_project_roles(project_id: Id) -> list[ProjectRole]:
-    """
-    Создаёт 5 системных ролей для проекта по шаблону `SYSTEM_PROJECT_ROLES`.
-
-    Аргументы:
-        project_id: ID проекта, к которому привязываются роли.
-
-    Возвращает:
-        Список `ProjectRole` с `is_system=True` и `project_id=<project_id>`.
-    """
-    roles: list[ProjectRole] = []
-    for template in SYSTEM_PROJECT_ROLES:
-        role = ProjectRole(
-            project_id=project_id,
-            name=str(template["name"]),
-            permissions=list(template["permissions"]),  # type: ignore[arg-type]
-            is_system=True,
-            description=template["description"],  # type: ignore[arg-type]
-        )
-        roles.append(role)
-    return roles

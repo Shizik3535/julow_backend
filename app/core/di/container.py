@@ -18,6 +18,14 @@ from app.context.workspace.application.messaging import (
     build_workspace_event_bus,
     workspace_subscriptions,
 )
+from app.context.project.application.messaging import (
+    build_project_event_bus,
+    project_subscriptions,
+)
+from app.context.task.application.messaging import (
+    build_task_event_bus,
+    task_subscriptions,
+)
 from app.core.config.settings import Settings
 from app.core.di.providers.auth_provider import create_auth_token_adapter, create_password_adapter
 from app.core.di.providers.background_tasks_provider import create_celery_app
@@ -95,6 +103,51 @@ from app.core.di.providers.workspace_provider import (
     create_workspace_role_repository,
     create_workspace_team_mapper,
     create_workspace_team_repository,
+)
+from app.core.di.providers.project_provider import (
+    create_board_mapper,
+    create_board_provider_adapter,
+    create_board_repository,
+    create_epic_mapper,
+    create_epic_provider_adapter,
+    create_epic_repository,
+    create_project_identity_user_adapter,
+    create_project_mapper,
+    create_project_membership_mapper,
+    create_project_membership_provider_adapter,
+    create_project_membership_repository,
+    create_project_org_membership_adapter,
+    create_project_permission_checker,
+    create_project_permission_provider,
+    create_project_provider_adapter,
+    create_project_repository,
+    create_project_role_mapper,
+    create_project_role_provider_adapter,
+    create_project_role_repository,
+    create_project_workspace_adapter,
+    create_project_workspace_membership_adapter,
+    create_project_ws_permission_checker_adapter,
+    create_retro_template_mapper,
+    create_retro_template_repository,
+    create_sprint_mapper,
+    create_sprint_provider_adapter,
+    create_sprint_repository,
+)
+from app.core.di.providers.task_provider import (
+    create_changelog_mapper,
+    create_changelog_repository,
+    create_task_board_adapter,
+    create_task_epic_adapter,
+    create_task_identity_user_adapter,
+    create_task_mapper,
+    create_task_permission_checker,
+    create_task_project_adapter,
+    create_task_project_membership_adapter,
+    create_task_provider_adapter,
+    create_task_repository,
+    create_task_sprint_adapter,
+    create_task_template_mapper,
+    create_task_template_repository,
 )
 from app.shared.application.messaging.subscription import Subscription
 from app.shared.application.messaging.uow_subscriber import subscribe_with_uow
@@ -490,6 +543,193 @@ class Container(containers.DeclarativeContainer):
         org_permission_checker=ws_org_permission_checker_port,
     )
 
+    # ==================================================================
+    # Project BC
+    # ==================================================================
+
+    # Project BC - Event Bus
+    project_event_bus = providers.Singleton(
+        build_project_event_bus,
+        broker=message_broker_port,
+    )
+
+    # Project BC - Mappers (Singleton)
+    project_mapper = providers.Singleton(create_project_mapper)
+    board_mapper = providers.Singleton(create_board_mapper)
+    epic_mapper = providers.Singleton(create_epic_mapper)
+    sprint_mapper = providers.Singleton(create_sprint_mapper)
+    project_membership_mapper = providers.Singleton(create_project_membership_mapper)
+    project_role_mapper = providers.Singleton(create_project_role_mapper)
+    retro_template_mapper = providers.Singleton(create_retro_template_mapper)
+
+    # Project BC - Repositories (Factory with session)
+    project_repo = providers.Factory(
+        create_project_repository,
+        session=db_session_factory,
+        mapper=project_mapper,
+    )
+    board_repo = providers.Factory(
+        create_board_repository,
+        session=db_session_factory,
+        mapper=board_mapper,
+    )
+    epic_repo = providers.Factory(
+        create_epic_repository,
+        session=db_session_factory,
+        mapper=epic_mapper,
+    )
+    sprint_repo = providers.Factory(
+        create_sprint_repository,
+        session=db_session_factory,
+        mapper=sprint_mapper,
+    )
+    project_membership_repo = providers.Factory(
+        create_project_membership_repository,
+        session=db_session_factory,
+        mapper=project_membership_mapper,
+    )
+    project_role_repo = providers.Factory(
+        create_project_role_repository,
+        session=db_session_factory,
+        mapper=project_role_mapper,
+    )
+    retro_template_repo = providers.Factory(
+        create_retro_template_repository,
+        session=db_session_factory,
+        mapper=retro_template_mapper,
+    )
+
+    # Project BC - Integration inboard adapters
+    project_identity_user_port = providers.Factory(
+        create_project_identity_user_adapter,
+        identity_user_provider=identity_user_provider,
+    )
+    project_workspace_port = providers.Factory(
+        create_project_workspace_adapter,
+        workspace_provider=workspace_provider,
+    )
+    project_workspace_membership_port = providers.Factory(
+        create_project_workspace_membership_adapter,
+        workspace_membership_provider=workspace_membership_provider,
+    )
+    project_org_membership_port = providers.Factory(
+        create_project_org_membership_adapter,
+        org_membership_provider=org_membership_provider,
+    )
+    project_ws_permission_checker_port = providers.Factory(
+        create_project_ws_permission_checker_adapter,
+        workspace_membership_provider=workspace_membership_provider,
+    )
+
+    # Project BC - Integration outboard adapters
+    project_provider = providers.Factory(
+        create_project_provider_adapter,
+        repo=project_repo,
+    )
+    board_provider = providers.Factory(
+        create_board_provider_adapter,
+        repo=board_repo,
+    )
+    epic_provider = providers.Factory(
+        create_epic_provider_adapter,
+        repo=epic_repo,
+    )
+    sprint_provider = providers.Factory(
+        create_sprint_provider_adapter,
+        repo=sprint_repo,
+    )
+    project_membership_provider = providers.Factory(
+        create_project_membership_provider_adapter,
+        repo=project_membership_repo,
+    )
+    project_role_provider = providers.Factory(
+        create_project_role_provider_adapter,
+        repo=project_role_repo,
+    )
+
+    # Project BC - Authorization
+    project_permission_checker = providers.Factory(
+        create_project_permission_checker,
+        membership_repo=project_membership_repo,
+        project_role_repo=project_role_repo,
+        project_repo=project_repo,
+        workspace_permission_checker=project_ws_permission_checker_port,
+    )
+    project_permission_provider = providers.Factory(
+        create_project_permission_provider,
+        checker=project_permission_checker,
+    )
+
+    # ==================================================================
+    # Task BC
+    # ==================================================================
+
+    # Task BC - Event Bus
+    task_event_bus = providers.Singleton(
+        build_task_event_bus,
+        broker=message_broker_port,
+    )
+
+    # Task BC - Mappers (Singleton)
+    task_mapper = providers.Singleton(create_task_mapper)
+    task_template_mapper = providers.Singleton(create_task_template_mapper)
+    changelog_mapper = providers.Singleton(create_changelog_mapper)
+
+    # Task BC - Repositories (Factory with session)
+    task_repo = providers.Factory(
+        create_task_repository,
+        session=db_session_factory,
+        mapper=task_mapper,
+    )
+    task_template_repo = providers.Factory(
+        create_task_template_repository,
+        session=db_session_factory,
+        mapper=task_template_mapper,
+    )
+    changelog_repo = providers.Factory(
+        create_changelog_repository,
+        session=db_session_factory,
+        mapper=changelog_mapper,
+    )
+
+    # Task BC - Integration outboard adapters
+    task_provider = providers.Factory(
+        create_task_provider_adapter,
+        repo=task_repo,
+    )
+
+    # Task BC - Integration inboard adapters
+    task_identity_user_port = providers.Factory(
+        create_task_identity_user_adapter,
+        identity_user_provider=identity_user_provider,
+    )
+    task_project_port = providers.Factory(
+        create_task_project_adapter,
+        project_provider=project_provider,
+    )
+    task_project_membership_port = providers.Factory(
+        create_task_project_membership_adapter,
+        project_membership_provider=project_membership_provider,
+    )
+    task_board_port = providers.Factory(
+        create_task_board_adapter,
+        board_provider=board_provider,
+    )
+    task_sprint_port = providers.Factory(
+        create_task_sprint_adapter,
+        sprint_provider=sprint_provider,
+    )
+    task_epic_port = providers.Factory(
+        create_task_epic_adapter,
+        epic_provider=epic_provider,
+    )
+    task_permission_checker_port = providers.Factory(
+        create_task_permission_checker,
+        task_repo=task_repo,
+        project_membership_port=task_project_membership_port,
+        project_permission_provider=project_permission_provider,
+    )
+
 
 # ------------------------------------------------------------------
 # Messaging wiring — см. wire_messaging() ниже.
@@ -519,6 +759,8 @@ async def wire_messaging(container: Container) -> None:
         *profile_subscriptions(container),
         *organization_subscriptions(container),
         *workspace_subscriptions(container),
+        *project_subscriptions(container),
+        *task_subscriptions(container),
     ]
 
     for sub in subscriptions:

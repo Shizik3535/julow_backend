@@ -29,7 +29,7 @@ class OnProjectArchived(BaseEventHandler[dict[str, Any]]):
         payload = event.get("payload", {})
         project_id_str = payload.get("project_id")
         if not project_id_str:
-            self._logger.warning("ProjectArchived missing project_id", event=event)
+            self._logger.warning("ProjectArchived missing project_id", raw_event=event)
             return
 
         tasks = await self._task_repo.get_by_project(Id.from_string(project_id_str))

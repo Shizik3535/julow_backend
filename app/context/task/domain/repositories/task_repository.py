@@ -62,3 +62,7 @@ class TaskRepository(RepositoryPort[Task]):
     @abstractmethod
     async def count_by_status(self, project_id: Id, status_id: Id) -> int:
         """Подсчитать количество задач по workflow-статусу."""
+
+    @abstractmethod
+    async def is_participant_in_project(self, project_id: Id, user_id: Id) -> bool:
+        """Проверить, является ли пользователь участником задач проекта (assignee, reporter, watcher)."""

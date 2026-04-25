@@ -30,7 +30,7 @@ class OnSprintCompleted(BaseEventHandler[dict[str, Any]]):
         payload = event.get("payload", {})
         sprint_id_str = payload.get("sprint_id")
         if not sprint_id_str:
-            self._logger.warning("SprintCompleted missing sprint_id", event=event)
+            self._logger.warning("SprintCompleted missing sprint_id", raw_event=event)
             return
 
         next_sprint_id_str = payload.get("next_sprint_id")

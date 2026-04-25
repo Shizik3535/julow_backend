@@ -89,10 +89,15 @@ class CreateWorkspaceHandler(BaseCommandHandler[CreateWorkspaceCommand, Workspac
 
         owner_id = Id.from_string(command.owner_id)
 
+        try:
+            ws_type = WorkspaceType(command.workspace_type)
+        except ValueError:
+            ws_type = WorkspaceType[command.workspace_type]
+
         workspace = Workspace.create(
             name=command.name,
             owner_id=owner_id,
-            workspace_type=WorkspaceType(command.workspace_type),
+            workspace_type=ws_type,
             organization_id=Id.from_string(command.organization_id) if command.organization_id else None,
             parent_workspace_id=Id.from_string(command.parent_workspace_id) if command.parent_workspace_id else None,
         )

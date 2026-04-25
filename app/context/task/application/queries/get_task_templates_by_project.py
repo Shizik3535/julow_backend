@@ -4,6 +4,9 @@ from app.shared.application.base_query import BaseQuery
 from app.shared.application.base_query_handler import BaseQueryHandler
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.task.application.dto.task_template_dto import TaskTemplateDTO, TaskTemplateListDTO
+from app.context.task.application.ports.authorization.task_permission_checker_port import (
+    TaskPermissionCheckerPort,
+)
 from app.context.task.domain.repositories.task_template_repository import TaskTemplateRepository
 
 
@@ -15,17 +18,26 @@ class GetTaskTemplatesByProjectQuery(BaseQuery):
         project_id: ID проекта.
     """
 
+    caller_id: str
     project_id: str
 
 
 class GetTaskTemplatesByProjectHandler(BaseQueryHandler[GetTaskTemplatesByProjectQuery, TaskTemplateListDTO]):
     """Обработчик получения шаблонов задач проекта."""
 
-    def __init__(self, template_repo: TaskTemplateRepository) -> None:
+    REQUIRED_PERMISSION = "tasks.read"
+
+    def __init__(self, template_repo: TaskTemplateRepository, permission_checker: TaskPermissionCheckerPort) -> None:
         super().__init__()
         self._template_repo = template_repo
+        self._permission_checker = permission_checker
 
     async def handle(self, query: GetTaskTemplatesByProjectQuery) -> TaskTemplateListDTO:
+        await self._permission_checker.require_permission(
+            user_id=query.caller_id,
+            project_id=query.project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
         templates = await self._template_repo.get_by_project(Id.from_string(query.project_id))
         items = [
             TaskTemplateDTO(

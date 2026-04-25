@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, type_coerce
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.shared.domain.value_objects.id_vo import Id
@@ -29,9 +30,9 @@ class SqlWorkspaceRepository(SqlAlchemyRepository[Workspace, WorkspaceORM], Work
 
     async def get_by_owner(self, owner_id: Id) -> list[Workspace]:
         uuid_val = self._mapper._map_uuid(owner_id)
-        # owner_ids хранится как JSON-массив строк UUID
+        # owner_ids хранится как JSONB-массив строк UUID
         stmt = select(WorkspaceORM).where(
-            WorkspaceORM.owner_ids.bool_op("@>")(str(uuid_val))
+            WorkspaceORM.owner_ids.bool_op("@>")(type_coerce(str(uuid_val), JSONB))
         )
         result = await self._session.execute(stmt)
         return [self._mapper.to_domain(orm) for orm in result.scalars().all()]

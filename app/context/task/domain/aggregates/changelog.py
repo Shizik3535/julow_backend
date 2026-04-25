@@ -23,6 +23,8 @@ class ChangelogEntry(AggregateRoot):
         new_value: Новое значение.
         changed_by: ID изменившего.
         changed_at: Время изменения.
+        created_at: Время создания.
+        updated_at: Время последнего обновления.
     """
 
     task_id: Id = field(default_factory=Id.generate)
@@ -31,6 +33,8 @@ class ChangelogEntry(AggregateRoot):
     new_value: str | None = None
     changed_by: Id = field(default_factory=Id.generate)
     changed_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
 
     @classmethod
     def create(

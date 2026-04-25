@@ -59,8 +59,8 @@ class ArchiveProjectHandler(BaseCommandHandler[ArchiveProjectCommand, None]):
         if project is None:
             raise ProjectNotFoundException(command.project_id)
 
-        active_sprint = await self._sprint_repo.get_active_by_project(project_id)
-        if active_sprint is not None:
+        active_sprints = await self._sprint_repo.get_active_by_project(project_id)
+        if active_sprints:
             from app.context.project.domain.exceptions.project_exceptions import (
                 CannotChangeMethodologyWithActiveSprintsException,
             )

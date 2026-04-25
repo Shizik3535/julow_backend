@@ -22,9 +22,8 @@ from app.context.project.domain.repositories.project_membership_repository impor
 from app.context.project.domain.repositories.project_repository import ProjectRepository
 from app.context.project.domain.repositories.project_role_repository import ProjectRoleRepository
 from app.context.project.domain.value_objects.methodology import Methodology
-from app.context.project.infrastructure.persistence.seed.system_project_roles import (
-    build_system_project_roles,
-)
+from app.context.project.domain.aggregates.project_role import ProjectRole
+from app.context.project.infrastructure.persistence.seed.system_project_roles import SYSTEM_PROJECT_ROLES
 
 
 class CreateProjectCommand(BaseCommand):
@@ -43,7 +42,7 @@ class CreateProjectCommand(BaseCommand):
     name: str
     workspace_id: str
     owner_id: str
-    methodology: str = "KANBAN"
+    methodology: str = "kanban"
 
 
 class CreateProjectHandler(BaseCommandHandler[CreateProjectCommand, ProjectDTO]):
@@ -118,7 +117,15 @@ class CreateProjectHandler(BaseCommandHandler[CreateProjectCommand, ProjectDTO])
             methodology=methodology,
         )
 
-        system_roles = build_system_project_roles(project.id)
+        system_roles = [
+            ProjectRole.create_custom(
+                project_id=project.id,
+                name=str(template["name"]),
+                permissions=list(template["permissions"]),  # type: ignore[arg-type]
+                description=template["description"],  # type: ignore[arg-type]
+            )
+            for template in SYSTEM_PROJECT_ROLES
+        ]
 
         await self._project_repo.add(project)
         await self._membership_repo.add(membership)

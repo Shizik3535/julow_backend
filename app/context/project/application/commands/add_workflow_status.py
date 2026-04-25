@@ -30,7 +30,7 @@ class AddWorkflowStatusCommand(BaseCommand):
     caller_id: str
     project_id: str
     name: str
-    category: str = "TODO"
+    category: str = "todo"
     color: str | None = None
     icon: str | None = None
     is_default: bool = False

@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from app.shared.domain.base_aggregate import AggregateRoot
+from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.value_objects.rich_text_vo import RichText
 from app.context.task.domain.value_objects.task_type import TaskType
 from app.context.task.domain.value_objects.label import Label
@@ -27,6 +28,7 @@ class TaskTemplate(AggregateRoot):
     с is_system=True. Кастомные шаблоны создаются на уровне проекта.
 
     Атрибуты:
+        project_id: Opaque ID проекта (None для системных шаблонов).
         name: Название шаблона.
         description: Описание (форматированный текст).
         task_type: Тип задачи по умолчанию.
@@ -38,6 +40,7 @@ class TaskTemplate(AggregateRoot):
         updated_at: Время последнего обновления.
     """
 
+    project_id: Id | None = None
     name: str = ""
     description: RichText | None = None
     task_type: TaskType = TaskType.TASK
@@ -74,6 +77,7 @@ class TaskTemplate(AggregateRoot):
         cls,
         name: str,
         task_type: TaskType,
+        project_id: Id | None = None,
         default_labels: list[Label] | None = None,
         default_checklists: list[Checklist] | None = None,
         default_custom_fields: dict[str, str] | None = None,
@@ -82,6 +86,7 @@ class TaskTemplate(AggregateRoot):
         template = cls(
             name=name,
             task_type=task_type,
+            project_id=project_id,
             default_labels=default_labels or [],
             default_checklists=default_checklists or [],
             default_custom_fields=default_custom_fields or {},

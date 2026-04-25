@@ -50,6 +50,49 @@ from app.context.workspace.infrastructure.persistence.orm_models.workspace_membe
 from app.context.workspace.infrastructure.persistence.orm_models.workspace_role_orm import WorkspaceRoleORM  # noqa: F401
 from app.context.workspace.infrastructure.persistence.orm_models.workspace_team_orm import WorkspaceTeamORM  # noqa: F401
 from app.context.workspace.infrastructure.persistence.orm_models.workspace_invitation_orm import WorkspaceInvitationORM  # noqa: F401
+from app.context.project.infrastructure.persistence.orm_models.project_orm import (  # noqa: F401
+    MilestoneORM,
+    ProjectCustomFieldORM,
+    ProjectORM,
+    project_owners_table,
+)
+from app.context.project.infrastructure.persistence.orm_models.board_orm import (  # noqa: F401
+    AutomationRuleORM,
+    BoardColumnORM,
+    BoardORM,
+    ProjectViewORM,
+    SwimlaneORM,
+    WorkflowStatusORM,
+    WorkflowTransitionORM,
+)
+from app.context.project.infrastructure.persistence.orm_models.epic_orm import EpicORM  # noqa: F401
+from app.context.project.infrastructure.persistence.orm_models.sprint_orm import (  # noqa: F401
+    RetroItemORM,
+    SprintORM,
+    SprintRetroORM,
+)
+from app.context.project.infrastructure.persistence.orm_models.project_membership_orm import (  # noqa: F401
+    ProjectMemberORM,
+    ProjectMembershipORM,
+)
+from app.context.project.infrastructure.persistence.orm_models.project_role_orm import ProjectRoleORM  # noqa: F401
+from app.context.project.infrastructure.persistence.orm_models.retro_template_orm import RetroTemplateORM  # noqa: F401
+from app.context.task.infrastructure.persistence.orm_models.task_orm import (  # noqa: F401
+    TaskAttachmentORM,
+    TaskChecklistItemORM,
+    TaskChecklistORM,
+    TaskORM,
+    TaskRelationORM,
+    TaskWatcherORM,
+    task_labels_table,
+)
+from app.context.task.infrastructure.persistence.orm_models.task_template_orm import (  # noqa: F401
+    TaskTemplateORM,
+    TemplateChecklistItemORM,
+    TemplateChecklistORM,
+    task_template_labels_table,
+)
+from app.context.task.infrastructure.persistence.orm_models.changelog_orm import ChangelogEntryORM  # noqa: F401
 
 # Alembic Config object
 config = context.config

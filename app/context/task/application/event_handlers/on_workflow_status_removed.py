@@ -37,7 +37,7 @@ class OnWorkflowStatusRemoved(BaseEventHandler[dict[str, Any]]):
         status_id_str = payload.get("status_id")
         project_id_str = payload.get("project_id")
         if not status_id_str or not project_id_str:
-            self._logger.warning("WorkflowStatusRemoved missing fields", event=event)
+            self._logger.warning("WorkflowStatusRemoved missing fields", raw_event=event)
             return
 
         default_status_id = await self._board_port.get_default_status_id(project_id_str)

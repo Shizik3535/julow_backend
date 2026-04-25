@@ -32,7 +32,7 @@ class CreateProjectViewCommand(BaseCommand):
     caller_id: str
     project_id: str
     name: str
-    view_type: str = "BOARD"
+    view_type: str = "board"
     is_shared: bool = True
     owner_id: str | None = None
     filters: list[dict] | None = None

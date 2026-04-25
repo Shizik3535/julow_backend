@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import BigInteger, Boolean, Integer, JSON, String, Text
+from sqlalchemy import BigInteger, Boolean, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.shared.infrastructure.persistence.sqlalchemy_base_orm_model import BaseORMModel
@@ -31,12 +32,12 @@ class WorkspaceORM(BaseORMModel):
     custom_css: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # owner_ids → JSON
-    owner_ids: Mapped[list | None] = mapped_column(JSON, nullable=True, default=list)
+    owner_ids: Mapped[list | None] = mapped_column(JSONB, nullable=True, default=list)
 
     # SecurityPolicy → скалярные колонки
     pin_code_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     password_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    ip_allowlist: Mapped[list | None] = mapped_column(JSON, nullable=True, default=list)
+    ip_allowlist: Mapped[list | None] = mapped_column(JSONB, nullable=True, default=list)
     sso_mode: Mapped[str] = mapped_column(String(20), nullable=False, default="none")
     require_2fa: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     session_timeout_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -47,7 +48,7 @@ class WorkspaceORM(BaseORMModel):
     default_role: Mapped[str] = mapped_column(String(50), nullable=False, default="member")
     require_approval: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     max_members: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    allowed_email_domains: Mapped[list | None] = mapped_column(JSON, nullable=True, default=list)
+    allowed_email_domains: Mapped[list | None] = mapped_column(JSONB, nullable=True, default=list)
     auto_add_from_org: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     membership_inherit_from_parent: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 

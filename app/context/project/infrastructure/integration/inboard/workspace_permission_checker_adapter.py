@@ -33,5 +33,5 @@ class WorkspacePermissionCheckerAdapter(WorkspacePermissionCheckerPort):
                 InsufficientProjectPermissionsException,
             )
             raise InsufficientProjectPermissionsException(
-                user_id=user_id, project_id=workspace_id, permission=permission,
+                permission=permission, project_id=workspace_id,
             )

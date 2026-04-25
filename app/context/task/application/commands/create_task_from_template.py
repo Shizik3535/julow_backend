@@ -9,6 +9,9 @@ from app.context.task.application.exceptions.task_app_exceptions import (
     TaskProjectNotFoundException,
     TaskProjectArchivedOrSuspendedException,
 )
+from app.context.task.application.ports.authorization.task_permission_checker_port import (
+    TaskPermissionCheckerPort,
+)
 from app.context.task.application.ports.integration.inboard.project_port import ProjectPort
 from app.context.task.application.ports.integration.inboard.board_port import BoardPort
 from app.context.task.domain.aggregates.task import Task
@@ -27,6 +30,7 @@ class CreateTaskFromTemplateCommand(BaseCommand):
         reporter_id: ID автора.
     """
 
+    caller_id: str
     project_id: str
     template_id: str
     reporter_id: str
@@ -35,12 +39,15 @@ class CreateTaskFromTemplateCommand(BaseCommand):
 class CreateTaskFromTemplateHandler(BaseCommandHandler[CreateTaskFromTemplateCommand, TaskDTO]):
     """Обработчик создания задачи из шаблона."""
 
+    REQUIRED_PERMISSION = "tasks.create"
+
     def __init__(
         self,
         task_repo: TaskRepository,
         template_repo: TaskTemplateRepository,
         project_port: ProjectPort,
         board_port: BoardPort,
+        permission_checker: TaskPermissionCheckerPort,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
@@ -48,9 +55,16 @@ class CreateTaskFromTemplateHandler(BaseCommandHandler[CreateTaskFromTemplateCom
         self._template_repo = template_repo
         self._project_port = project_port
         self._board_port = board_port
+        self._permission_checker = permission_checker
         self._event_bus = event_bus
 
     async def handle(self, command: CreateTaskFromTemplateCommand) -> TaskDTO:
+        await self._permission_checker.require_permission(
+            user_id=command.caller_id,
+            project_id=command.project_id,
+            permission=self.REQUIRED_PERMISSION,
+        )
+
         if not await self._project_port.project_exists(command.project_id):
             raise TaskProjectNotFoundException(command.project_id)
         if not await self._project_port.is_project_active(command.project_id):

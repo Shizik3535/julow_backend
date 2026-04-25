@@ -23,7 +23,7 @@ class GetActiveSprintHandler(BaseQueryHandler[GetActiveSprintQuery, SprintDTO]):
         self._sprint_repo = sprint_repo
 
     async def handle(self, query: GetActiveSprintQuery) -> SprintDTO:
-        sprint = await self._sprint_repo.get_active_by_project(Id.from_string(query.project_id))
-        if sprint is None:
+        sprints = await self._sprint_repo.get_active_by_project(Id.from_string(query.project_id))
+        if not sprints:
             raise SprintNotFoundException(f"active sprint for project {query.project_id}")
-        return GetSprintsByProjectHandler._to_dto(sprint)
+        return GetSprintsByProjectHandler._to_dto(sprints[0])

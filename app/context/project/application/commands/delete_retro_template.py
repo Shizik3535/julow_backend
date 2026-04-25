@@ -47,5 +47,5 @@ class DeleteRetroTemplateHandler(BaseCommandHandler[DeleteRetroTemplateCommand, 
             raise ValueError(f"Шаблон ретроспективы не найден: {command.template_id}")
 
         template.mark_deleted()
-        await self._retro_template_repo.update(template)
+        await self._retro_template_repo.delete(template.id)
         await self._event_bus.publish_all(template.clear_domain_events())

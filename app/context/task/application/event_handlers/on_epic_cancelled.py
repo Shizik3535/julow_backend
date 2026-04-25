@@ -33,7 +33,7 @@ class OnEpicCancelled(BaseEventHandler[dict[str, Any]]):
 
         epic_id_str = payload.get("epic_id")
         if not epic_id_str:
-            self._logger.warning("EpicStatusChanged missing epic_id", event=event)
+            self._logger.warning("EpicStatusChanged missing epic_id", raw_event=event)
             return
 
         tasks = await self._task_repo.get_by_epic(Id.from_string(epic_id_str))

@@ -35,7 +35,7 @@ class AddWorkspaceMemberCommand(BaseCommand):
     workspace_id: str
     user_id: str
     role_id: str
-    source: str = "DIRECT"
+    source: str = "direct"
     invited_by: str | None = None
     display_name: str | None = None
 
