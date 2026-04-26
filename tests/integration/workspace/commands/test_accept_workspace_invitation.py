@@ -56,6 +56,7 @@ class TestAcceptWorkspaceInvitationHandler:
         found_inv = await ws_invitation_repo.get_by_id(inv.id)
         assert found_inv is not None
         assert found_inv.status == InvitationStatus.ACCEPTED
+        assert found_inv.user_id == accepting_user
 
         membership = await ws_membership_repo.get_by_workspace_id(ws.id)
         assert membership is not None

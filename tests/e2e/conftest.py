@@ -24,7 +24,21 @@ from app.shared.application.ports.messaging.message_broker_port import (
     MessageBrokerPort,
     MessageHandler,
 )
+from app.shared.application.ports.auth.password_port import PasswordPort
 from app.shared.infrastructure.persistence.sqlalchemy_base_orm_model import BaseORMModel
+
+
+# ── Fast password stub (заменяет Argon2 в e2e-тестах) ──────────────────────────
+
+
+class FastPasswordAdapter(PasswordPort):
+    """Быстрая заглушка для e2e-тестов — не тратит время на argon2."""
+
+    def hash_password(self, password: str) -> str:
+        return f"fast${password}"
+
+    def verify_password(self, password: str, password_hash: str) -> bool:
+        return password_hash == f"fast${password}"
 
 
 # ── In-memory broker (заменяет Kafka в e2e-тестах) ───────────────────────────
@@ -81,6 +95,7 @@ def app():
     container = application.state.container
     container.message_broker_port.override(InMemoryMessageBrokerAdapter())
     container.oauth_port.override(InMemoryOAuthAdapter())
+    container.password_port.override(FastPasswordAdapter())
     return application
 
 
@@ -404,6 +419,143 @@ async def add_member_to_org(
         headers=auth_headers(owner_token),
     )
     return {"response": resp}
+
+
+async def create_workspace(
+    client: AsyncClient,
+    *,
+    token: str,
+    name: str | None = None,
+    organization_id: str | None = None,
+    parent_workspace_id: str | None = None,
+) -> dict:
+    """
+    Создаёт workspace через API.
+
+    Возвращает:
+        {"ws_id": ..., "ws_name": ..., "response": ...}
+    """
+    name = name or f"e2e-ws-{uuid.uuid4().hex[:8]}"
+    body: dict[str, Any] = {"name": name}
+    if organization_id:
+        body["organization_id"] = organization_id
+    if parent_workspace_id:
+        body["parent_workspace_id"] = parent_workspace_id
+    resp = await client.post(
+        f"{API}/workspaces/",
+        json=body,
+        headers=auth_headers(token),
+    )
+    data = resp.json().get("data", {})
+    return {"ws_id": data.get("id", ""), "ws_name": name, "response": resp}
+
+
+async def create_workspace_with_owner(
+    client: AsyncClient,
+    *,
+    organization_id: str | None = None,
+    name: str | None = None,
+) -> dict:
+    """
+    Регистрирует пользователя, логинит, создаёт workspace.
+
+    Возвращает:
+        {"email", "password", "user_id", "access_token", "refresh_token", "ws_id", "ws_name"}
+    """
+    user = await register_and_login(client)
+    ws = await create_workspace(
+        client,
+        token=user["access_token"],
+        name=name,
+        organization_id=organization_id,
+    )
+    return {**user, "ws_id": ws["ws_id"], "ws_name": ws["ws_name"]}
+
+
+async def create_workspace_in_org(client: AsyncClient) -> dict:
+    """
+    Регистрирует пользователя, логинит, создаёт организацию,
+    затем создаёт workspace внутри организации.
+
+    Возвращает:
+        {"email", "password", "user_id", "access_token", "refresh_token",
+         "org_id", "org_name", "ws_id", "ws_name"}
+    """
+    user = await register_and_login(client)
+    org = await create_organization(client, token=user["access_token"])
+    ws = await create_workspace(
+        client,
+        token=user["access_token"],
+        organization_id=org["org_id"],
+    )
+    return {
+        **user,
+        "org_id": org["org_id"],
+        "org_name": org["org_name"],
+        "ws_id": ws["ws_id"],
+        "ws_name": ws["ws_name"],
+    }
+
+
+async def add_member_to_workspace(
+    client: AsyncClient,
+    *,
+    ws_id: str,
+    owner_token: str,
+    new_member_user_id: str,
+    role_id: str,
+) -> dict:
+    """
+    Добавляет участника в workspace через API.
+
+    Возвращает:
+        {"response": ...}
+    """
+    body: dict[str, Any] = {"user_id": new_member_user_id, "role_id": role_id}
+    resp = await client.post(
+        f"{API}/workspaces/{ws_id}/members",
+        json=body,
+        headers=auth_headers(owner_token),
+    )
+    return {"response": resp}
+
+
+async def add_ws_member_with_role(
+    client: AsyncClient,
+    *,
+    ws_id: str,
+    owner_token: str,
+    new_member_user_id: str,
+    role_name: str,
+) -> dict:
+    """
+    Добавляет участника с конкретной ролью по имени (owner/admin/manager/member).
+    Находит role_id через GET /workspaces/{ws_id}/roles?system_only=true.
+
+    Возвращает:
+        {"response": ..., "role_id": ...}
+    """
+    roles_resp = await client.get(
+        f"{API}/workspaces/{ws_id}/roles",
+        params={"system_only": True},
+        headers=auth_headers(owner_token),
+    )
+    roles = roles_resp.json().get("items", [])
+    role_id = ""
+    for r in roles:
+        if r.get("name") == role_name:
+            role_id = r.get("id", "")
+            break
+    if not role_id:
+        raise ValueError(f"System role '{role_name}' not found in workspace {ws_id}")
+    result = await add_member_to_workspace(
+        client,
+        ws_id=ws_id,
+        owner_token=owner_token,
+        new_member_user_id=new_member_user_id,
+        role_id=role_id,
+    )
+    return {**result, "role_id": role_id}
 
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────

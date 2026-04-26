@@ -92,14 +92,14 @@ class TestTeamMembers:
         events = team.clear_domain_events()
         assert any(isinstance(e, WorkspaceTeamMemberAdded) for e in events)
 
-    def test_add_duplicate_member_ignored(self, team: WorkspaceTeam) -> None:
+    def test_add_duplicate_member_raises(self, team: WorkspaceTeam) -> None:
+        from app.context.workspace.domain.exceptions.workspace_team_exceptions import TeamMemberAlreadyExistsException
         user_id = IdFactory()
         team.add_member(user_id)
         team.clear_domain_events()
-        team.add_member(user_id)
+        with pytest.raises(TeamMemberAlreadyExistsException):
+            team.add_member(user_id)
         assert team.member_ids.count(user_id) == 1
-        events = team.clear_domain_events()
-        assert not any(isinstance(e, WorkspaceTeamMemberAdded) for e in events)
 
     def test_add_member_to_inactive_team_raises(self, inactive_team: WorkspaceTeam) -> None:
         with pytest.raises(ValueError):

@@ -6,6 +6,10 @@ from datetime import datetime, timezone
 from app.shared.domain.base_aggregate import AggregateRoot
 from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.value_objects.url_vo import Url
+from app.context.workspace.domain.exceptions.workspace_team_exceptions import (
+    TeamMemberAlreadyExistsException,
+    WorkspaceTeamNotFoundException,
+)
 from app.context.workspace.domain.events.workspace_team_events import (
     WorkspaceTeamCreated,
     WorkspaceTeamUpdated,
@@ -102,16 +106,17 @@ class WorkspaceTeam(AggregateRoot):
     def add_member(self, user_id: Id) -> None:
         """Добавляет участника в команду. Участник должен быть членом workspace (проверка на app-слое)."""
         self._assert_active()
-        if user_id not in self.member_ids:
-            self.member_ids.append(user_id)
-            self.updated_at = datetime.now(tz=timezone.utc)
-            self._register_event(
-                WorkspaceTeamMemberAdded(
-                    workspace_id=str(self.workspace_id),
-                    team_id=str(self.id),
-                    user_id=str(user_id),
-                )
+        if user_id in self.member_ids:
+            raise TeamMemberAlreadyExistsException(user_id)
+        self.member_ids.append(user_id)
+        self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            WorkspaceTeamMemberAdded(
+                workspace_id=str(self.workspace_id),
+                team_id=str(self.id),
+                user_id=str(user_id),
             )
+        )
 
     def remove_member(self, user_id: Id) -> None:
         """Удаляет участника из команды."""

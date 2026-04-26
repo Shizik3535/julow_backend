@@ -32,7 +32,7 @@ class ChangeTaskPriorityCommand(BaseCommand):
 class ChangeTaskPriorityHandler(BaseCommandHandler[ChangeTaskPriorityCommand, None]):
     """Обработчик смены приоритета задачи."""
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(
         self,

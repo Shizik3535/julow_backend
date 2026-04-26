@@ -42,7 +42,7 @@ class UpdateTaskInfoCommand(BaseCommand):
 class UpdateTaskInfoHandler(BaseCommandHandler[UpdateTaskInfoCommand, None]):
     """Обработчик обновления информации задачи с записью в changelog."""
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(
         self,

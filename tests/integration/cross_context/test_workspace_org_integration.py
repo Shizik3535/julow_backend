@@ -28,7 +28,7 @@ class TestCreateWorkspaceInOrgCrossContext:
     """Cross-context: создание workspace в организации."""
 
     async def test_create_workspace_with_real_org(
-        self, ws_repo, ws_membership_repo, make_org_with_membership
+        self, ws_repo, ws_membership_repo, ws_role_repo, make_org_with_membership
     ) -> None:
         data = await make_org_with_membership()
         org = data["org"]
@@ -37,6 +37,7 @@ class TestCreateWorkspaceInOrgCrossContext:
         handler = CreateWorkspaceHandler(
             ws_repo=ws_repo,
             membership_repo=ws_membership_repo,
+            role_repo=ws_role_repo,
             identity_port=_StubIdentityUserPort(),
             org_permission_checker=_AlwaysAllowOrgPermissionChecker(),
             event_bus=_NoopEventBus(),

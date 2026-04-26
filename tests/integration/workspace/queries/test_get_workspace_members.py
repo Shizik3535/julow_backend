@@ -7,7 +7,6 @@ from app.context.workspace.application.queries.get_workspace_members import (
     GetWorkspaceMembersQuery,
     GetWorkspaceMembersHandler,
 )
-from tests.integration.workspace.conftest import _AlwaysAllowPermissionChecker
 
 
 @pytest.mark.integration
@@ -15,10 +14,11 @@ class TestGetWorkspaceMembersHandler:
     """Тесты GetWorkspaceMembersHandler."""
 
     @pytest.fixture
-    def handler(self, ws_membership_repo) -> GetWorkspaceMembersHandler:
+    def handler(self, ws_membership_repo, ws_repo, permission_checker_stub) -> GetWorkspaceMembersHandler:
         return GetWorkspaceMembersHandler(
             membership_repo=ws_membership_repo,
-            permission_checker=_AlwaysAllowPermissionChecker(),
+            ws_repo=ws_repo,
+            permission_checker=permission_checker_stub,
         )
 
     async def test_get_members_found(self, handler, make_workspace_with_membership) -> None:

@@ -232,6 +232,7 @@ def make_workspace_with_membership(
         membership = WorkspaceMembership.create(
             workspace_id=ws.id,
             owner_id=oid,
+            owner_role_id=owner_role.id if owner_role else Id.generate(),
         )
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)

@@ -7,7 +7,6 @@ from app.context.workspace.application.queries.get_workspace_roles import (
     GetWorkspaceRolesQuery,
     GetWorkspaceRolesHandler,
 )
-from tests.integration.workspace.conftest import _AlwaysAllowPermissionChecker
 
 
 @pytest.mark.integration
@@ -15,10 +14,11 @@ class TestGetWorkspaceRolesHandler:
     """Тесты GetWorkspaceRolesHandler."""
 
     @pytest.fixture
-    def handler(self, ws_role_repo) -> GetWorkspaceRolesHandler:
+    def handler(self, ws_role_repo, ws_repo, permission_checker_stub) -> GetWorkspaceRolesHandler:
         return GetWorkspaceRolesHandler(
             role_repo=ws_role_repo,
-            permission_checker=_AlwaysAllowPermissionChecker(),
+            ws_repo=ws_repo,
+            permission_checker=permission_checker_stub,
         )
 
     async def test_get_roles_by_workspace(self, handler, make_workspace_role) -> None:
@@ -32,23 +32,25 @@ class TestGetWorkspaceRolesHandler:
         names = [r.name for r in result.items]
         assert "list-role" in names
 
-    async def test_get_system_roles_only(self, handler, ws_role_repo) -> None:
+    async def test_get_system_roles_only(self, handler, ws_role_repo, make_workspace) -> None:
         from app.context.workspace.domain.aggregates.workspace_role import WorkspaceRole
 
+        ws = await make_workspace()
         role = WorkspaceRole.create_system(name="sys-list", permissions=["ws.*"])
         role.clear_domain_events()
         await ws_role_repo.add(role)
 
         query = GetWorkspaceRolesQuery(
-            caller_id=str(Id.generate()), workspace_id=str(Id.generate()), system_only=True,
+            caller_id=str(Id.generate()), workspace_id=str(ws.id), system_only=True,
         )
         result = await handler.handle(query)
 
         assert all(r.is_system for r in result.items)
 
-    async def test_get_roles_empty(self, handler) -> None:
+    async def test_get_roles_empty(self, handler, make_workspace) -> None:
+        ws = await make_workspace()
         query = GetWorkspaceRolesQuery(
-            caller_id=str(Id.generate()), workspace_id=str(Id.generate()),
+            caller_id=str(Id.generate()), workspace_id=str(ws.id),
         )
         result = await handler.handle(query)
 

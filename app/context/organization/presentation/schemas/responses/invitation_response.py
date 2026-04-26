@@ -65,5 +65,9 @@ class InvitationResponse(BaseModel):
         default=None,
         description="UUID подтвердившего",
     )
+    user_id: str | None = Field(
+        default=None,
+        description="UUID пользователя, принявшего/отклонившего приглашение",
+    )
     created_at: datetime = Field(..., description="Дата создания (UTC)")
     updated_at: datetime = Field(..., description="Дата последнего обновления (UTC)")

@@ -21,7 +21,7 @@ class TestProjectPermissionProviderImpl:
         result = await adapter.has_permission(
             user_id=str(Id.generate()),
             project_id=str(Id.generate()),
-            permission="content.read",
+            permission="tasks.read",
         )
         assert result is True
 
@@ -34,6 +34,6 @@ class TestProjectPermissionProviderImpl:
         result = await adapter.has_permission(
             user_id=str(Id.generate()),
             project_id=str(Id.generate()),
-            permission="content.read",
+            permission="tasks.read",
         )
         assert result is False

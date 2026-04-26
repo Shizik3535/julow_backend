@@ -99,7 +99,7 @@ class ProjectRoleBasedPermissionChecker(ProjectPermissionCheckerPort):
 
         Примеры:
             «project.*»        → «ws.projects.*»
-            «content.read»     → «projects.content.read»
+            «tasks.read»       → «projects.tasks.read»
             «members.write»    → «projects.members.write»
             «workflow.*»       → «projects.workflow.*»
         """

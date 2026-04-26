@@ -87,14 +87,14 @@ class TestSqlOrgRoleRepositoryUpdate:
     """Тесты обновления."""
 
     async def test_update_permissions(self, org_role_repo: SqlOrgRoleRepository, make_org_role) -> None:
-        role = await make_org_role(permissions=["self.*"])
-        role.update(permissions=["members.*", "content.*"])
+        role = await make_org_role(permissions=["org.read"])
+        role.update(permissions=["members.*", "teams.*"])
         role.clear_domain_events()
         await org_role_repo.update(role)
 
         found = await org_role_repo.get_by_id(role.id)
         assert found is not None
-        assert found.permissions == ["members.*", "content.*"]
+        assert found.permissions == ["members.*", "teams.*"]
 
     async def test_update_description(self, org_role_repo: SqlOrgRoleRepository, make_org_role) -> None:
         role = await make_org_role()

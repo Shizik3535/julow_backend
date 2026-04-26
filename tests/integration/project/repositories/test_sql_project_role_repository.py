@@ -18,11 +18,11 @@ class TestSqlProjectRoleRepositoryAdd:
         assert found.id == role.id
 
     async def test_add_persists_attributes(self, role_repo: SqlProjectRoleRepository, make_project_role) -> None:
-        role = await make_project_role(name="CustomRole", permissions=["content.read", "content.write"])
+        role = await make_project_role(name="CustomRole", permissions=["tasks.read", "tasks.write"])
         found = await role_repo.get_by_id(role.id)
         assert found is not None
         assert found.name == "CustomRole"
-        assert "content.read" in found.permissions
+        assert "tasks.read" in found.permissions
         assert found.is_system is False
 
 
@@ -57,14 +57,14 @@ class TestSqlProjectRoleRepositoryUpdate:
     """Тесты обновления."""
 
     async def test_update_permissions(self, role_repo: SqlProjectRoleRepository, make_project_role) -> None:
-        role = await make_project_role(permissions=["content.read"])
-        role.update(permissions=["content.read", "content.write", "tasks.*"])
+        role = await make_project_role(permissions=["tasks.read"])
+        role.update(permissions=["tasks.read", "tasks.write", "members.*"])
         role.clear_domain_events()
         await role_repo.update(role)
 
         found = await role_repo.get_by_id(role.id)
         assert found is not None
-        assert "tasks.*" in found.permissions
+        assert "members.*" in found.permissions
 
 
 @pytest.mark.integration

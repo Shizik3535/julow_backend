@@ -32,7 +32,7 @@ class RemoveTaskCustomFieldCommand(BaseCommand):
 class RemoveTaskCustomFieldHandler(BaseCommandHandler[RemoveTaskCustomFieldCommand, None]):
     """Обработчик удаления кастомного поля задачи."""
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(
         self,

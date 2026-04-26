@@ -66,5 +66,9 @@ class WorkspaceInvitationResponse(BaseModel):
         description="UUID подтвердившего",
         examples=["approver-uuid"],
     )
+    user_id: str | None = Field(
+        default=None,
+        description="UUID пользователя, принявшего/отклонившего приглашение",
+    )
     created_at: datetime | None = Field(None, description="Дата создания (UTC)")
     updated_at: datetime | None = Field(None, description="Дата последнего обновления (UTC)")

@@ -20,15 +20,16 @@ class TestGetTaskChangelogHandler:
         result = await handler.handle(GetTaskChangelogQuery(caller_id=str(Id.generate()), task_id=str(entry.task_id)))
         assert result.total >= 1
 
-    async def test_get_changelog_empty(self, handler) -> None:
-        result = await handler.handle(GetTaskChangelogQuery(caller_id=str(Id.generate()), task_id=str(Id.generate())))
+    async def test_get_changelog_empty(self, handler, make_task) -> None:
+        task = await make_task()
+        result = await handler.handle(GetTaskChangelogQuery(caller_id=str(Id.generate()), task_id=str(task.id)))
         assert result.total == 0
 
-    async def test_get_changelog_pagination(self, handler, make_changelog_entry) -> None:
-        task_id = Id.generate()
+    async def test_get_changelog_pagination(self, handler, make_changelog_entry, make_task) -> None:
+        task = await make_task()
         for i in range(5):
-            await make_changelog_entry(task_id=task_id, field_name=f"field_{i}")
-        result = await handler.handle(GetTaskChangelogQuery(caller_id=str(Id.generate()), task_id=str(task_id), offset=0, limit=2))
+            await make_changelog_entry(task_id=task.id, field_name=f"field_{i}")
+        result = await handler.handle(GetTaskChangelogQuery(caller_id=str(Id.generate()), task_id=str(task.id), offset=0, limit=2))
         assert len(result.items) <= 2
 
     async def test_get_changelog_permission_denied(self, changelog_repo, task_repo, permission_denied_stub, make_changelog_entry) -> None:

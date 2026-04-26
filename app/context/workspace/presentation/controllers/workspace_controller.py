@@ -92,6 +92,7 @@ from app.context.workspace.presentation.dependencies import (
     get_workspace_repository,
     get_ws_identity_user_port,
     get_ws_org_permission_checker_port,
+    get_workspace_role_repository,
 )
 from app.context.workspace.presentation.schemas.requests.create_workspace_request import CreateWorkspaceRequest
 from app.context.workspace.presentation.schemas.requests.move_workspace_request import MoveWorkspaceRequest
@@ -418,6 +419,7 @@ class WorkspaceController(BaseController):
         caller_id: str = Depends(get_current_user_id),
         ws_repo=Depends(get_workspace_repository),
         membership_repo=Depends(get_workspace_membership_repository),
+        role_repo=Depends(get_workspace_role_repository),
         identity_port=Depends(get_ws_identity_user_port),
         org_permission_checker=Depends(get_ws_org_permission_checker_port),
         event_bus=Depends(get_workspace_event_bus),
@@ -426,6 +428,7 @@ class WorkspaceController(BaseController):
         handler = CreateWorkspaceHandler(
             ws_repo=ws_repo,
             membership_repo=membership_repo,
+            role_repo=role_repo,
             identity_port=identity_port,
             org_permission_checker=org_permission_checker,
             event_bus=event_bus,

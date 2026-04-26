@@ -25,7 +25,7 @@ class TestWorkspaceMembershipProviderAdapter:
     ) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -58,7 +58,7 @@ class TestWorkspaceMembershipProviderAdapter:
         role.clear_domain_events()
         await ws_role_repo.add(role)
 
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -87,7 +87,7 @@ class TestWorkspaceMembershipProviderAdapter:
     ) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -121,8 +121,7 @@ class TestWorkspaceMembershipProviderAdapter:
         role.clear_domain_events()
         await ws_role_repo.add(role)
 
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
-        membership.change_member_role(user_id=owner_id, new_role_id=role.id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=role.id)
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 

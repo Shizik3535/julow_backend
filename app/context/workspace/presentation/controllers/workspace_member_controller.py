@@ -268,7 +268,7 @@ class WorkspaceMemberController(BaseController):
             workspace_id=ws_id,
             user_id=body.user_id,
             role_id=body.role_id,
-            source=body.source,
+            source=body.source or "direct",
             display_name=body.display_name,
         )
         await handler.handle(command)
@@ -294,7 +294,7 @@ class WorkspaceMemberController(BaseController):
             caller_id=caller_id,
             workspace_id=ws_id,
             user_id=user_id,
-            new_role_id=body.new_role_id,
+            new_role_id=str(body.new_role_id),
         )
         await handler.handle(command)
         return SuccessResponse(data={"message": "Роль участника изменена"})

@@ -68,7 +68,7 @@ class TestAddWorkspaceMemberHandler:
         with pytest.raises(MemberAlreadyExistsException):
             await handler.handle(cmd)
 
-    async def test_add_member_user_not_found(self, ws_membership_repo) -> None:
+    async def test_add_member_user_not_found(self, ws_membership_repo, make_workspace_with_membership) -> None:
         class _NoUserPort(_StubIdentityUserPort):
             async def user_exists(self, user_id: str) -> bool:
                 return False
@@ -79,9 +79,11 @@ class TestAddWorkspaceMemberHandler:
             permission_checker=_AlwaysAllowPermissionChecker(),
             event_bus=_NoopEventBus(),
         )
+        data = await make_workspace_with_membership()
+        ws = data["workspace"]
         cmd = AddWorkspaceMemberCommand(
-            caller_id=str(Id.generate()),
-            workspace_id=str(Id.generate()),
+            caller_id=str(ws.owner_ids[0]),
+            workspace_id=str(ws.id),
             user_id=str(Id.generate()),
             role_id=str(Id.generate()),
         )

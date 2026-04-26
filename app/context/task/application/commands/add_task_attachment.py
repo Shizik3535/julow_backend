@@ -42,7 +42,7 @@ class AddTaskAttachmentHandler(BaseCommandHandler[AddTaskAttachmentCommand, str]
     Возвращает file_id.
     """
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(
         self,

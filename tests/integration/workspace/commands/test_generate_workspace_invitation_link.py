@@ -15,9 +15,10 @@ class TestGenerateWorkspaceInvitationLinkHandler:
     """Тесты GenerateWorkspaceInvitationLinkHandler."""
 
     @pytest.fixture
-    def handler(self, ws_invitation_repo) -> GenerateWorkspaceInvitationLinkHandler:
+    def handler(self, ws_invitation_repo, ws_repo) -> GenerateWorkspaceInvitationLinkHandler:
         return GenerateWorkspaceInvitationLinkHandler(
             invitation_repo=ws_invitation_repo,
+            ws_repo=ws_repo,
             permission_checker=_AlwaysAllowPermissionChecker(),
             event_bus=_NoopEventBus(),
         )

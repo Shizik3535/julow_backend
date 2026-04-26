@@ -33,6 +33,7 @@ class WorkspaceInvitationDTO(BaseDTO):
     invited_at: datetime
     status: str
     approved_by: str | None = None
+    user_id: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

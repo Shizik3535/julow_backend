@@ -75,7 +75,7 @@ class TestSqlProjectRepositorySearch:
         await make_project(name="UniqueAlphaProject")
         await make_project(name="OtherProject")
 
-        results = await project_repo.search("Alpha")
+        results = await project_repo.search(filters={"query": "Alpha"})
         assert len(results) >= 1
         assert any("Alpha" in p.name for p in results)
 

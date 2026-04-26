@@ -41,6 +41,10 @@ from app.context.organization.application.queries.get_invitation_by_token import
     GetInvitationByTokenHandler,
     GetInvitationByTokenQuery,
 )
+from app.context.organization.application.queries.search_my_invitations import (
+    SearchMyInvitationsHandler,
+    SearchMyInvitationsQuery,
+)
 from app.context.organization.presentation.dependencies import (
     get_current_user_id,
     get_invitation_repository,
@@ -77,6 +81,7 @@ class InvitationController(BaseController):
         GET    /invitations/token/{token}                       — Получить приглашение по токену
         POST   /invitations/{invitation_id}/accept              — Принять приглашение
         POST   /invitations/{invitation_id}/decline             — Отклонить приглашение
+        GET    /invitations/mine                                — Мои приглашения
     """
 
     def __init__(self) -> None:
@@ -198,6 +203,18 @@ class InvitationController(BaseController):
                 401: {"description": "Не аутентифицирован", "model": ErrorResponse},
                 404: {"description": "Приглашение не найдено", "model": ErrorResponse},
                 409: {"description": "Нарушение бизнес-правила", "model": ErrorResponse},
+            },
+        )
+        self._router.add_api_route(
+            "/invitations/mine",
+            self.get_my_invitations,
+            methods=["GET"],
+            response_model=SuccessResponse[list[InvitationResponse]],
+            summary="Мои приглашения в организации",
+            description="Возвращает список приглашений текущего пользователя (PENDING по email, ACCEPTED/DECLINED по user_id).",
+            responses={
+                200: {"description": "Список приглашений"},
+                401: {"description": "Не аутентифицирован", "model": ErrorResponse},
             },
         )
 
@@ -376,15 +393,58 @@ class InvitationController(BaseController):
         invitation_id: str,
         caller_id: str = Depends(get_current_user_id),
         invitation_repo=Depends(get_invitation_repository),
+        identity_port=Depends(get_org_identity_user_port),
+        permission_checker=Depends(get_org_permission_checker),
         event_bus=Depends(get_organization_event_bus),
     ) -> MessageResponse:
         """Отклонить приглашение."""
         handler = DeclineInvitationHandler(
             invitation_repo=invitation_repo,
+            identity_port=identity_port,
+            permission_checker=permission_checker,
             event_bus=event_bus,
         )
         command = DeclineInvitationCommand(
             invitation_id=invitation_id,
+            user_id=caller_id,
         )
         await handler.handle(command)
         return MessageResponse(message="Приглашение отклонено")
+
+    # ------------------------------------------------------------------
+    # My invitations
+    # ------------------------------------------------------------------
+
+    async def get_my_invitations(
+        self,
+        offset: int = 0,
+        limit: int = 100,
+        status: str | None = None,
+        org_id: str | None = None,
+        search_text: str | None = None,
+        caller_id: str = Depends(get_current_user_id),
+        invitation_repo=Depends(get_invitation_repository),
+        identity_port=Depends(get_org_identity_user_port),
+    ) -> SuccessResponse[list[InvitationResponse]]:
+        """Получить мои приглашения в организации."""
+        filters: dict = {}
+        if status:
+            filters["status"] = status
+        if org_id:
+            filters["org_id"] = org_id
+        if search_text:
+            filters["search_text"] = search_text
+
+        handler = SearchMyInvitationsHandler(
+            invitation_repo=invitation_repo,
+            identity_port=identity_port,
+        )
+        query = SearchMyInvitationsQuery(
+            caller_id=caller_id,
+            offset=offset,
+            limit=limit,
+            filters=filters or None,
+        )
+        dto = await handler.handle(query)
+        items = [InvitationResponse.model_validate(item.model_dump()) for item in dto.items]
+        return SuccessResponse(data=items)

@@ -191,9 +191,10 @@ def create_organization_provider(
 
 def create_organization_membership_provider(
     repo: OrgMembershipRepository,
+    org_repo: OrganizationRepository,
 ) -> OrganizationMembershipProvider:
     """Создать OrganizationMembershipProviderAdapter (outbound)."""
-    return OrganizationMembershipProviderAdapter(repo=repo)
+    return OrganizationMembershipProviderAdapter(repo=repo, org_repo=org_repo)
 
 
 # --- Authorization ---

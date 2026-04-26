@@ -40,7 +40,7 @@ class SetTaskCustomFieldHandler(BaseCommandHandler[SetTaskCustomFieldCommand, No
     Валидация имени поля через ProjectPort (CustomFieldDefinition).
     """
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(
         self,

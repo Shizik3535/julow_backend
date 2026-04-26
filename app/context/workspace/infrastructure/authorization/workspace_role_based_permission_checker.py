@@ -113,12 +113,15 @@ class WorkspaceRoleBasedPermissionChecker(WorkspacePermissionCheckerPort):
         Проверяет, покрывает ли список разрешений требуемое.
 
         Правила:
+            - «ws.*» — полный доступ (покрывает любое разрешение)
             - «group.*» покрывает «group.anything»
             - точное совпадение строки
         """
         for perm in permissions:
             if perm == required:
                 return True
+            if perm == "ws.*":
+                return True  # полный доступ к workspace
             if perm.endswith(".*"):
                 prefix = perm[:-1]  # «group.»
                 if required.startswith(prefix):

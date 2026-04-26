@@ -44,7 +44,7 @@
 | `AddBoardColumnCommand` | `AddBoardColumnHandler` | `workflow.write` | — |
 | `AddBoardSwimlaneCommand` | `AddBoardSwimlaneHandler` | `workflow.write` | — |
 | `AddProjectCustomFieldCommand` | `AddProjectCustomFieldHandler` | `custom_fields.write` | — |
-| `AddProjectMemberCommand` | `AddProjectMemberHandler` | `members.write` | Проверка существования пользователя через `IdentityUserPort`; проверка членства в workspace через `WorkspaceMembershipPort`; проверка на дубликат |
+| `AddProjectMemberCommand` | `AddProjectMemberHandler` | `members.write` | Проверка существования пользователя через `IdentityUserPort`; проверка членства в workspace через `WorkspaceMembershipPort`¶; проверка на дубликат; поддержка гостевого членства (`MembershipType.GUEST`) |
 | `AddProjectMilestoneCommand` | `AddProjectMilestoneHandler` | `milestones.write` | Проверка `methodology_capabilities.has_milestones` |
 | `AddProjectOwnerCommand` | `AddProjectOwnerHandler` | `project.*` | — |
 | `AddWorkflowStatusCommand` | `AddWorkflowStatusHandler` | `workflow.write` | — |
@@ -164,6 +164,7 @@
 
 \* — используют `has_permission` для фильтрации, а не `require_permission`
 ‡ — проверяется через `WorkspacePermissionCheckerPort.has_permission` + выбрасывает `InsufficientProjectPermissionsException` вручную
+\¶ — если пользователь не является участником workspace, его можно добавить как гостя (`MembershipType.GUEST`) только с гостевой ролью (name=`guest`); при этом `membership_type` автоматически устанавливается в `GUEST`
 
 ---
 
@@ -179,6 +180,16 @@
 
 При отсутствии capability выбрасывается соответствующее исключение (`SprintCapabilityNotAvailableException`, `EpicCapabilityNotAvailableException`).
 
+### Гостевой доступ (Guest Access)
+
+Пользователи, не являющиеся участниками workspace, могут быть добавлены в проект как **гости** (`MembershipType.GUEST`). Это позволяет внешним пользователям просматривать проект и работать с назначенными им задачами без полного членства.
+
+Особенности гостевого доступа:
+- Гость может быть добавлен только с **гостевой ролью** (name=`guest`)
+- Гостевая роль предоставляет: `views.read`, `tasks.read`, `tasks.update_own`, `tasks.update_status`
+- `tasks.update_own` и `tasks.update_status` позволяют гостю-исполнителю обновлять свои задачи (через `_TASK_ASSIGNEE_PERMISSIONS`)
+- При попытке добавить не-workspace пользователя с негостевой ролью выбрасывается `MemberNotInWorkspaceException`
+
 ### Двойная проверка при работе с участниками
 
 Команды `DeactivateProjectMember` и `RemoveProjectMember` проверяют `is_owner` через агрегат `Project`, что влияет на логику удаления/деактивации в `ProjectMembership`.
@@ -186,6 +197,6 @@
 ### Кросс-BC интеграции
 
 - **`IdentityUserPort`** — проверка существования пользователя перед добавлением в проект (`AddProjectMember`, `CreateProject`).
-- **`WorkspaceMembershipPort`** — проверка членства в workspace перед добавлением в проект (`AddProjectMember`).
+- **`WorkspaceMembershipPort`** — проверка членства в workspace перед добавлением в проект (`AddProjectMember`). Если пользователь не в workspace — допустимо добавление только как гостя с гостевой ролью.
 - **`WorkspacePort`** — проверка существования workspace при создании проекта (`CreateProject`).
 - **`WorkspacePermissionCheckerPort`** — авторизация на уровне workspace для кросс-BC операций.

@@ -297,9 +297,9 @@ class CustomFieldDefinition:
 |---|---|---|
 | `owner` | `["project.*"]` | Полный доступ, управление владельцами |
 | `admin` | `["project.settings.*", "members.*", "workflow.*", "views.*", "automations.*"]` | Управление проектом |
-| `manager` | `["members.read", "workflow.*", "sprints.*", "epics.*", "milestones.*", "content.*"]` | Управление процессами |
-| `member` | `["content.*", "sprints.read", "views.read"]` | Работа с задачами |
-| `guest` | `["content.read", "views.read"]` | Только просмотр |
+| `manager` | `["members.read", "workflow.*", "sprints.*", "epics.*", "milestones.*", "views.read", "tasks.*"]` | Управление процессами |
+| `member` | `["sprints.read", "views.read", "tasks.create", "tasks.read", "tasks.update", "tasks.assign", "tasks.watch"]` | Работа с задачами |
+| `guest` | `["views.read", "tasks.read", "tasks.update_own", "tasks.update_status"]` | Просмотр + обновление своих задач |
 
 > Кастомные роли = `ProjectRole` с `is_system=False`.
 

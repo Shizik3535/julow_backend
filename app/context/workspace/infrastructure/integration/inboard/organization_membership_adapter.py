@@ -33,3 +33,6 @@ class OrganizationMembershipAdapter(OrganizationMembershipPort):
             }
             for dto in dtos
         ]
+
+    async def org_exists(self, org_id: str) -> bool:
+        return await self._provider.org_exists(org_id=org_id)

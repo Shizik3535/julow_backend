@@ -32,11 +32,11 @@ class TestProjectRoleProviderAdapter:
         assert len(result) >= 1
 
     async def test_has_permission(self, adapter, make_project_role) -> None:
-        role = await make_project_role(permissions=["content.read"])
-        result = await adapter.has_permission(str(role.id), "content.read")
+        role = await make_project_role(permissions=["tasks.read"])
+        result = await adapter.has_permission(str(role.id), "tasks.read")
         assert result is True
 
     async def test_has_permission_false(self, adapter, make_project_role) -> None:
-        role = await make_project_role(permissions=["content.read"])
-        result = await adapter.has_permission(str(role.id), "content.write")
+        role = await make_project_role(permissions=["tasks.read"])
+        result = await adapter.has_permission(str(role.id), "tasks.write")
         assert result is False

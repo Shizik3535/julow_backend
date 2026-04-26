@@ -3,6 +3,7 @@ from __future__ import annotations
 from app.shared.infrastructure.persistence.sqlalchemy_base_mapper import BaseMapper
 from app.context.project.domain.aggregates.project_membership import ProjectMembership
 from app.context.project.domain.entities.project_member import ProjectMember
+from app.context.project.domain.value_objects.membership_type import MembershipType
 from app.context.project.infrastructure.persistence.orm_models.project_membership_orm import (
     ProjectMembershipORM,
     ProjectMemberORM,
@@ -40,6 +41,7 @@ class ProjectMembershipMapper(BaseMapper[ProjectMembership, ProjectMembershipORM
             id=self._map_id(orm.id),
             user_id=self._map_id(orm.user_id),
             role_id=self._map_id(orm.role_id),
+            membership_type=MembershipType(orm.membership_type),
             joined_at=orm.joined_at,
             is_active=orm.is_active,
         )
@@ -50,6 +52,7 @@ class ProjectMembershipMapper(BaseMapper[ProjectMembership, ProjectMembershipORM
             membership_id=self._map_uuid(membership_id),
             user_id=self._map_uuid(member.user_id),
             role_id=self._map_uuid(member.role_id),
+            membership_type=member.membership_type.value,
             joined_at=member.joined_at,
             is_active=member.is_active,
         )

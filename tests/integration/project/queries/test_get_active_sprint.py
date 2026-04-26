@@ -15,8 +15,8 @@ class TestGetActiveSprintHandler:
     """Тесты GetActiveSprintHandler."""
 
     @pytest.fixture
-    def handler(self, sprint_repo) -> GetActiveSprintHandler:
-        return GetActiveSprintHandler(sprint_repo=sprint_repo)
+    def handler(self, sprint_repo, permission_checker_stub) -> GetActiveSprintHandler:
+        return GetActiveSprintHandler(sprint_repo=sprint_repo, permission_checker=permission_checker_stub)
 
     async def test_get_active_sprint_found(self, handler, sprint_repo, make_sprint) -> None:
         sprint = await make_sprint()
@@ -24,13 +24,13 @@ class TestGetActiveSprintHandler:
         sprint.clear_domain_events()
         await sprint_repo.update(sprint)
 
-        query = GetActiveSprintQuery(project_id=str(sprint.project_id))
+        query = GetActiveSprintQuery(caller_id=str(Id.generate()), project_id=str(sprint.project_id))
         result = await handler.handle(query)
         assert result is not None
         assert result.status == "active"
 
     async def test_get_active_sprint_not_found(self, handler, make_sprint) -> None:
         sprint = await make_sprint()  # PLANNING, not active
-        query = GetActiveSprintQuery(project_id=str(sprint.project_id))
+        query = GetActiveSprintQuery(caller_id=str(Id.generate()), project_id=str(sprint.project_id))
         with pytest.raises(SprintNotFoundException):
             await handler.handle(query)

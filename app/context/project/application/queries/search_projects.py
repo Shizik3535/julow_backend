@@ -35,11 +35,15 @@ class SearchProjectsHandler(BaseQueryHandler[SearchProjectsQuery, ProjectListDTO
         self._permission_checker = permission_checker
 
     async def handle(self, query: SearchProjectsQuery) -> ProjectListDTO:
+        filters: dict[str, Any] = query.filters or {}
+        if query.search_text:
+            filters["query"] = query.search_text
+        if query.workspace_id:
+            filters["workspace_id"] = query.workspace_id
         projects = await self._project_repo.search(
-            search_text=query.search_text,
-            workspace_id=Id.from_string(query.workspace_id) if query.workspace_id else None,
             offset=query.offset,
             limit=query.limit,
+            filters=filters if filters else None,
         )
         accessible = []
         for p in projects:

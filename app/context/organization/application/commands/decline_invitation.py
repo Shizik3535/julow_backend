@@ -4,6 +4,11 @@ from app.shared.application.base_command import BaseCommand
 from app.shared.application.base_command_handler import BaseCommandHandler
 from app.shared.application.messaging.domain_event_bus import DomainEventBus
 from app.shared.domain.value_objects.id_vo import Id
+from app.context.organization.application.exceptions.authorization_exceptions import InsufficientOrgPermissionsException
+from app.context.organization.application.ports.authorization.org_permission_checker_port import (
+    OrgPermissionCheckerPort,
+)
+from app.context.organization.application.ports.integration.inboard.identity_user_port import IdentityUserPort
 from app.context.organization.domain.exceptions.invitation_exceptions import InvitationNotFoundException
 from app.context.organization.domain.repositories.invitation_repository import InvitationRepository
 
@@ -14,25 +19,34 @@ class DeclineInvitationCommand(BaseCommand):
 
     Атрибуты:
         invitation_id: ID приглашения.
+        user_id: ID пользователя, отклоняющего приглашение.
     """
 
     invitation_id: str
+    user_id: str
 
 
 class DeclineInvitationHandler(BaseCommandHandler[DeclineInvitationCommand, None]):
     """
     Обработчик отклонения приглашения.
 
-    Загружает Invitation, вызывает decline, сохраняет.
+    Авторизация: отклонить может только адресат приглашения
+    (email совпадает) ИЛИ пользователь с разрешением members.invite.
     """
+
+    REQUIRED_PERMISSION = "members.invite"
 
     def __init__(
         self,
         invitation_repo: InvitationRepository,
+        identity_port: IdentityUserPort,
+        permission_checker: OrgPermissionCheckerPort,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
         self._invitation_repo = invitation_repo
+        self._identity_port = identity_port
+        self._permission_checker = permission_checker
         self._event_bus = event_bus
 
     async def handle(self, command: DeclineInvitationCommand) -> None:
@@ -40,6 +54,20 @@ class DeclineInvitationHandler(BaseCommandHandler[DeclineInvitationCommand, None
         if invitation is None:
             raise InvitationNotFoundException(command.invitation_id)
 
-        invitation.decline()
+        # Проверка: адресат приглашения (email совпадает) или members.invite
+        is_invitee = False
+        if invitation.email is not None:
+            user_data = await self._identity_port.get_user(command.user_id)
+            if user_data and user_data.get("email") == str(invitation.email):
+                is_invitee = True
+
+        if not is_invitee:
+            await self._permission_checker.require_permission(
+                user_id=Id.from_string(command.user_id),
+                org_id=invitation.org_id,
+                permission=self.REQUIRED_PERMISSION,
+            )
+
+        invitation.decline(user_id=Id.from_string(command.user_id))
         await self._invitation_repo.update(invitation)
         await self._event_bus.publish_all(invitation.clear_domain_events())

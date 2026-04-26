@@ -32,6 +32,11 @@ from app.context.workspace.domain.exceptions.workspace_exceptions import (
     WorkspaceSuspendedException,
     WorkspaceArchivedException,
     CannotArchiveWithChildrenException,
+    WorkspaceAlreadyArchivedException,
+    WorkspaceNotArchivedException,
+    WorkspaceAlreadySuspendedException,
+    WorkspaceNotSuspendedException,
+    WorkspaceDeletionAlreadyRequestedException,
 )
 
 
@@ -199,6 +204,8 @@ class Workspace(AggregateRoot):
 
     def archive(self) -> None:
         """Архивирует workspace. Нельзя архивировать с активными дочерними (проверка на app-слое)."""
+        if self.status == WorkspaceStatus.ARCHIVED:
+            raise WorkspaceAlreadyArchivedException()
         self._assert_can_modify()
         self.status = WorkspaceStatus.ARCHIVED
         self.updated_at = datetime.now(tz=timezone.utc)
@@ -209,7 +216,7 @@ class Workspace(AggregateRoot):
     def restore(self) -> None:
         """Восстанавливает workspace из архива."""
         if self.status != WorkspaceStatus.ARCHIVED:
-            return
+            raise WorkspaceNotArchivedException()
         self.status = WorkspaceStatus.ACTIVE
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(
@@ -220,7 +227,7 @@ class Workspace(AggregateRoot):
         """Приостанавливает workspace."""
         self._assert_not_pending_deletion()
         if self.status == WorkspaceStatus.SUSPENDED:
-            return
+            raise WorkspaceAlreadySuspendedException()
         self.status = WorkspaceStatus.SUSPENDED
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(
@@ -230,7 +237,7 @@ class Workspace(AggregateRoot):
     def reactivate(self) -> None:
         """Реактивирует workspace."""
         if self.status != WorkspaceStatus.SUSPENDED:
-            return
+            raise WorkspaceNotSuspendedException()
         self.status = WorkspaceStatus.ACTIVE
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(
@@ -239,6 +246,8 @@ class Workspace(AggregateRoot):
 
     def request_deletion(self) -> None:
         """Запрашивает удаление workspace."""
+        if self.status == WorkspaceStatus.PENDING_DELETION:
+            raise WorkspaceDeletionAlreadyRequestedException()
         self._assert_can_modify()
         self.status = WorkspaceStatus.PENDING_DELETION
         self.updated_at = datetime.now(tz=timezone.utc)

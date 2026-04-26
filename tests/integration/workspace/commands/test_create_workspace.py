@@ -24,10 +24,11 @@ class TestCreateWorkspaceHandler:
     """Тесты CreateWorkspaceHandler."""
 
     @pytest.fixture
-    def handler(self, ws_repo, ws_membership_repo) -> CreateWorkspaceHandler:
+    def handler(self, ws_repo, ws_membership_repo, ws_role_repo) -> CreateWorkspaceHandler:
         return CreateWorkspaceHandler(
             ws_repo=ws_repo,
             membership_repo=ws_membership_repo,
+            role_repo=ws_role_repo,
             identity_port=_StubIdentityUserPort(),
             org_permission_checker=_AlwaysAllowOrgPermissionChecker(),
             event_bus=_NoopEventBus(),
@@ -68,7 +69,7 @@ class TestCreateWorkspaceHandler:
         assert ws is not None
         assert ws.organization_id == org_id
 
-    async def test_create_workspace_user_not_found(self, ws_repo, ws_membership_repo) -> None:
+    async def test_create_workspace_user_not_found(self, ws_repo, ws_membership_repo, ws_role_repo) -> None:
         class _NoUserPort(_StubIdentityUserPort):
             async def user_exists(self, user_id: str) -> bool:
                 return False
@@ -76,6 +77,7 @@ class TestCreateWorkspaceHandler:
         handler = CreateWorkspaceHandler(
             ws_repo=ws_repo,
             membership_repo=ws_membership_repo,
+            role_repo=ws_role_repo,
             identity_port=_NoUserPort(),
             org_permission_checker=_AlwaysAllowOrgPermissionChecker(),
             event_bus=_NoopEventBus(),
@@ -88,7 +90,7 @@ class TestCreateWorkspaceHandler:
         with pytest.raises(UserNotFoundException):
             await handler.handle(cmd)
 
-    async def test_create_workspace_insufficient_org_permission(self, ws_repo, ws_membership_repo) -> None:
+    async def test_create_workspace_insufficient_org_permission(self, ws_repo, ws_membership_repo, ws_role_repo) -> None:
         class _DenyOrgChecker(_AlwaysAllowOrgPermissionChecker):
             async def has_permission(self, user_id: str, org_id: str, permission: str) -> bool:
                 return False
@@ -96,6 +98,7 @@ class TestCreateWorkspaceHandler:
         handler = CreateWorkspaceHandler(
             ws_repo=ws_repo,
             membership_repo=ws_membership_repo,
+            role_repo=ws_role_repo,
             identity_port=_StubIdentityUserPort(),
             org_permission_checker=_DenyOrgChecker(),
             event_bus=_NoopEventBus(),

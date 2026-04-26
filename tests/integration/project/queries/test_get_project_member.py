@@ -14,14 +14,15 @@ class TestGetProjectMemberHandler:
     """Тесты GetProjectMemberHandler."""
 
     @pytest.fixture
-    def handler(self, membership_repo) -> GetProjectMemberHandler:
-        return GetProjectMemberHandler(membership_repo=membership_repo)
+    def handler(self, membership_repo, permission_checker_stub) -> GetProjectMemberHandler:
+        return GetProjectMemberHandler(membership_repo=membership_repo, permission_checker=permission_checker_stub)
 
     async def test_get_member_found(self, handler, make_project_with_membership) -> None:
         data = await make_project_with_membership()
         owner_id = data["owner_id"]
 
         query = GetProjectMemberQuery(
+            caller_id=str(owner_id),
             project_id=str(data["project"].id),
             user_id=str(owner_id),
         )
@@ -31,6 +32,7 @@ class TestGetProjectMemberHandler:
     async def test_get_member_not_found(self, handler, make_project_with_membership) -> None:
         data = await make_project_with_membership()
         query = GetProjectMemberQuery(
+            caller_id=str(data["owner_id"]),
             project_id=str(data["project"].id),
             user_id=str(Id.generate()),
         )

@@ -26,15 +26,15 @@ class TestUpdateProjectRoleHandler:
         )
 
     async def test_update_role_permissions(self, handler, role_repo, make_project_role) -> None:
-        role = await make_project_role(permissions=["content.read"])
+        role = await make_project_role(permissions=["tasks.read"])
         cmd = UpdateProjectRoleCommand(
             caller_id=str(Id.generate()),
             project_id=str(role.project_id) if role.project_id else str(Id.generate()),
             role_id=str(role.id),
-            permissions=["content.read", "content.write", "tasks.*"],
+            permissions=["tasks.read", "tasks.write", "members.*"],
         )
         await handler.handle(cmd)
 
         found = await role_repo.get_by_id(role.id)
         assert found is not None
-        assert "tasks.*" in found.permissions
+        assert "members.*" in found.permissions

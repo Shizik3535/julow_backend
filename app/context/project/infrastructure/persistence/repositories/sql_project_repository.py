@@ -81,11 +81,17 @@ class SqlProjectRepository(
         result = await self._session.execute(stmt)
         return [await self._to_domain_with_owners(orm) for orm in result.scalars().all()]
 
-    async def search(self, query: str, workspace_id: Id | None = None) -> list[Project]:
-        stmt = select(ProjectORM).where(ProjectORM.name.ilike(f"%{query}%"))
-        if workspace_id is not None:
-            uuid_val = self._mapper._map_uuid(workspace_id)
-            stmt = stmt.where(ProjectORM.workspace_id == uuid_val)
+    async def search(self, offset: int = 0, limit: int = 100, filters: dict | None = None) -> list[Project]:
+        stmt = select(ProjectORM)
+        if filters:
+            search_text = filters.get("query") or filters.get("search_text")
+            if search_text:
+                stmt = stmt.where(ProjectORM.name.ilike(f"%{search_text}%"))
+            workspace_id = filters.get("workspace_id")
+            if workspace_id is not None:
+                uuid_val = self._mapper._map_uuid(Id.from_string(str(workspace_id)))
+                stmt = stmt.where(ProjectORM.workspace_id == uuid_val)
+        stmt = stmt.offset(offset).limit(limit)
         result = await self._session.execute(stmt)
         return [await self._to_domain_with_owners(orm) for orm in result.scalars().all()]
 

@@ -25,6 +25,9 @@ class _StubOrgMembershipPort:
     async def get_org_members(self, org_id: str) -> list[dict]:
         return []
 
+    async def org_exists(self, org_id: str) -> bool:
+        return True
+
 
 class _DenyOrgMembershipPort:
     """Stub: никто не является членом организации."""
@@ -34,6 +37,9 @@ class _DenyOrgMembershipPort:
 
     async def get_org_members(self, org_id: str) -> list[dict]:
         return []
+
+    async def org_exists(self, org_id: str) -> bool:
+        return True
 
 
 @pytest.mark.integration

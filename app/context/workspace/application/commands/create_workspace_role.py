@@ -8,6 +8,7 @@ from app.context.workspace.application.dto.workspace_role_dto import WorkspaceRo
 from app.context.workspace.application.ports.authorization.workspace_permission_checker_port import (
     WorkspacePermissionCheckerPort,
 )
+from app.context.workspace.application.exceptions.role_app_exceptions import DuplicateRoleNameException
 from app.context.workspace.domain.aggregates.workspace_role import WorkspaceRole
 from app.context.workspace.domain.exceptions.workspace_exceptions import WorkspaceNotFoundException
 from app.context.workspace.domain.repositories.workspace_role_repository import WorkspaceRoleRepository
@@ -62,6 +63,11 @@ class CreateWorkspaceRoleHandler(BaseCommandHandler[CreateWorkspaceRoleCommand, 
             workspace_id=ws_id,
             permission=self.REQUIRED_PERMISSION,
         )
+        existing_roles = await self._role_repo.get_by_workspace(ws_id)
+        for r in existing_roles:
+            if r.name == command.name:
+                raise DuplicateRoleNameException(command.name, command.workspace_id)
+
         role = WorkspaceRole.create_custom(
             workspace_id=Id.from_string(command.workspace_id),
             name=command.name,

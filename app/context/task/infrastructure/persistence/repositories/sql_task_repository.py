@@ -355,3 +355,18 @@ class SqlTaskRepository(SqlAlchemyRepository[Task, TaskORM], TaskRepository):
         )
         result = await self._session.execute(stmt)
         return result.scalar_one() > 0
+
+    async def is_assignee_in_project(self, project_id: Id, user_id: Id) -> bool:
+        """Проверить, является ли пользователь исполнителем хотя бы одной задачи проекта."""
+        project_uuid = self._mapper._map_uuid(project_id)
+        user_uuid = self._mapper._map_uuid(user_id)
+        user_uuid_str = str(user_uuid)
+
+        stmt = select(func.count()).select_from(TaskORM).where(
+            and_(
+                TaskORM.project_id == project_uuid,
+                type_coerce(TaskORM.assignee_ids, JSONB).astext.contains(user_uuid_str),
+            )
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar_one() > 0

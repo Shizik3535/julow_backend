@@ -65,6 +65,7 @@ class GetInvitationsByOrgHandler(BaseQueryHandler[GetInvitationsByOrgQuery, Invi
                 invited_at=inv.invited_at,
                 status=inv.status.value,
                 approved_by=str(inv.approved_by) if inv.approved_by else None,
+                user_id=str(inv.user_id) if inv.user_id else None,
                 created_at=inv.created_at,
                 updated_at=inv.updated_at,
             )

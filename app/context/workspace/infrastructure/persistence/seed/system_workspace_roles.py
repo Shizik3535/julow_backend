@@ -30,6 +30,7 @@ SYSTEM_WORKSPACE_ROLES: list[dict[str, object]] = [
         "workspace_id": None,
         "name": "admin",
         "permissions": [
+            "ws.read",
             "ws.settings.*",
             "members.*",
             "roles.*",
@@ -46,11 +47,11 @@ SYSTEM_WORKSPACE_ROLES: list[dict[str, object]] = [
         "workspace_id": None,
         "name": "manager",
         "permissions": [
+            "ws.read",
             "members.read",
             "teams.*",
             "projects.read",
             "projects.members.*",
-            "projects.content.*",
             "projects.workflow.read",
             "projects.tasks.*",
         ],
@@ -62,9 +63,9 @@ SYSTEM_WORKSPACE_ROLES: list[dict[str, object]] = [
         "workspace_id": None,
         "name": "member",
         "permissions": [
+            "ws.read",
             "members.read",
             "projects.read",
-            "projects.content.*",
             "projects.tasks.read",
             "projects.tasks.create",
             "projects.tasks.update",

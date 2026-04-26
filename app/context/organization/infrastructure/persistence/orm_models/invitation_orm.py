@@ -24,7 +24,7 @@ class InvitationORM(BaseORMModel):
     invited_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")
     approved_by: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
-
+    user_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True, index=True)
     # --- Embedded InvitationToken VO ---
     link_value: Mapped[str | None] = mapped_column(String(512), nullable=True, unique=True)
     link_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

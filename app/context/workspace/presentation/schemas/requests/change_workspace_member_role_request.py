@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -13,4 +15,4 @@ class ChangeWorkspaceMemberRoleRequest(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    new_role_id: str = Field(..., description="UUID новой роли", examples=["role-uuid"])
+    new_role_id: UUID = Field(..., description="UUID новой роли", examples=["role-uuid"])

@@ -120,3 +120,53 @@ class WorkspaceLimitExceededException(BusinessRuleViolationException):
             rule="WorkspaceLimit",
             message=f"Лимит workspace превышен{f': {limit_name}' if limit_name else ''}",
         )
+
+
+class WorkspaceAlreadyArchivedException(BusinessRuleViolationException):
+    """Workspace уже архивирован."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="WorkspaceAlreadyArchived",
+            message="Workspace уже архивирован",
+        )
+
+
+class WorkspaceNotArchivedException(BusinessRuleViolationException):
+    """Workspace не в архиве."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="WorkspaceNotArchived",
+            message="Workspace не в архиве",
+        )
+
+
+class WorkspaceAlreadySuspendedException(BusinessRuleViolationException):
+    """Workspace уже приостановлен."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="WorkspaceAlreadySuspended",
+            message="Workspace уже приостановлен",
+        )
+
+
+class WorkspaceNotSuspendedException(BusinessRuleViolationException):
+    """Workspace не приостановлен."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="WorkspaceNotSuspended",
+            message="Workspace не приостановлен",
+        )
+
+
+class WorkspaceDeletionAlreadyRequestedException(BusinessRuleViolationException):
+    """Запрос на удаление workspace уже отправлен."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="WorkspaceDeletionAlreadyRequested",
+            message="Запрос на удаление workspace уже отправлен",
+        )

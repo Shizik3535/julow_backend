@@ -23,7 +23,6 @@
 | Команда | Handler | Описание |
 |---|---|---|
 | `AcceptInvitationCommand` | `AcceptInvitationHandler` | Принятие приглашения. Доступно любому аутентифицированному пользователю по `invitation_id`. Проверяется только существование пользователя через `IdentityUserPort`. |
-| `DeclineInvitationCommand` | `DeclineInvitationHandler` | Отклонение приглашения. Доступно без проверки роли. |
 | `CreateOrganizationCommand` | `CreateOrganizationHandler` | Создание организации. Доступно любому аутентифицированному пользователю. Проверяется существование пользователя через `IdentityUserPort`. |
 
 ### Команды с проверкой разрешений
@@ -41,6 +40,7 @@
 | `CreateOrgRoleCommand` | `CreateOrgRoleHandler` | `roles.write` | — |
 | `CreateTeamCommand` | `CreateTeamHandler` | `teams.write` | — |
 | `DeactivateOrgMemberCommand` | `DeactivateOrgMemberHandler` | `members.write` | Проверяется, является ли деактивируемый пользователь владельцем (`is_owner`) — влияет на логику деактивации |
+| `DeclineInvitationCommand` | `DeclineInvitationHandler` | `members.invite`† | Адресат приглашения (email совпадает) может отклонить без разрешения; иначе требуется `members.invite` |
 | `DeactivateSSOIntegrationCommand` | `DeactivateSSOIntegrationHandler` | `org.settings.write` | — |
 | `DeactivateTeamCommand` | `DeactivateTeamHandler` | `teams.write` | — |
 | `DeleteDepartmentCommand` | `DeleteDepartmentHandler` | `departments.write` | — |
@@ -115,7 +115,7 @@
 | `org.read` | — | `GetOrganization`, `GetOrganizationsByOwner`*, `SearchOrganizations`* |
 | `members.write` | `AddOrgMember`, `ChangeOrgMemberRole`, `DeactivateOrgMember`, `ReactivateOrgMember`, `RemoveOrgMember`, `UpdateOrgMemberDisplayName` | — |
 | `members.read` | — | `GetOrgMember`, `GetOrgMembers` |
-| `members.invite` | `GenerateInvitationLink`, `RevokeInvitation`, `SendBulkInvitations`, `SendInvitation` | — |
+| `members.invite` | `DeclineInvitation`†, `GenerateInvitationLink`, `RevokeInvitation`, `SendBulkInvitations`, `SendInvitation` | — |
 | `invitations.read` | — | `GetInvitationsByOrg` |
 | `departments.write` | `AddDepartmentMember`, `CreateDepartment`, `DeleteDepartment`, `RemoveDepartmentMember`, `UpdateDepartment` | — |
 | `departments.read` | — | `GetDepartment`, `GetDepartmentsByOrg` |
@@ -123,6 +123,7 @@
 | `teams.read` | — | `GetTeam`, `GetTeamsByOrg` |
 | `roles.write` | `CreateOrgRole`, `DeleteOrgRole`, `UpdateOrgRole` | — |
 | `roles.read` | — | `GetOrgRole`, `GetOrgRoles` |
-| Без проверки | `AcceptInvitation`, `DeclineInvitation`, `CreateOrganization` | `GetInvitationByToken` |
+| Без проверки | `AcceptInvitation`, `CreateOrganization` | `GetInvitationByToken` |
 
 \* — используют `has_permission` для фильтрации, а не `require_permission`
+† — `members.invite` требуется только если отклоняющий не является адресатом приглашения (email совпадает)

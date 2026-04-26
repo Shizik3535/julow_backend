@@ -33,6 +33,7 @@ class InvitationDTO(BaseDTO):
     invited_at: datetime
     status: str = "PENDING"
     approved_by: str | None = None
+    user_id: str | None = None
     created_at: datetime
     updated_at: datetime
 

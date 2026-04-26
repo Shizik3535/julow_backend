@@ -16,6 +16,9 @@ class _StubOrgMembershipProvider:
 
     async def is_member(self, user_id: str, org_id: str) -> bool:
         return self._is_member
+    
+    async def org_exists(self, org_id: str) -> bool:
+        return True
 
 
 @pytest.mark.integration

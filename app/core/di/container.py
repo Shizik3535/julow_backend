@@ -450,6 +450,7 @@ class Container(containers.DeclarativeContainer):
     org_membership_provider = providers.Factory(
         create_organization_membership_provider,
         repo=org_membership_repo,
+        org_repo=organization_repo,
     )
 
     # Organization BC - BC-specific adapters

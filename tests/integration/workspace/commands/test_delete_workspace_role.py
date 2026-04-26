@@ -35,7 +35,7 @@ class TestDeleteWorkspaceRoleHandler:
         await handler.handle(cmd)
 
         found = await ws_role_repo.get_by_id(role.id)
-        assert found is not None
+        assert found is None
 
     async def test_delete_system_role_raises(self, ws_role_repo) -> None:
         from app.context.workspace.domain.aggregates.workspace_role import WorkspaceRole

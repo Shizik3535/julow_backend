@@ -6,6 +6,9 @@ from app.shared.application.application_exceptions import ApplicationException
 class MemberAlreadyExistsException(ApplicationException):
     """Пользователь уже является участником workspace."""
 
+    http_status_code = 409
+    error_code = "MEMBER_ALREADY_EXISTS"
+
     def __init__(self, user_id: str, workspace_id: str) -> None:
         super().__init__(
             f"Пользователь {user_id} уже является участником workspace {workspace_id}"

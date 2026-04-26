@@ -33,6 +33,7 @@ class InvitationMapper(BaseMapper[Invitation, InvitationORM]):
             invited_at=orm_model.invited_at,
             status=InvitationStatus(orm_model.status),
             approved_by=self._map_id(orm_model.approved_by) if orm_model.approved_by else None,
+            user_id=self._map_id(orm_model.user_id) if orm_model.user_id else None,
             created_at=orm_model.created_at,
             updated_at=orm_model.updated_at,
         )
@@ -47,6 +48,7 @@ class InvitationMapper(BaseMapper[Invitation, InvitationORM]):
             invited_at=aggregate.invited_at,
             status=aggregate.status.value,
             approved_by=self._map_uuid(aggregate.approved_by) if aggregate.approved_by else None,
+            user_id=self._map_uuid(aggregate.user_id) if aggregate.user_id else None,
             # InvitationToken
             link_value=aggregate.link.value if aggregate.link else None,
             link_expires_at=aggregate.link.expires_at if aggregate.link else None,

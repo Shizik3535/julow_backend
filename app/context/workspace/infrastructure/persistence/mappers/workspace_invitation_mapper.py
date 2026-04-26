@@ -29,6 +29,7 @@ class WorkspaceInvitationMapper(BaseMapper[WorkspaceInvitation, WorkspaceInvitat
             invited_at=orm_model.invited_at,
             status=InvitationStatus(orm_model.status),
             approved_by=self._map_id(orm_model.approved_by) if orm_model.approved_by else None,
+            user_id=self._map_id(orm_model.user_id) if orm_model.user_id else None,
             created_at=orm_model.created_at,
             updated_at=orm_model.updated_at,
         )
@@ -50,6 +51,7 @@ class WorkspaceInvitationMapper(BaseMapper[WorkspaceInvitation, WorkspaceInvitat
             invited_at=aggregate.invited_at,
             status=aggregate.status.value,
             approved_by=self._map_uuid(aggregate.approved_by) if aggregate.approved_by else None,
+            user_id=self._map_uuid(aggregate.user_id) if aggregate.user_id else None,
             created_at=aggregate.created_at,
             updated_at=aggregate.updated_at,
         )

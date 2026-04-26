@@ -10,3 +10,7 @@ class AddProjectMemberRequest(BaseModel):
 
     user_id: str = Field(..., description="UUID пользователя для добавления")
     role_id: str = Field(..., description="UUID роли проекта")
+    membership_type: str = Field(
+        default="STANDARD",
+        description="Тип членства (STANDARD или GUEST)",
+    )

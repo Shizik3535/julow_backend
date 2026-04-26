@@ -66,3 +66,7 @@ class TaskRepository(RepositoryPort[Task]):
     @abstractmethod
     async def is_participant_in_project(self, project_id: Id, user_id: Id) -> bool:
         """Проверить, является ли пользователь участником задач проекта (assignee, reporter, watcher)."""
+
+    @abstractmethod
+    async def is_assignee_in_project(self, project_id: Id, user_id: Id) -> bool:
+        """Проверить, является ли пользователь исполнителем хотя бы одной задачи проекта."""

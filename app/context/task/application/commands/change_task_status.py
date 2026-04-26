@@ -37,7 +37,7 @@ class ChangeTaskStatusHandler(BaseCommandHandler[ChangeTaskStatusCommand, None])
     Валидирует переход через BoardPort.is_transition_allowed.
     """
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_status"
 
     def __init__(
         self,

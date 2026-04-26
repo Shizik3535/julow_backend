@@ -21,6 +21,7 @@ class RevokeWorkspaceInvitationCommand(BaseCommand):
     """
 
     caller_id: str
+    workspace_id: str
     invitation_id: str
 
 
@@ -41,15 +42,17 @@ class RevokeWorkspaceInvitationHandler(BaseCommandHandler[RevokeWorkspaceInvitat
         self._event_bus = event_bus
 
     async def handle(self, command: RevokeWorkspaceInvitationCommand) -> None:
-        invitation = await self._invitation_repo.get_by_id(Id.from_string(command.invitation_id))
-        if invitation is None:
-            raise InvitationNotFoundException(command.invitation_id)
+        ws_id = Id.from_string(command.workspace_id)
 
         await self._permission_checker.require_permission(
             user_id=Id.from_string(command.caller_id),
-            workspace_id=invitation.workspace_id,
+            workspace_id=ws_id,
             permission=self.REQUIRED_PERMISSION,
         )
+
+        invitation = await self._invitation_repo.get_by_id(Id.from_string(command.invitation_id))
+        if invitation is None:
+            raise InvitationNotFoundException(command.invitation_id)
 
         invitation.revoke()
         await self._invitation_repo.update(invitation)

@@ -7,7 +7,6 @@ from app.context.workspace.application.queries.get_workspace_invitations import 
     GetWorkspaceInvitationsQuery,
     GetWorkspaceInvitationsHandler,
 )
-from tests.integration.workspace.conftest import _AlwaysAllowPermissionChecker
 
 
 @pytest.mark.integration
@@ -15,10 +14,11 @@ class TestGetWorkspaceInvitationsHandler:
     """Тесты GetWorkspaceInvitationsHandler."""
 
     @pytest.fixture
-    def handler(self, ws_invitation_repo) -> GetWorkspaceInvitationsHandler:
+    def handler(self, ws_invitation_repo, ws_repo, permission_checker_stub) -> GetWorkspaceInvitationsHandler:
         return GetWorkspaceInvitationsHandler(
             invitation_repo=ws_invitation_repo,
-            permission_checker=_AlwaysAllowPermissionChecker(),
+            ws_repo=ws_repo,
+            permission_checker=permission_checker_stub,
         )
 
     async def test_get_invitations_found(self, handler, make_workspace_invitation) -> None:
@@ -30,9 +30,10 @@ class TestGetWorkspaceInvitationsHandler:
 
         assert result.total >= 1
 
-    async def test_get_invitations_empty(self, handler) -> None:
+    async def test_get_invitations_empty(self, handler, make_workspace) -> None:
+        ws = await make_workspace()
         query = GetWorkspaceInvitationsQuery(
-            caller_id=str(Id.generate()), workspace_id=str(Id.generate()),
+            caller_id=str(Id.generate()), workspace_id=str(ws.id),
         )
         result = await handler.handle(query)
 

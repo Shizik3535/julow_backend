@@ -37,7 +37,7 @@ class SetActualEffortCommand(BaseCommand):
 class SetActualEffortHandler(BaseCommandHandler[SetActualEffortCommand, None]):
     """Обработчик установки фактического усилия."""
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(
         self,

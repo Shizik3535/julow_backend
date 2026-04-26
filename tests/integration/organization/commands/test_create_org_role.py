@@ -27,11 +27,11 @@ class TestCreateOrgRoleHandler:
             caller_id=str(Id.generate()),
             org_id=str(org.id),
             name="editor",
-            permissions=["content.*"],
+            permissions=["teams.*"],
             scope="org",
-            description="Content editor",
+            description="Team manager",
         )
         result = await handler.handle(cmd)
         assert isinstance(result, OrgRoleDTO)
         assert result.name == "editor"
-        assert result.permissions == ["content.*"]
+        assert result.permissions == ["teams.*"]

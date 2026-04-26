@@ -40,6 +40,7 @@ from app.context.project.presentation.dependencies import (
     get_project_membership_repository,
     get_project_permission_checker,
     get_project_repository,
+    get_project_role_repository,
     get_project_workspace_membership_port,
 )
 from app.context.project.presentation.schemas.requests.add_project_member_request import (
@@ -132,6 +133,7 @@ class ProjectMemberController(BaseController):
         caller_id: str = Depends(get_current_user_id),
         project_repo=Depends(get_project_repository),
         membership_repo=Depends(get_project_membership_repository),
+        role_repo=Depends(get_project_role_repository),
         identity_port=Depends(get_project_identity_user_port),
         workspace_membership_port=Depends(get_project_workspace_membership_port),
         permission_checker=Depends(get_project_permission_checker),
@@ -139,13 +141,14 @@ class ProjectMemberController(BaseController):
     ) -> MessageResponse:
         handler = AddProjectMemberHandler(
             project_repo=project_repo, membership_repo=membership_repo,
+            role_repo=role_repo,
             identity_port=identity_port, workspace_membership_port=workspace_membership_port,
             permission_checker=permission_checker, event_bus=event_bus,
         )
         await handler.handle(AddProjectMemberCommand(
             caller_id=caller_id, project_id=project_id,
             user_id=body.user_id, role_id=body.role_id,
-            invited_by=caller_id,
+            invited_by=caller_id, membership_type=body.membership_type,
         ))
         return SuccessResponse(data={"message": "Участник добавлен в проект"})
 

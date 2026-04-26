@@ -28,6 +28,7 @@ class TestRevokeWorkspaceInvitationHandler:
         inv = await make_workspace_invitation()
         cmd = RevokeWorkspaceInvitationCommand(
             caller_id=str(Id.generate()),
+            workspace_id=str(inv.workspace_id),
             invitation_id=str(inv.id),
         )
         await handler.handle(cmd)
@@ -39,6 +40,7 @@ class TestRevokeWorkspaceInvitationHandler:
     async def test_revoke_not_found(self, handler) -> None:
         cmd = RevokeWorkspaceInvitationCommand(
             caller_id=str(Id.generate()),
+            workspace_id=str(Id.generate()),
             invitation_id=str(Id.generate()),
         )
         with pytest.raises(InvitationNotFoundException):

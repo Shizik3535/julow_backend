@@ -304,10 +304,10 @@ Organization
 
 | name | permissions | Описание |
 |---|---|---|
-| `owner` | `workspace.*` | Полный доступ, управление владельцами |
-| `admin` | `workspace.settings.*`, `members.*`, `teams.*`, `projects.*`, `content.*` | Управление workspace |
-| `moderator` | `members.read`, `members.invite`, `content.*`, `teams.*` | Ограниченное управление |
-| `member` | `self.*`, `content.read`, `projects.read`, `teams.read` | Базовый доступ |
+| `owner` | `ws.*` | Полный доступ, управление владельцами |
+| `admin` | `ws.settings.*`, `members.*`, `roles.*`, `teams.*`, `projects.*`, `projects.tasks.*` | Управление workspace |
+| `manager` | `members.read`, `teams.*`, `projects.read`, `projects.members.*`, `projects.workflow.read`, `projects.tasks.*` | Управление командами и процессами проектов |
+| `member` | `members.read`, `projects.read`, `projects.tasks.read`, `projects.tasks.create`, `projects.tasks.update`, `projects.tasks.assign`, `projects.tasks.watch` | Базовый доступ к workspace и проектам |
 
 > Кастомные роли создаются админами/владельцами workspace с `is_system=False`. Примеры: `guest` (только чтение), `contractor` (ограниченный доступ), `viewer` (просмотр без редактирования).
 

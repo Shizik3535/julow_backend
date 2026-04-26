@@ -6,13 +6,15 @@ from app.context.organization.application.ports.integration.outboard.organizatio
     OrganizationMembershipProvider,
 )
 from app.context.organization.domain.repositories.org_membership_repository import OrgMembershipRepository
+from app.context.organization.domain.repositories.organization_repository import OrganizationRepository
 
 
 class OrganizationMembershipProviderAdapter(OrganizationMembershipProvider):
     """Реализация OrganizationMembershipProvider (outboard) — предоставляет данные о членстве другим BC."""
 
-    def __init__(self, repo: OrgMembershipRepository) -> None:
+    def __init__(self, repo: OrgMembershipRepository, org_repo: OrganizationRepository | None = None) -> None:
         self._repo = repo
+        self._org_repo = org_repo
 
     async def is_member(self, user_id: str, org_id: str) -> bool:
         member = await self._repo.get_member_by_org_and_user(
@@ -44,3 +46,11 @@ class OrganizationMembershipProviderAdapter(OrganizationMembershipProvider):
             )
             for m in members
         ]
+
+    async def org_exists(self, org_id: str) -> bool:
+        if self._org_repo is None:
+            # Fallback: check via membership aggregate existence
+            membership = await self._repo.get_by_org_id(Id.from_string(org_id))
+            return membership is not None
+        org = await self._org_repo.get_by_id(Id.from_string(org_id))
+        return org is not None

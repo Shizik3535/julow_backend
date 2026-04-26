@@ -32,7 +32,7 @@ class ChangeTaskTypeCommand(BaseCommand):
 class ChangeTaskTypeHandler(BaseCommandHandler[ChangeTaskTypeCommand, None]):
     """Обработчик смены типа задачи."""
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(
         self,

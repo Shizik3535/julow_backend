@@ -28,3 +28,4 @@ class WorkspaceInvitationORM(BaseORMModel):
     invited_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="pending")
     approved_by: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True, index=True)

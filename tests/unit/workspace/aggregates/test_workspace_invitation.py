@@ -33,6 +33,7 @@ class TestEmailInvitationCreation:
         assert email_invitation.email == any_email
         assert email_invitation.link is None
         assert email_invitation.status == InvitationStatus.PENDING
+        assert email_invitation.user_id is None
 
     def test_create_email_invitation_emits_sent(self, email_invitation: WorkspaceInvitation) -> None:
         events = email_invitation.clear_domain_events()
@@ -74,12 +75,14 @@ class TestInvitationAccept:
         user_id = IdFactory()
         email_invitation.accept(user_id)
         assert email_invitation.status == InvitationStatus.ACCEPTED
+        assert email_invitation.user_id == user_id
 
     def test_accept_emits_accepted(self, email_invitation: WorkspaceInvitation) -> None:
         user_id = IdFactory()
         email_invitation.accept(user_id)
         events = email_invitation.clear_domain_events()
         assert any(isinstance(e, InvitationAccepted) for e in events)
+        assert email_invitation.user_id == user_id
 
     def test_accept_non_pending_raises(self, email_invitation: WorkspaceInvitation) -> None:
         user_id = IdFactory()
@@ -96,18 +99,26 @@ class TestInvitationAccept:
 @pytest.mark.unit
 class TestInvitationDecline:
     def test_decline_pending_invitation(self, email_invitation: WorkspaceInvitation) -> None:
+        user_id = IdFactory()
+        email_invitation.decline(user_id=user_id)
+        assert email_invitation.status == InvitationStatus.DECLINED
+        assert email_invitation.user_id == user_id
+
+    def test_decline_without_user_id(self, email_invitation: WorkspaceInvitation) -> None:
         email_invitation.decline()
         assert email_invitation.status == InvitationStatus.DECLINED
+        assert email_invitation.user_id is None
 
     def test_decline_emits_declined(self, email_invitation: WorkspaceInvitation) -> None:
-        email_invitation.decline()
+        user_id = IdFactory()
+        email_invitation.decline(user_id=user_id)
         events = email_invitation.clear_domain_events()
         assert any(isinstance(e, InvitationDeclined) for e in events)
 
     def test_decline_non_pending_raises(self, email_invitation: WorkspaceInvitation) -> None:
-        email_invitation.decline()
+        email_invitation.decline(user_id=IdFactory())
         with pytest.raises(ValueError):
-            email_invitation.decline()
+            email_invitation.decline(user_id=IdFactory())
 
 
 # ═══════════════════════════════════════════════════════════════════════════

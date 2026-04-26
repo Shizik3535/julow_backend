@@ -50,3 +50,15 @@ class OrganizationMembershipProvider(ABC):
         Возвращает:
             Список DTO участников.
         """
+
+    @abstractmethod
+    async def org_exists(self, org_id: str) -> bool:
+        """
+        Проверить, существует ли организация.
+
+        Аргументы:
+            org_id: Идентификатор организации.
+
+        Возвращает:
+            True, если организация существует.
+        """

@@ -26,7 +26,7 @@ class ComputeTaskProgressCommand(BaseCommand):
 class ComputeTaskProgressHandler(BaseCommandHandler[ComputeTaskProgressCommand, None]):
     """Обработчик авто-расчёта прогресса из чек-листов."""
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(self, task_repo: TaskRepository, permission_checker: TaskPermissionCheckerPort, event_bus: DomainEventBus) -> None:
         super().__init__()

@@ -410,6 +410,7 @@ def make_ws(ws_repo: SqlWorkspaceRepository, _ensure_user):
 def make_ws_with_membership(
     ws_repo: SqlWorkspaceRepository,
     ws_membership_repo: SqlWorkspaceMembershipRepository,
+    ws_role_repo: SqlWorkspaceRoleRepository,
     _ensure_user,
 ):
     """Фабрика: создаёт Workspace + WorkspaceMembership."""
@@ -431,7 +432,12 @@ def make_ws_with_membership(
         ws.clear_domain_events()
         await ws_repo.add(ws)
 
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=oid)
+        owner_role = await ws_role_repo.get_by_name("owner")
+        membership = WorkspaceMembership.create(
+            workspace_id=ws.id,
+            owner_id=oid,
+            owner_role_id=owner_role.id if owner_role else Id.generate(),
+        )
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 

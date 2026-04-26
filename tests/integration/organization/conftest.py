@@ -316,7 +316,7 @@ def make_org_role(org_role_repo: SqlOrgRoleRepository, make_org):
         role = OrgRole.create_custom(
             org_id=org_id,
             name=role_name,
-            permissions=permissions or ["self.*"],
+            permissions=permissions or ["org.read"],
             scope=scope,
             description=description,
         )
@@ -486,10 +486,10 @@ def make_storage_integration(storage_repo: SqlStorageIntegrationRepository, make
 class _AlwaysAllowPermissionChecker(OrgPermissionCheckerPort):
     """Stub: всегда разрешает любые действия."""
 
-    async def has_permission(self, caller_id: Id, org_id: Id, permission: str) -> bool:
+    async def has_permission(self, user_id: Id, org_id: Id, permission: str) -> bool:
         return True
 
-    async def require_permission(self, caller_id: Id, org_id: Id, permission: str) -> None:
+    async def require_permission(self, user_id: Id, org_id: Id, permission: str) -> None:
         pass
 
 

@@ -31,7 +31,7 @@ class ToggleChecklistItemCommand(BaseCommand):
 class ToggleChecklistItemHandler(BaseCommandHandler[ToggleChecklistItemCommand, None]):
     """Обработчик отметки/снятия пункта чек-листа."""
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(self, task_repo: TaskRepository, permission_checker: TaskPermissionCheckerPort, event_bus: DomainEventBus) -> None:
         super().__init__()

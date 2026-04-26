@@ -15,9 +15,10 @@ class TestCreateWorkspaceTeamHandler:
     """Тесты CreateWorkspaceTeamHandler."""
 
     @pytest.fixture
-    def handler(self, ws_team_repo) -> CreateWorkspaceTeamHandler:
+    def handler(self, ws_team_repo, ws_repo) -> CreateWorkspaceTeamHandler:
         return CreateWorkspaceTeamHandler(
             team_repo=ws_team_repo,
+            ws_repo=ws_repo,
             permission_checker=_AlwaysAllowPermissionChecker(),
             event_bus=_NoopEventBus(),
         )

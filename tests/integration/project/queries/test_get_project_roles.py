@@ -14,17 +14,17 @@ class TestGetProjectRolesHandler:
     """Тесты GetProjectRolesHandler."""
 
     @pytest.fixture
-    def handler(self, role_repo) -> GetProjectRolesHandler:
-        return GetProjectRolesHandler(role_repo=role_repo)
+    def handler(self, role_repo, permission_checker_stub) -> GetProjectRolesHandler:
+        return GetProjectRolesHandler(role_repo=role_repo, permission_checker=permission_checker_stub)
 
     async def test_get_roles_with_roles(self, handler, make_project_with_membership) -> None:
         data = await make_project_with_membership()
-        query = GetProjectRolesQuery(project_id=str(data["project"].id))
+        query = GetProjectRolesQuery(caller_id=str(data["owner_id"]), project_id=str(data["project"].id))
         result = await handler.handle(query)
         assert len(result.items) >= 1
 
     async def test_get_roles_empty(self, handler, make_project) -> None:
         project = await make_project()
-        query = GetProjectRolesQuery(project_id=str(project.id))
+        query = GetProjectRolesQuery(caller_id=str(Id.generate()), project_id=str(project.id))
         result = await handler.handle(query)
         assert len(result.items) == 0

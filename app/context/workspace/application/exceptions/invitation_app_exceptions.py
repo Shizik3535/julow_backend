@@ -14,6 +14,9 @@ class InvitationAlreadyProcessedException(ApplicationException):
 class DuplicateInvitationForEmailException(ApplicationException):
     """Приглашение для этого email уже существует в workspace."""
 
+    http_status_code = 409
+    error_code = "DUPLICATE_INVITATION"
+
     def __init__(self, email: str, workspace_id: str) -> None:
         super().__init__(
             f"Приглашение для {email} уже существует в workspace {workspace_id}"

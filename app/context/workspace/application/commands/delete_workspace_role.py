@@ -60,5 +60,5 @@ class DeleteWorkspaceRoleHandler(BaseCommandHandler[DeleteWorkspaceRoleCommand, 
         )
 
         role.mark_deleted()
-        await self._role_repo.update(role)
+        await self._role_repo.delete(role.id)
         await self._event_bus.publish_all(role.clear_domain_events())

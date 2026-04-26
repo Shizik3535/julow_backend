@@ -26,10 +26,11 @@ class TestAddProjectMemberHandler:
     """Тесты AddProjectMemberHandler."""
 
     @pytest.fixture
-    def handler(self, project_repo, membership_repo, permission_checker_stub, event_bus_stub) -> AddProjectMemberHandler:
+    def handler(self, project_repo, membership_repo, role_repo, permission_checker_stub, event_bus_stub) -> AddProjectMemberHandler:
         return AddProjectMemberHandler(
             project_repo=project_repo,
             membership_repo=membership_repo,
+            role_repo=role_repo,
             identity_port=_StubIdentityUserPort(),
             workspace_membership_port=_StubWorkspaceMembershipPort(),
             permission_checker=permission_checker_stub,
@@ -54,7 +55,7 @@ class TestAddProjectMemberHandler:
         assert membership is not None
         assert any(m.user_id == new_user.id for m in membership.members)
 
-    async def test_add_member_user_not_found(self, project_repo, membership_repo, permission_checker_stub, event_bus_stub) -> None:
+    async def test_add_member_user_not_found(self, project_repo, membership_repo, role_repo, permission_checker_stub, event_bus_stub) -> None:
         class _NoUserPort(_StubIdentityUserPort):
             async def user_exists(self, user_id: str) -> bool:
                 return False
@@ -62,6 +63,7 @@ class TestAddProjectMemberHandler:
         handler = AddProjectMemberHandler(
             project_repo=project_repo,
             membership_repo=membership_repo,
+            role_repo=role_repo,
             identity_port=_NoUserPort(),
             workspace_membership_port=_StubWorkspaceMembershipPort(),
             permission_checker=permission_checker_stub,
@@ -76,7 +78,7 @@ class TestAddProjectMemberHandler:
         with pytest.raises(UserNotFoundException):
             await handler.handle(cmd)
 
-    async def test_add_member_not_workspace_member(self, project_repo, membership_repo, permission_checker_stub, event_bus_stub, make_project_with_membership) -> None:
+    async def test_add_member_not_workspace_member(self, project_repo, membership_repo, role_repo, permission_checker_stub, event_bus_stub, make_project_with_membership) -> None:
         class _NotWsMember(_StubWorkspaceMembershipPort):
             async def is_workspace_member(self, workspace_id: str, user_id: str) -> bool:
                 return False
@@ -85,6 +87,7 @@ class TestAddProjectMemberHandler:
         handler = AddProjectMemberHandler(
             project_repo=project_repo,
             membership_repo=membership_repo,
+            role_repo=role_repo,
             identity_port=_StubIdentityUserPort(),
             workspace_membership_port=_NotWsMember(),
             permission_checker=permission_checker_stub,

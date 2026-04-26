@@ -122,11 +122,12 @@ def link_invitation(
 
 
 @pytest.fixture
-def new_membership(any_workspace_id: Id, any_owner_id: Id) -> WorkspaceMembership:
+def new_membership(any_workspace_id: Id, any_owner_id: Id, any_role_id: Id) -> WorkspaceMembership:
     """Членство workspace после создания."""
     return WorkspaceMembership.create(
         workspace_id=any_workspace_id,
         owner_id=any_owner_id,
+        owner_role_id=any_role_id,
     )
 
 

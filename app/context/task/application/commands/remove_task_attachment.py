@@ -28,7 +28,7 @@ class RemoveTaskAttachmentCommand(BaseCommand):
 class RemoveTaskAttachmentHandler(BaseCommandHandler[RemoveTaskAttachmentCommand, None]):
     """Обработчик удаления вложения задачи."""
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(self, task_repo: TaskRepository, permission_checker: TaskPermissionCheckerPort, event_bus: DomainEventBus) -> None:
         super().__init__()

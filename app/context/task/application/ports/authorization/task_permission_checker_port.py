@@ -15,7 +15,12 @@ class TaskPermissionCheckerPort(ABC):
         - `tasks.*` — полный доступ к задачам проекта
         - `tasks.create` / `tasks.read` / `tasks.update` / `tasks.delete`
           / `tasks.assign` / `tasks.watch` — конкретные действия
+        - `tasks.update_own` — обновление информации своей задачи (assignee)
+        - `tasks.update_status` — смена статуса своей задачи (assignee)
         - `tasks.templates.manage` — управление шаблонами задач
+
+    Покрытие разрешений:
+        - `tasks.update` покрывает `tasks.update_own` и `tasks.update_status`
 
     Каскад (реализован в Project/Workspace/Org BC):
         Task BC  : `tasks.<action>` на `project_id`

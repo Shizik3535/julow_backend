@@ -43,7 +43,7 @@ class SetTaskRecurrenceCommand(BaseCommand):
 class SetTaskRecurrenceHandler(BaseCommandHandler[SetTaskRecurrenceCommand, None]):
     """Обработчик установки конфигурации повторения задачи."""
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(
         self,

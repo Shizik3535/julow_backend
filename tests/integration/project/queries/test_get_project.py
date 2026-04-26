@@ -15,17 +15,17 @@ class TestGetProjectHandler:
     """Тесты GetProjectHandler."""
 
     @pytest.fixture
-    def handler(self, project_repo) -> GetProjectHandler:
-        return GetProjectHandler(project_repo=project_repo)
+    def handler(self, project_repo, permission_checker_stub) -> GetProjectHandler:
+        return GetProjectHandler(project_repo=project_repo, permission_checker=permission_checker_stub)
 
     async def test_get_project_found(self, handler, make_project) -> None:
         project = await make_project(name="Test Project")
-        query = GetProjectQuery(project_id=str(project.id))
+        query = GetProjectQuery(caller_id=str(Id.generate()), project_id=str(project.id))
         result = await handler.handle(query)
         assert result.id == str(project.id)
         assert result.name == "Test Project"
 
     async def test_get_project_not_found(self, handler) -> None:
-        query = GetProjectQuery(project_id=str(Id.generate()))
+        query = GetProjectQuery(caller_id=str(Id.generate()), project_id=str(Id.generate()))
         with pytest.raises(ProjectNotFoundException):
             await handler.handle(query)

@@ -14,17 +14,17 @@ class TestGetEpicsByProjectHandler:
     """Тесты GetEpicsByProjectHandler."""
 
     @pytest.fixture
-    def handler(self, epic_repo) -> GetEpicsByProjectHandler:
-        return GetEpicsByProjectHandler(epic_repo=epic_repo)
+    def handler(self, epic_repo, permission_checker_stub) -> GetEpicsByProjectHandler:
+        return GetEpicsByProjectHandler(epic_repo=epic_repo, permission_checker=permission_checker_stub)
 
     async def test_get_epics_with_epics(self, handler, make_epic) -> None:
         epic = await make_epic()
-        query = GetEpicsByProjectQuery(project_id=str(epic.project_id))
+        query = GetEpicsByProjectQuery(caller_id=str(Id.generate()), project_id=str(epic.project_id))
         result = await handler.handle(query)
         assert len(result.items) >= 1
 
     async def test_get_epics_empty(self, handler, make_project) -> None:
         project = await make_project()
-        query = GetEpicsByProjectQuery(project_id=str(project.id))
+        query = GetEpicsByProjectQuery(caller_id=str(Id.generate()), project_id=str(project.id))
         result = await handler.handle(query)
         assert len(result.items) == 0

@@ -15,9 +15,10 @@ class TestCreateWorkspaceRoleHandler:
     """Тесты CreateWorkspaceRoleHandler."""
 
     @pytest.fixture
-    def handler(self, ws_role_repo) -> CreateWorkspaceRoleHandler:
+    def handler(self, ws_role_repo, ws_repo) -> CreateWorkspaceRoleHandler:
         return CreateWorkspaceRoleHandler(
             role_repo=ws_role_repo,
+            ws_repo=ws_repo,
             permission_checker=_AlwaysAllowPermissionChecker(),
             event_bus=_NoopEventBus(),
         )

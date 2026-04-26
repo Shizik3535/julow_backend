@@ -31,7 +31,6 @@
 | Команда | Handler | Описание |
 |---|---|---|
 | `AcceptWorkspaceInvitationCommand` | `AcceptWorkspaceInvitationHandler` | Принятие приглашения. Доступно любому аутентифицированному пользователю по `invitation_id`. Проверяется существование пользователя через `IdentityUserPort`. |
-| `DeclineWorkspaceInvitationCommand` | `DeclineWorkspaceInvitationHandler` | Отклонение приглашения. Доступно без проверки роли. |
 
 ### Команды с кросс-BC проверкой (Organization Permission)
 
@@ -51,6 +50,7 @@
 | `CreateWorkspaceRoleCommand` | `CreateWorkspaceRoleHandler` | `roles.write` | — |
 | `CreateWorkspaceTeamCommand` | `CreateWorkspaceTeamHandler` | `teams.write` | — |
 | `DeactivateWorkspaceMemberCommand` | `DeactivateWorkspaceMemberHandler` | `members.write` | Проверяется, является ли деактивируемый пользователь владельцем (`is_owner`) — влияет на логику деактивации |
+| `DeclineWorkspaceInvitationCommand` | `DeclineWorkspaceInvitationHandler` | `members.invite`¶ | Адресат приглашения (email совпадает) может отклонить без разрешения; иначе требуется `members.invite` |
 | `DeactivateWorkspaceTeamCommand` | `DeactivateWorkspaceTeamHandler` | `teams.write` | — |
 | `DeleteWorkspaceRoleCommand` | `DeleteWorkspaceRoleHandler` | `roles.write` | Системные роли (`workspace_id=None`) недоступны для удаления — выбрасывается `InsufficientWorkspacePermissionsException` |
 | `GenerateWorkspaceInvitationLinkCommand` | `GenerateWorkspaceInvitationLinkHandler` | `members.invite` | — |
@@ -134,12 +134,12 @@
 | `ws.read` | — | `GetWorkspace`, `GetChildWorkspaces`, `GetRootWorkspaces`*, `GetWorkspacesByOwner`*, `SearchWorkspaces`* |
 | `members.write` | `AddWorkspaceMember`, `ChangeWorkspaceMemberRole`, `DeactivateWorkspaceMember`, `ReactivateWorkspaceMember`, `RemoveWorkspaceMember`, `UpdateWorkspaceMemberDisplayName` | — |
 | `members.read` | — | `GetWorkspaceMember`, `GetWorkspaceMembers` |
-| `members.invite` | `GenerateWorkspaceInvitationLink`, `RevokeWorkspaceInvitation`, `SendBulkWorkspaceInvitations`, `SendWorkspaceInvitation` | `GetWorkspaceInvitations` |
+| `members.invite` | `DeclineWorkspaceInvitation`¶, `GenerateWorkspaceInvitationLink`, `RevokeWorkspaceInvitation`, `SendBulkWorkspaceInvitations`, `SendWorkspaceInvitation` | `GetWorkspaceInvitations` |
 | `teams.write` | `AddWorkspaceTeamMember`, `CreateWorkspaceTeam`, `DeactivateWorkspaceTeam`, `ReactivateWorkspaceTeam`, `RemoveWorkspaceTeamMember`, `UpdateWorkspaceTeam` | — |
 | `teams.read` | — | `GetWorkspaceTeam`, `GetWorkspaceTeams` |
 | `roles.write` | `CreateWorkspaceRole`, `DeleteWorkspaceRole`, `UpdateWorkspaceRole` | — |
 | `roles.read` | — | `GetWorkspaceRole`†, `GetWorkspaceRoles` |
-| Без проверки | `AcceptWorkspaceInvitation`, `DeclineWorkspaceInvitation` | `GetWorkspaceInvitationByToken` |
+| Без проверки | `AcceptWorkspaceInvitation` | `GetWorkspaceInvitationByToken` |
 
 ### Кросс-BC (Organization) разрешения
 
@@ -152,3 +152,4 @@
 † — `require_permission` применяется только для кастомных ролей; системные роли доступны без проверки
 ‡ — проверяется через `OrganizationPermissionCheckerPort.has_permission` только при наличии `organization_id`
 § — проверяется через `OrganizationPermissionCheckerPort.has_permission` + `OrganizationMembershipPort.is_org_member`
+¶ — `members.invite` требуется только если отклоняющий не является адресатом приглашения (email совпадает)

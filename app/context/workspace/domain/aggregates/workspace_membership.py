@@ -46,11 +46,12 @@ class WorkspaceMembership(AggregateRoot):
     # --- Фабричный метод ---
 
     @classmethod
-    def create(cls, workspace_id: Id, owner_id: Id) -> WorkspaceMembership:
+    def create(cls, workspace_id: Id, owner_id: Id, owner_role_id: Id) -> WorkspaceMembership:
         """Создаёт членство workspace с владельцем."""
         membership = cls(workspace_id=workspace_id)
         owner_member = WorkspaceMember(
             user_id=owner_id,
+            role_id=owner_role_id,
             source=MemberSource.DIRECT,
         )
         membership.members.append(owner_member)
@@ -58,7 +59,7 @@ class WorkspaceMembership(AggregateRoot):
             WorkspaceMemberJoined(
                 workspace_id=str(workspace_id),
                 user_id=str(owner_id),
-                role_id="",
+                role_id=str(owner_role_id),
                 source=MemberSource.DIRECT.value,
             )
         )

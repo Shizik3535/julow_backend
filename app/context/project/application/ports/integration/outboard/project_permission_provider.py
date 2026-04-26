@@ -24,7 +24,7 @@ class ProjectPermissionProvider(ABC):
         Аргументы:
             user_id: Идентификатор пользователя.
             project_id: Идентификатор проекта.
-            permission: Требуемое project-разрешение (например «content.read»).
+            permission: Требуемое project-разрешение (например «tasks.read»).
 
         Возвращает:
             True, если разрешение есть, иначе False.

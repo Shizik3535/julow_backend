@@ -15,6 +15,7 @@ from app.context.project.domain.exceptions.project_membership_exceptions import 
     CannotRemoveOwnerAsMemberException,
     ProjectMemberNotFoundException,
 )
+from app.context.project.domain.value_objects.membership_type import MembershipType
 
 
 @dataclass
@@ -60,9 +61,15 @@ class ProjectMembership(AggregateRoot):
             raise ProjectMemberNotFoundException(id=user_id)
         return member
 
-    def add_member(self, user_id: Id, role_id: Id, invited_by: Id | None = None) -> None:
+    def add_member(
+        self,
+        user_id: Id,
+        role_id: Id,
+        invited_by: Id | None = None,
+        membership_type: MembershipType = MembershipType.STANDARD,
+    ) -> None:
         """Добавляет участника в проект."""
-        member = ProjectMember(user_id=user_id, role_id=role_id)
+        member = ProjectMember(user_id=user_id, role_id=role_id, membership_type=membership_type)
         self.members.append(member)
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(

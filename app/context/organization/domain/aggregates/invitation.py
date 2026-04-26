@@ -52,6 +52,7 @@ class Invitation(AggregateRoot):
     invited_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
     status: InvitationStatus = InvitationStatus.PENDING
     approved_by: Id | None = None
+    user_id: Id | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
 
@@ -126,15 +127,17 @@ class Invitation(AggregateRoot):
     def accept(self, user_id: Id) -> None:
         """Принимает приглашение."""
         self._assert_pending()
+        self.user_id = user_id
         self.status = InvitationStatus.ACCEPTED
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(
             InvitationAccepted(org_id=str(self.org_id), user_id=str(user_id))
         )
 
-    def decline(self) -> None:
+    def decline(self, user_id: Id | None = None) -> None:
         """Отклоняет приглашение."""
         self._assert_pending()
+        self.user_id = user_id
         self.status = InvitationStatus.DECLINED
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(

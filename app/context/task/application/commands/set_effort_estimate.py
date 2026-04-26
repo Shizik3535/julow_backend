@@ -37,7 +37,7 @@ class SetEffortEstimateCommand(BaseCommand):
 class SetEffortEstimateHandler(BaseCommandHandler[SetEffortEstimateCommand, None]):
     """Обработчик установки оценки усилия."""
 
-    REQUIRED_PERMISSION = "tasks.update"
+    REQUIRED_PERMISSION = "tasks.update_own"
 
     def __init__(
         self,

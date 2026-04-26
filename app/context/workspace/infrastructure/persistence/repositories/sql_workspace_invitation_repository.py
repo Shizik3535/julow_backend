@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from typing import Any
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.shared.domain.value_objects.id_vo import Id
@@ -44,3 +46,52 @@ class SqlWorkspaceInvitationRepository(
         )
         result = await self._session.execute(stmt)
         return [self._mapper.to_domain(orm) for orm in result.scalars().all()]
+
+    async def search_by_user(
+        self,
+        email: str,
+        user_id: Id | None = None,
+        offset: int = 0,
+        limit: int = 100,
+        filters: dict[str, Any] | None = None,
+    ) -> tuple[list[WorkspaceInvitation], int]:
+        conditions = []
+        # PENDING приглашения по email
+        conditions.append(
+            (WorkspaceInvitationORM.email == email) & (WorkspaceInvitationORM.status == "pending")
+        )
+        # Принятые/отклонённые по user_id
+        if user_id is not None:
+            uuid_val = self._mapper._map_uuid(user_id)
+            conditions.append(WorkspaceInvitationORM.user_id == uuid_val)
+
+        base_cond = or_(*conditions)
+
+        # Дополнительные фильтры
+        stmt = select(WorkspaceInvitationORM).where(base_cond)
+        count_stmt = select(func.count()).select_from(WorkspaceInvitationORM).where(base_cond)
+
+        if filters:
+            if "status" in filters:
+                stmt = stmt.where(WorkspaceInvitationORM.status == filters["status"])
+                count_stmt = count_stmt.where(WorkspaceInvitationORM.status == filters["status"])
+            if "workspace_id" in filters:
+                ws_uuid = self._mapper._map_uuid(Id.from_string(filters["workspace_id"]))
+                stmt = stmt.where(WorkspaceInvitationORM.workspace_id == ws_uuid)
+                count_stmt = count_stmt.where(WorkspaceInvitationORM.workspace_id == ws_uuid)
+            if "search_text" in filters:
+                pattern = f"%{filters['search_text']}%"
+                stmt = stmt.where(WorkspaceInvitationORM.email.ilike(pattern))
+                count_stmt = count_stmt.where(WorkspaceInvitationORM.email.ilike(pattern))
+
+        # Count
+        total_result = await self._session.execute(count_stmt)
+        total = total_result.scalar_one()
+
+        # Data
+        stmt = stmt.offset(offset).limit(limit).order_by(WorkspaceInvitationORM.invited_at.desc())
+        result = await self._session.execute(stmt)
+        orm_models = result.scalars().all()
+        aggregates = [self._mapper.to_domain(orm) for orm in orm_models]
+
+        return aggregates, total

@@ -14,17 +14,17 @@ class TestGetProjectsByWorkspaceHandler:
     """Тесты GetProjectsByWorkspaceHandler."""
 
     @pytest.fixture
-    def handler(self, project_repo) -> GetProjectsByWorkspaceHandler:
-        return GetProjectsByWorkspaceHandler(project_repo=project_repo)
+    def handler(self, project_repo, permission_checker_stub) -> GetProjectsByWorkspaceHandler:
+        return GetProjectsByWorkspaceHandler(project_repo=project_repo, permission_checker=permission_checker_stub)
 
     async def test_get_projects_by_workspace_found(self, handler, make_project) -> None:
         ws_id = Id.generate()
         await make_project(workspace_id=ws_id)
-        query = GetProjectsByWorkspaceQuery(workspace_id=str(ws_id))
+        query = GetProjectsByWorkspaceQuery(caller_id=str(Id.generate()), workspace_id=str(ws_id))
         result = await handler.handle(query)
         assert len(result.items) >= 1
 
     async def test_get_projects_by_workspace_empty(self, handler) -> None:
-        query = GetProjectsByWorkspaceQuery(workspace_id=str(Id.generate()))
+        query = GetProjectsByWorkspaceQuery(caller_id=str(Id.generate()), workspace_id=str(Id.generate()))
         result = await handler.handle(query)
         assert len(result.items) == 0

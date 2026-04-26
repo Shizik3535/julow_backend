@@ -18,6 +18,7 @@ from app.context.workspace.domain.aggregates.workspace_membership import Workspa
 from app.context.workspace.domain.exceptions.workspace_exceptions import WorkspaceNotFoundException
 from app.context.workspace.domain.repositories.workspace_repository import WorkspaceRepository
 from app.context.workspace.domain.repositories.workspace_membership_repository import WorkspaceMembershipRepository
+from app.context.workspace.domain.repositories.workspace_role_repository import WorkspaceRoleRepository
 from app.context.workspace.domain.value_objects.workspace_type import WorkspaceType
 
 
@@ -59,6 +60,7 @@ class CreateWorkspaceHandler(BaseCommandHandler[CreateWorkspaceCommand, Workspac
         self,
         ws_repo: WorkspaceRepository,
         membership_repo: WorkspaceMembershipRepository,
+        role_repo: WorkspaceRoleRepository,
         identity_port: IdentityUserPort,
         org_permission_checker: OrganizationPermissionCheckerPort,
         event_bus: DomainEventBus,
@@ -66,6 +68,7 @@ class CreateWorkspaceHandler(BaseCommandHandler[CreateWorkspaceCommand, Workspac
         super().__init__()
         self._ws_repo = ws_repo
         self._membership_repo = membership_repo
+        self._role_repo = role_repo
         self._identity_port = identity_port
         self._org_permission_checker = org_permission_checker
         self._event_bus = event_bus
@@ -110,9 +113,14 @@ class CreateWorkspaceHandler(BaseCommandHandler[CreateWorkspaceCommand, Workspac
             parent_workspace_id=Id.from_string(command.parent_workspace_id) if command.parent_workspace_id else None,
         )
 
+        owner_role = await self._role_repo.get_by_name("owner")
+        if owner_role is None:
+            raise ValueError("System role 'owner' not found")
+
         membership = WorkspaceMembership.create(
             workspace_id=workspace.id,
             owner_id=owner_id,
+            owner_role_id=owner_role.id,
         )
 
         await self._ws_repo.add(workspace)

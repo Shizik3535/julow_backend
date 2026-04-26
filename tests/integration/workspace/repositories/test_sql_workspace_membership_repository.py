@@ -16,7 +16,7 @@ class TestSqlWorkspaceMembershipRepositoryAdd:
 
     async def test_add_and_get_by_id(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0])
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0], owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -26,7 +26,7 @@ class TestSqlWorkspaceMembershipRepositoryAdd:
 
     async def test_add_persists_workspace_id(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0])
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0], owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -36,7 +36,7 @@ class TestSqlWorkspaceMembershipRepositoryAdd:
 
     async def test_add_with_owner_member(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0])
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0], owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -52,7 +52,7 @@ class TestSqlWorkspaceMembershipRepositorySearch:
 
     async def test_get_by_workspace_id(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0])
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0], owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -66,7 +66,7 @@ class TestSqlWorkspaceMembershipRepositorySearch:
     async def test_get_member_by_workspace_and_user(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -76,7 +76,7 @@ class TestSqlWorkspaceMembershipRepositorySearch:
 
     async def test_get_member_by_workspace_and_user_not_found(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0])
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0], owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -86,7 +86,7 @@ class TestSqlWorkspaceMembershipRepositorySearch:
     async def test_get_members_by_workspace(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -102,7 +102,7 @@ class TestSqlWorkspaceMembershipRepositoryUpdate:
     async def test_add_member(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -119,7 +119,7 @@ class TestSqlWorkspaceMembershipRepositoryUpdate:
     async def test_remove_member(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         new_user_id = Id.generate()
         membership.add_member(user_id=new_user_id, role_id=Id.generate(), source=MemberSource.DIRECT)
         membership.clear_domain_events()
@@ -136,7 +136,7 @@ class TestSqlWorkspaceMembershipRepositoryUpdate:
     async def test_deactivate_member(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         new_user_id = Id.generate()
         membership.add_member(user_id=new_user_id, role_id=Id.generate(), source=MemberSource.DIRECT)
         membership.clear_domain_events()
@@ -155,7 +155,7 @@ class TestSqlWorkspaceMembershipRepositoryUpdate:
     async def test_reactivate_member(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         new_user_id = Id.generate()
         membership.add_member(user_id=new_user_id, role_id=Id.generate(), source=MemberSource.DIRECT)
         membership.deactivate_member(new_user_id, is_owner=False)
@@ -175,7 +175,7 @@ class TestSqlWorkspaceMembershipRepositoryUpdate:
     async def test_change_member_role(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         new_user_id = Id.generate()
         old_role = Id.generate()
         membership.add_member(user_id=new_user_id, role_id=old_role, source=MemberSource.DIRECT)
@@ -196,7 +196,7 @@ class TestSqlWorkspaceMembershipRepositoryUpdate:
     async def test_add_member_from_org(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 
@@ -215,7 +215,7 @@ class TestSqlWorkspaceMembershipRepositoryUpdate:
     async def test_update_member_display_name(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
         owner_id = ws.owner_ids[0]
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id)
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=owner_id, owner_role_id=Id.generate())
         new_user_id = Id.generate()
         membership.add_member(user_id=new_user_id, role_id=Id.generate(), source=MemberSource.DIRECT)
         membership.clear_domain_events()
@@ -238,7 +238,7 @@ class TestSqlWorkspaceMembershipRepositoryDelete:
 
     async def test_delete(self, ws_membership_repo: SqlWorkspaceMembershipRepository, make_workspace) -> None:
         ws = await make_workspace()
-        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0])
+        membership = WorkspaceMembership.create(workspace_id=ws.id, owner_id=ws.owner_ids[0], owner_role_id=Id.generate())
         membership.clear_domain_events()
         await ws_membership_repo.add(membership)
 

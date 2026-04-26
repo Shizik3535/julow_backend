@@ -7,6 +7,9 @@ from app.context.workspace.application.dto.workspace_dto import WorkspaceDTO, Wo
 from app.context.workspace.application.exceptions.authorization_exceptions import (
     InsufficientWorkspacePermissionsException,
 )
+from app.context.workspace.application.exceptions.organization_app_exceptions import (
+    OrganizationNotFoundException,
+)
 from app.context.workspace.application.ports.integration.inboard.organization_membership_port import (
     OrganizationMembershipPort,
 )
@@ -56,6 +59,10 @@ class GetWorkspacesByOrganizationHandler(BaseQueryHandler[GetWorkspacesByOrganiz
     async def handle(self, query: GetWorkspacesByOrganizationQuery) -> WorkspaceListDTO:
         org_id_str = query.organization_id
         caller_id_str = query.caller_id
+
+        # 0. Проверка существования организации.
+        if not await self._org_membership_port.org_exists(org_id_str):
+            raise OrganizationNotFoundException(org_id_str)
 
         # 1. Проверка членства в организации.
         is_member = await self._org_membership_port.is_org_member(

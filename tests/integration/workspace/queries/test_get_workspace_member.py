@@ -8,8 +8,6 @@ from app.context.workspace.application.queries.get_workspace_member import (
     GetWorkspaceMemberHandler,
 )
 from app.context.workspace.domain.exceptions.workspace_membership_exceptions import WorkspaceMemberNotFoundException
-from app.context.workspace.domain.value_objects.member_source import MemberSource
-from tests.integration.workspace.conftest import _AlwaysAllowPermissionChecker
 
 
 @pytest.mark.integration
@@ -17,10 +15,11 @@ class TestGetWorkspaceMemberHandler:
     """Тесты GetWorkspaceMemberHandler."""
 
     @pytest.fixture
-    def handler(self, ws_membership_repo) -> GetWorkspaceMemberHandler:
+    def handler(self, ws_membership_repo, ws_repo, permission_checker_stub) -> GetWorkspaceMemberHandler:
         return GetWorkspaceMemberHandler(
             membership_repo=ws_membership_repo,
-            permission_checker=_AlwaysAllowPermissionChecker(),
+            ws_repo=ws_repo,
+            permission_checker=permission_checker_stub,
         )
 
     async def test_get_member_found(

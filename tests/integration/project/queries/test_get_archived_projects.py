@@ -14,8 +14,8 @@ class TestGetArchivedProjectsHandler:
     """Тесты GetArchivedProjectsHandler."""
 
     @pytest.fixture
-    def handler(self, project_repo) -> GetArchivedProjectsHandler:
-        return GetArchivedProjectsHandler(project_repo=project_repo)
+    def handler(self, project_repo, permission_checker_stub) -> GetArchivedProjectsHandler:
+        return GetArchivedProjectsHandler(project_repo=project_repo, permission_checker=permission_checker_stub)
 
     async def test_get_archived_projects_found(self, handler, project_repo, make_project) -> None:
         ws_id = Id.generate()
@@ -24,13 +24,13 @@ class TestGetArchivedProjectsHandler:
         project.clear_domain_events()
         await project_repo.update(project)
 
-        query = GetArchivedProjectsQuery(workspace_id=str(ws_id))
+        query = GetArchivedProjectsQuery(caller_id=str(Id.generate()), workspace_id=str(ws_id))
         result = await handler.handle(query)
         assert len(result.items) >= 1
 
     async def test_get_archived_projects_empty(self, handler, make_project) -> None:
         ws_id = Id.generate()
         await make_project(workspace_id=ws_id)  # active, not archived
-        query = GetArchivedProjectsQuery(workspace_id=str(ws_id))
+        query = GetArchivedProjectsQuery(caller_id=str(Id.generate()), workspace_id=str(ws_id))
         result = await handler.handle(query)
         assert len(result.items) == 0

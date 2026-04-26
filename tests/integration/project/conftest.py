@@ -309,7 +309,7 @@ def make_project_role(role_repo: SqlProjectRoleRepository, make_project):
         role = ProjectRole.create_custom(
             project_id=project_id,
             name=role_name,
-            permissions=permissions or ["content.read"],
+            permissions=permissions or ["tasks.read"],
             description=description,
         )
         role.clear_domain_events()

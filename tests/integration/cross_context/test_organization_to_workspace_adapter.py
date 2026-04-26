@@ -72,7 +72,7 @@ class _RealOrgMembershipProvider(OrganizationMembershipProvider):
         return None
 
     async def get_members(self, org_id: str) -> list[OrgMemberDTO]:
-        from app.shared.domain.value_objects.id_vo import IdVO
+        from app.shared.domain.value_objects.id_vo import Id as IdVO
         membership = await self._membership_repo.get_by_org_id(IdVO.from_string(org_id))
         if membership is None:
             return []
@@ -88,6 +88,11 @@ class _RealOrgMembershipProvider(OrganizationMembershipProvider):
             )
             for m in membership.members
         ]
+
+    async def org_exists(self, org_id: str) -> bool:
+        from app.shared.domain.value_objects.id_vo import Id as IdVO
+        membership = await self._membership_repo.get_by_org_id(IdVO.from_string(org_id))
+        return membership is not None
 
 
 @pytest.mark.integration

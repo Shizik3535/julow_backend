@@ -37,6 +37,7 @@ class TestAcceptInvitationHandler:
         found_inv = await invitation_repo.get_by_id(inv.id)
         assert found_inv is not None
         assert found_inv.status == InvitationStatus.ACCEPTED
+        assert found_inv.user_id == accepting_user
 
         membership = await membership_repo.get_by_org_id(data["org"].id)
         assert membership is not None

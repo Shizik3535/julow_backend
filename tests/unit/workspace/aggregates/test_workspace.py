@@ -30,6 +30,11 @@ from app.context.workspace.domain.exceptions.workspace_exceptions import (
     CannotTransferOwnershipException,
     WorkspaceSuspendedException,
     WorkspaceArchivedException,
+    WorkspaceAlreadyArchivedException,
+    WorkspaceNotArchivedException,
+    WorkspaceAlreadySuspendedException,
+    WorkspaceNotSuspendedException,
+    WorkspaceDeletionAlreadyRequestedException,
 )
 from tests.factories import IdFactory
 
@@ -202,11 +207,9 @@ class TestWorkspaceStatus:
         events = archived_workspace.clear_domain_events()
         assert any(isinstance(e, WorkspaceRestored) for e in events)
 
-    def test_restore_non_archived_is_noop(self, workspace: Workspace) -> None:
-        workspace.restore()
-        assert workspace.status == WorkspaceStatus.ACTIVE
-        events = workspace.clear_domain_events()
-        assert not any(isinstance(e, WorkspaceRestored) for e in events)
+    def test_restore_non_archived_raises(self, workspace: Workspace) -> None:
+        with pytest.raises(WorkspaceNotArchivedException):
+            workspace.restore()
 
     def test_suspend(self, workspace: Workspace) -> None:
         workspace.suspend("violation")
@@ -218,10 +221,9 @@ class TestWorkspaceStatus:
         event = next(e for e in events if isinstance(e, WorkspaceSuspended))
         assert event.reason == "violation"
 
-    def test_suspend_already_suspended_is_noop(self, suspended_workspace: Workspace) -> None:
-        suspended_workspace.suspend("another")
-        events = suspended_workspace.clear_domain_events()
-        assert not any(isinstance(e, WorkspaceSuspended) for e in events)
+    def test_suspend_already_suspended_raises(self, suspended_workspace: Workspace) -> None:
+        with pytest.raises(WorkspaceAlreadySuspendedException):
+            suspended_workspace.suspend("another")
 
     def test_reactivate(self, suspended_workspace: Workspace) -> None:
         suspended_workspace.reactivate()
@@ -232,10 +234,9 @@ class TestWorkspaceStatus:
         events = suspended_workspace.clear_domain_events()
         assert any(isinstance(e, WorkspaceReactivated) for e in events)
 
-    def test_reactivate_non_suspended_is_noop(self, workspace: Workspace) -> None:
-        workspace.reactivate()
-        events = workspace.clear_domain_events()
-        assert not any(isinstance(e, WorkspaceReactivated) for e in events)
+    def test_reactivate_non_suspended_raises(self, workspace: Workspace) -> None:
+        with pytest.raises(WorkspaceNotSuspendedException):
+            workspace.reactivate()
 
     def test_request_deletion(self, workspace: Workspace) -> None:
         workspace.request_deletion()
@@ -245,6 +246,14 @@ class TestWorkspaceStatus:
         workspace.request_deletion()
         events = workspace.clear_domain_events()
         assert any(isinstance(e, WorkspaceDeletionRequested) for e in events)
+
+    def test_request_deletion_already_requested_raises(self, pending_deletion_workspace: Workspace) -> None:
+        with pytest.raises(WorkspaceDeletionAlreadyRequestedException):
+            pending_deletion_workspace.request_deletion()
+
+    def test_archive_already_archived_raises(self, archived_workspace: Workspace) -> None:
+        with pytest.raises(WorkspaceAlreadyArchivedException):
+            archived_workspace.archive()
 
 
 # ═══════════════════════════════════════════════════════════════════════════

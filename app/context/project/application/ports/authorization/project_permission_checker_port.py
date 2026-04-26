@@ -16,7 +16,7 @@ class ProjectPermissionCheckerPort(ABC):
     Поддерживаемые wildcard-шаблоны:
         - «project.*» — полный доступ в проекте
         - «<group>.*» — все разрешения в группе (members.*, workflow.*, ...)
-        - «content.read» — конкретное разрешение
+        - «tasks.read» — конкретное разрешение
 
     Каскад ProjectRole → WorkspaceRole → OrgRole:
         Если у пользователя нет прямой project-роли, или она не покрывает
@@ -34,7 +34,7 @@ class ProjectPermissionCheckerPort(ABC):
         Аргументы:
             user_id: Идентификатор пользователя.
             project_id: Идентификатор проекта.
-            permission: Требуемое разрешение (например «content.read»).
+            permission: Требуемое разрешение (например «tasks.read»).
 
         Возвращает:
             True, если разрешение есть (через project/workspace/org-роль), иначе False.

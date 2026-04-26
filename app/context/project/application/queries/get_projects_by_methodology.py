@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.shared.application.base_query import BaseQuery
 from app.shared.application.base_query_handler import BaseQueryHandler
+from app.shared.domain.value_objects.id_vo import Id
 from app.context.project.application.dto.project_dto import ProjectListDTO
 from app.context.project.application.ports.authorization.project_permission_checker_port import (
     ProjectPermissionCheckerPort,

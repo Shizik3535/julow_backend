@@ -59,7 +59,7 @@ class TestOrgRoleBasedPermissionChecker:
         member_role = await make_org_role(
             org_id=data["org"].id,
             name="limited-role",
-            permissions=["self.*"],
+            permissions=["org.read"],
         )
         membership = data["membership"]
         membership.add_member(user_id=member_user_id, role_id=member_role.id)

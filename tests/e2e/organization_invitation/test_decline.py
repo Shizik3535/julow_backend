@@ -13,10 +13,10 @@ MEMBER_ROLE_ID = "00000000-0000-0000-0000-000000000014"
 class TestDeclineInvitation:
     """Отклонение приглашения."""
 
-    async def _create_invitation(self, client, owner) -> str:
+    async def _create_invitation(self, client, owner, email: str) -> str:
         resp = await client.post(
             f"{API}/orgs/{owner['org_id']}/invitations/email",
-            json={"email": f"decline-{uuid.uuid4().hex[:8]}@example.com", "role_id": MEMBER_ROLE_ID},
+            json={"email": email, "role_id": MEMBER_ROLE_ID},
             headers=auth_headers(owner["access_token"]),
         )
         assert resp.status_code == 201
@@ -25,8 +25,9 @@ class TestDeclineInvitation:
     async def test_decline_invitation_success(self, client) -> None:
         """200 — отклонение приглашения."""
         owner = await create_org_with_owner(client)
-        invitation_id = await self._create_invitation(client, owner)
-        decliner = await register_and_login(client)
+        invitee_email = f"decline-{uuid.uuid4().hex[:8]}@example.com"
+        invitation_id = await self._create_invitation(client, owner, invitee_email)
+        decliner = await register_and_login(client, email=invitee_email)
         resp = await client.post(
             f"{API}/orgs/invitations/{invitation_id}/decline",
             headers=auth_headers(decliner["access_token"]),

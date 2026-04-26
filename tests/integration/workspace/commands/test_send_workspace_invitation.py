@@ -16,9 +16,10 @@ class TestSendWorkspaceInvitationHandler:
     """Тесты SendWorkspaceInvitationHandler."""
 
     @pytest.fixture
-    def handler(self, ws_invitation_repo) -> SendWorkspaceInvitationHandler:
+    def handler(self, ws_invitation_repo, ws_repo) -> SendWorkspaceInvitationHandler:
         return SendWorkspaceInvitationHandler(
             invitation_repo=ws_invitation_repo,
+            ws_repo=ws_repo,
             permission_checker=_AlwaysAllowPermissionChecker(),
             event_bus=_NoopEventBus(),
         )

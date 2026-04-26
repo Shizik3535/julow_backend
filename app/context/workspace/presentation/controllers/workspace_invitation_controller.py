@@ -42,6 +42,10 @@ from app.context.workspace.application.queries.get_workspace_invitation_by_token
     GetWorkspaceInvitationByTokenHandler,
     GetWorkspaceInvitationByTokenQuery,
 )
+from app.context.workspace.application.queries.search_my_workspace_invitations import (
+    SearchMyWorkspaceInvitationsHandler,
+    SearchMyWorkspaceInvitationsQuery,
+)
 from app.context.workspace.presentation.dependencies import (
     get_current_user_id,
     get_workspace_event_bus,
@@ -76,6 +80,7 @@ class WorkspaceInvitationController(BaseController):
         GET    /invitations/token/{token}                     — По токену ссылки
         POST   /invitations/{invitation_id}/accept            — Принять приглашение
         POST   /invitations/{invitation_id}/decline           — Отклонить приглашение
+        GET    /invitations/mine                             — Мои приглашения
     """
 
     def __init__(self) -> None:
@@ -197,6 +202,18 @@ class WorkspaceInvitationController(BaseController):
                 200: {"description": "Приглашение отклонено"},
                 404: {"description": "Приглашение не найдено", "model": ErrorResponse},
                 409: {"description": "Нарушение бизнес-правила", "model": ErrorResponse},
+            },
+        )
+        self._router.add_api_route(
+            "/invitations/mine",
+            self.get_my_invitations,
+            methods=["GET"],
+            response_model=PaginatedResponse[WorkspaceInvitationResponse],
+            summary="Мои приглашения в workspace",
+            description="Возвращает список приглашений текущего пользователя (PENDING по email, ACCEPTED/DECLINED по user_id).",
+            responses={
+                200: {"description": "Список приглашений"},
+                401: {"description": "Не аутентифицирован", "model": ErrorResponse},
             },
         )
 
@@ -326,6 +343,7 @@ class WorkspaceInvitationController(BaseController):
         )
         command = RevokeWorkspaceInvitationCommand(
             caller_id=caller_id,
+            workspace_id=ws_id,
             invitation_id=invitation_id,
         )
         await handler.handle(command)
@@ -372,14 +390,61 @@ class WorkspaceInvitationController(BaseController):
     async def decline_invitation(
         self,
         invitation_id: str,
+        caller_id: str = Depends(get_current_user_id),
         invitation_repo=Depends(get_workspace_invitation_repository),
+        identity_port=Depends(get_ws_identity_user_port),
+        permission_checker=Depends(get_workspace_permission_checker),
         event_bus=Depends(get_workspace_event_bus),
     ) -> MessageResponse:
         """Отклонить приглашение."""
         handler = DeclineWorkspaceInvitationHandler(
             invitation_repo=invitation_repo,
+            identity_port=identity_port,
+            permission_checker=permission_checker,
             event_bus=event_bus,
         )
-        command = DeclineWorkspaceInvitationCommand(invitation_id=invitation_id)
+        command = DeclineWorkspaceInvitationCommand(
+            invitation_id=invitation_id,
+            user_id=caller_id,
+        )
         await handler.handle(command)
         return SuccessResponse(data={"message": "Приглашение отклонено"})
+
+    # ------------------------------------------------------------------
+    # My invitations
+    # ------------------------------------------------------------------
+
+    async def get_my_invitations(
+        self,
+        offset: int = Query(default=0, ge=0, description="Смещение пагинации"),
+        limit: int = Query(default=100, ge=1, le=500, description="Размер страницы"),
+        status: str | None = Query(default=None, description="Фильтр по статусу"),
+        workspace_id: str | None = Query(default=None, description="Фильтр по workspace ID"),
+        search_text: str | None = Query(default=None, description="Поиск по email"),
+        caller_id: str = Depends(get_current_user_id),
+        invitation_repo=Depends(get_workspace_invitation_repository),
+        identity_port=Depends(get_ws_identity_user_port),
+    ) -> PaginatedResponse[WorkspaceInvitationResponse]:
+        """Получить мои приглашения в workspace."""
+        filters: dict = {}
+        if status:
+            filters["status"] = status
+        if workspace_id:
+            filters["workspace_id"] = workspace_id
+        if search_text:
+            filters["search_text"] = search_text
+
+        handler = SearchMyWorkspaceInvitationsHandler(
+            invitation_repo=invitation_repo,
+            identity_port=identity_port,
+        )
+        query = SearchMyWorkspaceInvitationsQuery(
+            caller_id=caller_id,
+            offset=offset,
+            limit=limit,
+            filters=filters or None,
+        )
+        dto = await handler.handle(query)
+        items = [WorkspaceInvitationResponse.model_validate(item.model_dump()) for item in dto.items]
+        page = (offset // max(limit, 1)) + 1
+        return PaginatedResponse(items=items, total=dto.total, page=page, page_size=limit)

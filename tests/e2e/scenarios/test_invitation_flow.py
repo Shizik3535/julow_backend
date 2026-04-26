@@ -69,8 +69,8 @@ class TestInvitationFlow:
         )
         invitation_id = resp.json()["data"]["id"]
 
-        # 2. Отклонение приглашения
-        decliner = await register_and_login(client)
+        # 2. Отклонение приглашения пользователем с тем же email
+        decliner = await register_and_login(client, email=invite_email)
         resp = await client.post(
             f"{API}/orgs/invitations/{invitation_id}/decline",
             headers=auth_headers(decliner["access_token"]),

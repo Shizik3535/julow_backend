@@ -23,3 +23,7 @@ class OrganizationMembershipPort(ABC):
     @abstractmethod
     async def get_org_members(self, org_id: str) -> list[dict[str, Any]]:
         """Получить список участников организации."""
+
+    @abstractmethod
+    async def org_exists(self, org_id: str) -> bool:
+        """Проверить, существует ли организация."""
