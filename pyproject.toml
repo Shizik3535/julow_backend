@@ -17,6 +17,10 @@ filterwarnings = [
     "ignore::DeprecationWarning:dependency_injector",
 ]
 
+# Parallel execution configuration for e2e tests
+# Run with: pytest -m e2e -n auto
+# Or specify workers: pytest -m e2e -n 4
+
 [tool.coverage.run]
 source = ["app"]
 omit = ["tests/*"]

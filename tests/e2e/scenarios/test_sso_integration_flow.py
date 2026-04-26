@@ -4,16 +4,16 @@ import uuid
 
 import pytest
 
-from tests.e2e.conftest import API, auth_headers, create_org_with_owner
+from tests.e2e.conftest import API, auth_headers
 
 
 @pytest.mark.e2e
 class TestSSOIntegrationFlow:
     """Сценарий: add_sso → get_list → update → deactivate → get_list (deactivated)."""
 
-    async def test_sso_integration_flow(self, client) -> None:
+    async def test_sso_integration_flow(self, client, org_with_owner) -> None:
         """Полный цикл SSO-интеграции."""
-        owner = await create_org_with_owner(client)
+        owner = org_with_owner
         org_id = owner["org_id"]
         token = owner["access_token"]
 
@@ -27,7 +27,7 @@ class TestSSOIntegrationFlow:
                 "sso_url": "https://idp.example.com/sso",
                 "certificate": "MIICpDCCAYwCCQDU+jh+",
             },
-            headers=auth_headers(token),
+            headers=auth_headers(token)
         )
         assert resp.status_code == 201
         integration_id = resp.json()["data"]["id"]
@@ -35,7 +35,7 @@ class TestSSOIntegrationFlow:
         # 2. Проверка в списке интеграций
         resp = await client.get(
             f"{API}/orgs/{org_id}/sso-integrations",
-            headers=auth_headers(token),
+            headers=auth_headers(token)
         )
         assert resp.status_code == 200
         integration_ids = [i["id"] for i in resp.json()["data"]]
@@ -45,21 +45,21 @@ class TestSSOIntegrationFlow:
         resp = await client.patch(
             f"{API}/orgs/{org_id}/sso-integrations/{integration_id}",
             json={"sso_url": "https://new-idp.example.com/sso"},
-            headers=auth_headers(token),
+            headers=auth_headers(token)
         )
         assert resp.status_code == 200
 
         # 4. Деактивация SSO-интеграции
         resp = await client.post(
             f"{API}/orgs/{org_id}/sso-integrations/{integration_id}/deactivate",
-            headers=auth_headers(token),
+            headers=auth_headers(token)
         )
         assert resp.status_code == 200
 
         # 5. Проверка — интеграция деактивирована
         resp = await client.get(
             f"{API}/orgs/{org_id}/sso-integrations",
-            headers=auth_headers(token),
+            headers=auth_headers(token)
         )
         assert resp.status_code == 200
         integrations = resp.json()["data"]

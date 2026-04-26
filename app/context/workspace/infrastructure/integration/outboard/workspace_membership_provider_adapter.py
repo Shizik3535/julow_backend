@@ -84,6 +84,8 @@ class WorkspaceMembershipProviderAdapter(WorkspaceMembershipProvider):
         for perm in permissions:
             if perm == required:
                 return True
+            if perm == "ws.*":
+                return True  # полный доступ к workspace
             if perm.endswith(".*"):
                 prefix = perm[:-1]
                 if required.startswith(prefix):

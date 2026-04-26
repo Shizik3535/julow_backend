@@ -48,8 +48,8 @@ def task_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_project_events_handler(session: AsyncSession) -> MessageHandlerFn:
         task_repo = container.task_repo(session=session)
-        board_port = container.board_port(session=session)
-        event_bus = build_task_event_bus(container.message_broker())
+        board_port = container.task_board_port()
+        event_bus = build_task_event_bus(container.message_broker_port())
 
         handlers = [
             OnProjectArchived(task_repo=task_repo, event_bus=event_bus),

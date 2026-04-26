@@ -25,6 +25,14 @@ from app.context.project.application.commands.create_sprint_retro import (
     CreateSprintRetroCommand,
     CreateSprintRetroHandler,
 )
+from app.context.project.application.commands.complete_sprint import (
+    CompleteSprintCommand,
+    CompleteSprintHandler,
+)
+from app.context.project.application.commands.cancel_sprint import (
+    CancelSprintCommand,
+    CancelSprintHandler,
+)
 from app.context.project.application.queries.get_sprints_by_project import (
     GetSprintsByProjectHandler,
     GetSprintsByProjectQuery,
@@ -72,6 +80,8 @@ class SprintController(BaseController):
         GET    /{project_id}/sprints/{sprint_id}             — Получить спринт
         POST   /{project_id}/sprints                         — Создать спринт
         POST   /{project_id}/sprints/{sprint_id}/start       — Запустить спринт
+        POST   /{project_id}/sprints/{sprint_id}/complete    — Завершить спринт
+        POST   /{project_id}/sprints/{sprint_id}/cancel      — Отменить спринт
         PATCH  /{project_id}/sprints/{sprint_id}/goal        — Обновить цель
         PATCH  /{project_id}/sprints/{sprint_id}/date-range  — Обновить даты
         POST   /{project_id}/sprints/{sprint_id}/retro       — Создать ретроспективу
@@ -118,6 +128,14 @@ class SprintController(BaseController):
         self._router.add_api_route(
             "/{project_id}/sprints/{sprint_id}/retro", self.create_sprint_retro, methods=["POST"],
             response_model=MessageResponse, summary="Создать ретроспективу спринта",
+        )
+        self._router.add_api_route(
+            "/{project_id}/sprints/{sprint_id}/complete", self.complete_sprint, methods=["POST"],
+            response_model=MessageResponse, summary="Завершить спринт",
+        )
+        self._router.add_api_route(
+            "/{project_id}/sprints/{sprint_id}/cancel", self.cancel_sprint, methods=["POST"],
+            response_model=MessageResponse, summary="Отменить спринт",
         )
 
     async def list_sprints(
@@ -234,3 +252,29 @@ class SprintController(BaseController):
             caller_id=caller_id, sprint_id=sprint_id, template_id=body.template_id,
         ))
         return SuccessResponse(data={"message": "Ретроспектива создана"})
+
+    async def complete_sprint(
+        self, ws_id: str, project_id: str, sprint_id: str,
+        caller_id: str = Depends(get_current_user_id),
+        sprint_repo=Depends(get_sprint_repository),
+        permission_checker=Depends(get_project_permission_checker),
+        event_bus=Depends(get_project_event_bus),
+    ) -> MessageResponse:
+        handler = CompleteSprintHandler(
+            sprint_repo=sprint_repo, permission_checker=permission_checker, event_bus=event_bus,
+        )
+        await handler.handle(CompleteSprintCommand(caller_id=caller_id, sprint_id=sprint_id))
+        return SuccessResponse(data={"message": "Спринт завершён"})
+
+    async def cancel_sprint(
+        self, ws_id: str, project_id: str, sprint_id: str,
+        caller_id: str = Depends(get_current_user_id),
+        sprint_repo=Depends(get_sprint_repository),
+        permission_checker=Depends(get_project_permission_checker),
+        event_bus=Depends(get_project_event_bus),
+    ) -> MessageResponse:
+        handler = CancelSprintHandler(
+            sprint_repo=sprint_repo, permission_checker=permission_checker, event_bus=event_bus,
+        )
+        await handler.handle(CancelSprintCommand(caller_id=caller_id, sprint_id=sprint_id))
+        return SuccessResponse(data={"message": "Спринт отменён"})

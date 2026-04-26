@@ -8,7 +8,7 @@ from app.shared.application.messaging.domain_event_bus import DomainEventBus
 from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.value_objects.rich_text_vo import RichText
 from app.context.project.application.dto.milestone_dto import MilestoneDTO
-from app.context.project.application.exceptions.sprint_app_exceptions import SprintCapabilityNotAvailableException
+from app.context.project.application.exceptions.milestone_app_exceptions import MilestoneCapabilityNotAvailableException
 from app.context.project.domain.entities.milestone import Milestone
 from app.context.project.domain.exceptions.project_exceptions import ProjectNotFoundException
 from app.context.project.domain.repositories.project_repository import ProjectRepository
@@ -66,7 +66,7 @@ class AddProjectMilestoneHandler(BaseCommandHandler[AddProjectMilestoneCommand, 
         )
 
         if not project.methodology_capabilities.has_milestones:
-            raise SprintCapabilityNotAvailableException(project.methodology.value)
+            raise MilestoneCapabilityNotAvailableException(project.methodology.value)
 
         description: RichText | None = None
         if command.description_content is not None:

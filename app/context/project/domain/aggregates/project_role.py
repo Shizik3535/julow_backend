@@ -42,10 +42,10 @@ class ProjectRole(AggregateRoot):
     updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
 
     @classmethod
-    def create_system(cls, name: str, permissions: list[str], description: str | None = None) -> ProjectRole:
-        """Создаёт системную роль."""
-        role = cls(name=name, permissions=permissions, is_system=True, description=description)
-        role._register_event(ProjectRoleCreated(project_id="", role_name=name))
+    def create_system(cls, name: str, permissions: list[str], description: str | None = None, project_id: Id | None = None) -> ProjectRole:
+        """Создаёт системную роль (глобальную или привязанную к проекту)."""
+        role = cls(name=name, permissions=permissions, is_system=True, description=description, project_id=project_id)
+        role._register_event(ProjectRoleCreated(project_id=str(project_id) if project_id else "", role_name=name))
         return role
 
     @classmethod

@@ -18,7 +18,7 @@ class TestBackupCodesFlow:
         enable_resp = await client.post(
             f"{API}/account/security/2fa/enable",
             json={"method": "totp", "is_primary": True},
-            headers=headers,
+            headers=headers
         )
         assert enable_resp.status_code == 200
 
@@ -26,7 +26,7 @@ class TestBackupCodesFlow:
         gen_resp = await client.post(
             f"{API}/account/security/2fa/backup-codes",
             json={"count": 5},
-            headers=headers,
+            headers=headers
         )
         assert gen_resp.status_code == 200
         codes = gen_resp.json()["data"]["codes"]
@@ -36,7 +36,7 @@ class TestBackupCodesFlow:
         use_resp = await client.post(
             f"{API}/account/security/2fa/use-backup-code",
             json={"code": codes[0]},
-            headers=headers,
+            headers=headers
         )
         assert use_resp.status_code == 200
 
@@ -49,7 +49,7 @@ class TestBackupCodesFlow:
         enable_resp = await client.post(
             f"{API}/account/security/2fa/enable",
             json={"method": "totp", "is_primary": True},
-            headers=headers,
+            headers=headers
         )
         assert enable_resp.status_code == 200
 
@@ -57,7 +57,7 @@ class TestBackupCodesFlow:
         gen_resp = await client.post(
             f"{API}/account/security/2fa/backup-codes",
             json={"count": 3},
-            headers=headers,
+            headers=headers
         )
         codes = gen_resp.json()["data"]["codes"]
 
@@ -65,7 +65,7 @@ class TestBackupCodesFlow:
         use1 = await client.post(
             f"{API}/account/security/2fa/use-backup-code",
             json={"code": codes[0]},
-            headers=headers,
+            headers=headers
         )
         assert use1.status_code == 200
 
@@ -73,6 +73,6 @@ class TestBackupCodesFlow:
         use2 = await client.post(
             f"{API}/account/security/2fa/use-backup-code",
             json={"code": codes[0]},
-            headers=headers,
+            headers=headers
         )
         assert use2.status_code == 400

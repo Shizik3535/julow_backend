@@ -18,7 +18,7 @@ class Test2FAFlow:
         enable_resp = await client.post(
             f"{API}/account/security/2fa/enable",
             json={"method": "totp", "is_primary": False},
-            headers=headers,
+            headers=headers
         )
         assert enable_resp.status_code == 200
 
@@ -26,7 +26,7 @@ class Test2FAFlow:
         primary_resp = await client.post(
             f"{API}/account/security/2fa/set-primary",
             json={"method": "totp"},
-            headers=headers,
+            headers=headers
         )
         assert primary_resp.status_code == 200
 
@@ -34,7 +34,7 @@ class Test2FAFlow:
         disable_resp = await client.post(
             f"{API}/account/security/2fa/disable",
             json={"method": "totp"},
-            headers=headers,
+            headers=headers
         )
         assert disable_resp.status_code == 200
 
@@ -47,13 +47,13 @@ class Test2FAFlow:
         await client.post(
             f"{API}/account/security/2fa/enable",
             json={"method": "totp", "is_primary": True},
-            headers=headers,
+            headers=headers
         )
 
         # Проверяем неверный код
         verify_resp = await client.post(
             f"{API}/account/security/2fa/verify",
             json={"method": "totp", "code": "000000"},
-            headers=headers,
+            headers=headers
         )
         assert verify_resp.status_code == 400

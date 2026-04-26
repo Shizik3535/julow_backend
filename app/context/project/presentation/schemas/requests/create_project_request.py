@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,7 +17,7 @@ class CreateProjectRequest(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str = Field(..., min_length=3, max_length=200, description="Название проекта", examples=["Backend API"])
-    methodology: str = Field(
+    methodology: Literal["kanban", "scrum", "waterfall", "hybrid", "shape_up"] = Field(
         ..., description="Методология: kanban | scrum | waterfall | hybrid | shape_up", examples=["scrum"]
     )
     owner_id: str | None = Field(None, description="UUID владельца (по умолчанию — текущий пользователь)")

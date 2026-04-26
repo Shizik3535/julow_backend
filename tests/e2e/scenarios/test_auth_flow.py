@@ -19,7 +19,7 @@ class TestAuthFlow:
         # 2. Логин
         login_resp = await client.post(
             f"{API}/auth/login",
-            json={"email": email, "password": DEFAULT_PASSWORD},
+            json={"email": email, "password": DEFAULT_PASSWORD}
         )
         assert login_resp.status_code == 200
         login_data = login_resp.json()["data"]
@@ -36,7 +36,7 @@ class TestAuthFlow:
         # 4. Refresh
         refresh_resp = await client.post(
             f"{API}/auth/refresh",
-            json={"refresh_token": refresh_token},
+            json={"refresh_token": refresh_token}
         )
         assert refresh_resp.status_code == 200
         new_access = refresh_resp.json()["data"]["access_token"]

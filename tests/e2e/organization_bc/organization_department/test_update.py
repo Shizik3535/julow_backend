@@ -1,0 +1,63 @@
+"""E2E-тесты: PATCH /orgs/{org_id}/departments/{department_id}."""
+
+import uuid
+
+import pytest
+
+from tests.e2e.conftest import API, auth_headers, register_and_login
+
+
+@pytest.mark.e2e
+class TestUpdateDepartment:
+    """Обновление подразделения."""
+
+    async def _create_department(self, client, owner) -> str:
+        resp = await client.post(
+            f"{API}/orgs/{owner['org_id']}/departments",
+            json={"name": "Dept To Update"},
+            headers=auth_headers(owner["access_token"])
+        )
+        assert resp.status_code == 201
+        return resp.json()["data"]["id"]
+
+    async def test_update_department_success(self, client, org_with_owner) -> None:
+        """200 — обновление имени подразделения."""
+        owner = org_with_owner
+        dept_id = await self._create_department(client, owner)
+        resp = await client.patch(
+            f"{API}/orgs/{owner['org_id']}/departments/{dept_id}",
+            json={"name": "Updated Dept"},
+            headers=auth_headers(owner["access_token"])
+        )
+
+        assert resp.status_code == 200
+
+    async def test_update_department_forbidden(self, client, org_with_owner) -> None:
+        """403 — не-владелец не может обновить подразделение."""
+        owner = org_with_owner
+        dept_id = await self._create_department(client, owner)
+        other = await register_and_login(client)
+        resp = await client.patch(
+            f"{API}/orgs/{owner['org_id']}/departments/{dept_id}",
+            json={"name": "Hacked Dept"},
+            headers=auth_headers(other["access_token"])
+        )
+        assert resp.status_code == 403
+
+    async def test_update_department_not_found(self, client, org_with_owner) -> None:
+        """404 — подразделение не найдено."""
+        owner = org_with_owner
+        resp = await client.patch(
+            f"{API}/orgs/{owner['org_id']}/departments/{uuid.uuid4()}",
+            json={"name": "Ghost"},
+            headers=auth_headers(owner["access_token"])
+        )
+        assert resp.status_code == 404
+
+    async def test_update_department_no_auth(self, client) -> None:
+        """401 — без токена авторизации."""
+        resp = await client.patch(
+            f"{API}/orgs/{uuid.uuid4()}/departments/{uuid.uuid4()}",
+            json={"name": "NoAuth"}
+        )
+        assert resp.status_code == 401

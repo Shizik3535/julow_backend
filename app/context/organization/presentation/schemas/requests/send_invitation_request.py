@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class SendInvitationRequest(BaseModel):
@@ -21,7 +21,7 @@ class SendInvitationRequest(BaseModel):
         },
     )
 
-    email: str = Field(
+    email: EmailStr = Field(
         ...,
         description="Email приглашаемого",
         examples=["user@example.com"],

@@ -16,6 +16,9 @@ from app.context.project.application.exceptions.project_app_exceptions import (
     OperationNotAllowedForSuspendedProjectException,
     ProjectAlreadyExistsException,
 )
+from app.context.project.application.exceptions.milestone_app_exceptions import (
+    MilestoneCapabilityNotAvailableException,
+)
 from app.context.project.application.exceptions.sprint_app_exceptions import (
     EpicCapabilityNotAvailableException,
     SprintCapabilityNotAvailableException,
@@ -33,5 +36,6 @@ __all__ = [
     "OperationNotAllowedForSuspendedProjectException",
     "ProjectAlreadyExistsException",
     "EpicCapabilityNotAvailableException",
+    "MilestoneCapabilityNotAvailableException",
     "SprintCapabilityNotAvailableException",
 ]

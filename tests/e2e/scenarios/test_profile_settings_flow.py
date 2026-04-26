@@ -21,7 +21,7 @@ class TestProfileSettingsFlow:
                 "bio": "E2E тестовый bio",
                 "job_title": "QA Engineer",
             },
-            headers=headers,
+            headers=headers
         )
         assert resp1.status_code == 200
 
@@ -33,7 +33,7 @@ class TestProfileSettingsFlow:
                 "accent_color": "#10B981",
                 "interface_density": "spacious",
             },
-            headers=headers,
+            headers=headers
         )
         assert resp2.status_code == 200
 
@@ -52,7 +52,7 @@ class TestProfileSettingsFlow:
                     },
                 ],
             },
-            headers=headers,
+            headers=headers
         )
         assert resp3.status_code == 200
 
@@ -64,7 +64,7 @@ class TestProfileSettingsFlow:
                 "online_status_visibility": "nobody",
                 "activity_tracking_consent": "denied",
             },
-            headers=headers,
+            headers=headers
         )
         assert resp4.status_code == 200
 

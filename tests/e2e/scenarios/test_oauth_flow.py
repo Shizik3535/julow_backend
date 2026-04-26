@@ -22,7 +22,7 @@ class TestOAuthFlow:
                 "authorization_code": "test-code-github-12345",
                 "redirect_uri": "https://app.example.com/oauth/callback",
             },
-            headers=headers,
+            headers=headers
         )
         assert link_resp.status_code == 200
 
@@ -37,7 +37,7 @@ class TestOAuthFlow:
         # 3. Отвязываем
         unlink_resp = await client.delete(
             f"{API}/account/security/oauth/oauth_github",
-            headers=headers,
+            headers=headers
         )
         assert unlink_resp.status_code == 200
 

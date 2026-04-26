@@ -118,11 +118,11 @@ class CreateProjectHandler(BaseCommandHandler[CreateProjectCommand, ProjectDTO])
         )
 
         system_roles = [
-            ProjectRole.create_custom(
-                project_id=project.id,
+            ProjectRole.create_system(
                 name=str(template["name"]),
                 permissions=list(template["permissions"]),  # type: ignore[arg-type]
                 description=template["description"],  # type: ignore[arg-type]
+                project_id=project.id,
             )
             for template in SYSTEM_PROJECT_ROLES
         ]

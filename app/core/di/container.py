@@ -184,7 +184,7 @@ class Container(containers.DeclarativeContainer):
         create_auth_token_adapter,
         settings=settings.provided.auth,
     )
-    password_port = providers.Singleton(create_password_adapter)
+    password_port = providers.Factory(create_password_adapter)
 
     # Database
     db_engine = providers.Singleton(

@@ -36,6 +36,6 @@ class TestAccountDeletionFlow:
         user = await register_and_login(client)
         resp = await client.post(
             f"{API}/account/me/cancel-deletion",
-            headers=auth_headers(user["access_token"]),
+            headers=auth_headers(user["access_token"])
         )
         assert resp.status_code == 409

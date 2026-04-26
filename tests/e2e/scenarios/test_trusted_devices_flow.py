@@ -21,7 +21,7 @@ class TestTrustedDevicesFlow:
         add_resp = await client.post(
             f"{API}/account/security/trusted-devices",
             json={"device_fingerprint": fingerprint},
-            headers=headers,
+            headers=headers
         )
         assert add_resp.status_code == 200
 
@@ -37,7 +37,7 @@ class TestTrustedDevicesFlow:
         # 3. Удаляем
         remove_resp = await client.delete(
             f"{API}/account/security/trusted-devices/{fingerprint}",
-            headers=headers,
+            headers=headers
         )
         assert remove_resp.status_code == 200
 

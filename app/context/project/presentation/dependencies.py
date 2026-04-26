@@ -185,7 +185,11 @@ async def get_project_org_membership_port(
 ):
     """Получить OrganizationMembershipPort (inboard) из DI-контейнера."""
     org_membership_repo = container.org_membership_repo(session=session)
-    org_membership_provider = container.org_membership_provider(repo=org_membership_repo)
+    organization_repo = container.organization_repo(session=session)
+    org_membership_provider = container.org_membership_provider(
+        repo=org_membership_repo,
+        org_repo=organization_repo,
+    )
     return container.project_org_membership_port(org_membership_provider=org_membership_provider)
 
 

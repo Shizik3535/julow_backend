@@ -3,8 +3,7 @@ from httpx import AsyncClient
 
 from tests.e2e.conftest import (
     API,
-    auth_headers,
-    create_workspace_with_owner,
+    auth_headers
 )
 
 
@@ -12,8 +11,8 @@ from tests.e2e.conftest import (
 class TestWorkspaceRoleCrudFlow:
     """Сценарий: create_role → get_roles → update_role → get_role → delete_role → get_roles (нет кастомной)."""
 
-    async def test_full_role_crud(self, client: AsyncClient):
-        ws = await create_workspace_with_owner(client)
+    async def test_full_role_crud(self, client: AsyncClient, workspace_owner):
+        ws = workspace_owner
         h = auth_headers(ws["access_token"])
         ws_id = ws["ws_id"]
 
@@ -21,7 +20,7 @@ class TestWorkspaceRoleCrudFlow:
         resp = await client.post(
             f"{API}/workspaces/{ws_id}/roles",
             json={"name": "flow-role", "permissions": ["members.read"], "description": "Test role"},
-            headers=h,
+            headers=h
         )
         assert resp.status_code == 201
         role_id = resp.json()["data"]["id"]
@@ -37,7 +36,7 @@ class TestWorkspaceRoleCrudFlow:
         resp = await client.patch(
             f"{API}/workspaces/{ws_id}/roles/{role_id}",
             json={"permissions": ["members.read", "members.write"], "description": "Updated"},
-            headers=h,
+            headers=h
         )
         assert resp.status_code == 200
 

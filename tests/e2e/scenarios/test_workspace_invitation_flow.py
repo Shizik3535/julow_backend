@@ -4,8 +4,7 @@ from httpx import AsyncClient
 from tests.e2e.conftest import (
     API,
     auth_headers,
-    create_workspace_with_owner,
-    register_and_login,
+    register_and_login
 )
 
 
@@ -18,8 +17,8 @@ def _member_role_id(roles_resp):
 class TestWorkspaceInvitationFlow:
     """Сценарий: send_invitation → get_invitations → generate_link → get_by_token (без auth) → accept → decline → revoke."""
 
-    async def test_full_invitation_flow(self, client: AsyncClient):
-        ws = await create_workspace_with_owner(client)
+    async def test_full_invitation_flow(self, client: AsyncClient, workspace_owner):
+        ws = workspace_owner
         h = auth_headers(ws["access_token"])
         ws_id = ws["ws_id"]
 
@@ -27,7 +26,7 @@ class TestWorkspaceInvitationFlow:
         roles_resp = await client.get(
             f"{API}/workspaces/{ws_id}/roles",
             params={"system_only": True},
-            headers=h,
+            headers=h
         )
         role_id = _member_role_id(roles_resp)
 
@@ -36,7 +35,7 @@ class TestWorkspaceInvitationFlow:
         inv_resp = await client.post(
             f"{API}/workspaces/{ws_id}/invitations/email",
             json={"email": invitee["email"], "role_id": role_id},
-            headers=h,
+            headers=h
         )
         assert inv_resp.status_code == 201
         invitation_id = inv_resp.json()["data"]["id"]
@@ -49,7 +48,7 @@ class TestWorkspaceInvitationFlow:
         link_resp = await client.post(
             f"{API}/workspaces/{ws_id}/invitations/link",
             json={"role_id": role_id},
-            headers=h,
+            headers=h
         )
         assert link_resp.status_code == 201
         token = link_resp.json()["data"]["link"]["value"]
@@ -61,7 +60,7 @@ class TestWorkspaceInvitationFlow:
         # 6. Decline invitation
         resp = await client.post(
             f"{API}/workspaces/invitations/{invitation_id}/decline",
-            headers=auth_headers(invitee["access_token"]),
+            headers=auth_headers(invitee["access_token"])
         )
         assert resp.status_code == 200
 
@@ -69,7 +68,7 @@ class TestWorkspaceInvitationFlow:
         inv_resp2 = await client.post(
             f"{API}/workspaces/{ws_id}/invitations/email",
             json={"email": "revoke-test@example.com", "role_id": role_id},
-            headers=h,
+            headers=h
         )
         assert inv_resp2.status_code == 201
         inv2_id = inv_resp2.json()["data"]["id"]
@@ -77,6 +76,6 @@ class TestWorkspaceInvitationFlow:
         # 8. Revoke
         resp = await client.post(
             f"{API}/workspaces/{ws_id}/invitations/{inv2_id}/revoke",
-            headers=h,
+            headers=h
         )
         assert resp.status_code == 200
