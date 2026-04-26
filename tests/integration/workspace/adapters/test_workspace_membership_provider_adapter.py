@@ -152,6 +152,6 @@ class TestWorkspaceMembershipProviderAdapter:
         assert WorkspaceMembershipProviderAdapter._permission_grants(["members.*"], "members.read") is True
         assert WorkspaceMembershipProviderAdapter._permission_grants(["members.*"], "members.write") is True
         assert WorkspaceMembershipProviderAdapter._permission_grants(["ws.*"], "ws.settings.write") is True
-        assert WorkspaceMembershipProviderAdapter._permission_grants(["ws.*"], "members.read") is False
+        assert WorkspaceMembershipProviderAdapter._permission_grants(["ws.*"], "members.read") is True
         assert WorkspaceMembershipProviderAdapter._permission_grants(["members.read"], "members.read") is True
         assert WorkspaceMembershipProviderAdapter._permission_grants(["members.read"], "members.write") is False

@@ -81,6 +81,14 @@ class WorkspaceMembershipProviderAdapter(WorkspaceMembershipProvider):
 
     @staticmethod
     def _permission_grants(permissions: list[str], required: str) -> bool:
+        """
+        Проверяет, покрывает ли список разрешений требуемое.
+
+        Правила:
+            - «ws.*» — полный доступ (покрывает любое разрешение)
+            - «group.*» покрывает «group.anything»
+            - точное совпадение строки
+        """
         for perm in permissions:
             if perm == required:
                 return True
