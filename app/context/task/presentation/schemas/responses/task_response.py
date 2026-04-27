@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -92,7 +93,7 @@ class TaskResponse(BaseModel):
     actual_effort: dict[str, Any] | None = None
     start_date: str | None = None
     due_date: str | None = None
-    completed_at: str | None = None
+    completed_at: datetime | None = None
     custom_fields: dict[str, str] = Field(default_factory=dict)
     checklists: list[ChecklistResponse] = Field(default_factory=list)
     relations: list[RelationResponse] = Field(default_factory=list)
@@ -102,5 +103,5 @@ class TaskResponse(BaseModel):
     sprint_id: str | None = None
     status: str
     recurrence: dict[str, Any] | None = None
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime

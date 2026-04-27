@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
-
-from app.context.task.presentation.schemas.responses.task_response import LabelResponse
 
 
 class TaskTemplateChecklistResponse(BaseModel):
@@ -23,11 +22,11 @@ class TaskTemplateResponse(BaseModel):
 
     id: str
     name: str = Field(..., description="Название шаблона")
-    description: dict[str, str] | None = Field(default=None, description="Описание (content + format)")
+    description: dict[str, Any] | None = Field(default=None, description="Описание (content + format)")
     task_type: str = Field(..., description="Тип задачи")
-    default_labels: list[LabelResponse] = Field(default_factory=list, description="Метки по умолчанию")
-    default_checklists: list[TaskTemplateChecklistResponse] = Field(default_factory=list, description="Чек-листы по умолчанию")
+    default_labels: list[dict[str, Any]] = Field(default_factory=list, description="Метки по умолчанию")
+    default_checklists: list[dict[str, Any]] = Field(default_factory=list, description="Чек-листы по умолчанию")
     default_custom_fields: dict[str, str] = Field(default_factory=dict, description="Кастомные поля по умолчанию")
     is_system: bool = Field(..., description="Системный шаблон")
-    created_at: str
-    updated_at: str
+    created_at: datetime | str | None = Field(default=None, description="Время создания")
+    updated_at: datetime | str | None = Field(default=None, description="Время обновления")

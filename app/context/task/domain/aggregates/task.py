@@ -436,7 +436,7 @@ class Task(AggregateRoot):
             ChecklistRemoved(task_id=str(self.id), checklist_id=str(checklist_id))
         )
 
-    def add_checklist_item(self, checklist_id: Id, text: str, assignee_id: Id | None = None, due_date: date | None = None) -> None:
+    def add_checklist_item(self, checklist_id: Id, text: str, assignee_id: Id | None = None, due_date: date | None = None) -> ChecklistItem:
         self._assert_can_modify()
         checklist = next((cl for cl in self.checklists if cl.id == checklist_id), None)
         if checklist is None:
@@ -448,6 +448,7 @@ class Task(AggregateRoot):
         self._register_event(
             ChecklistItemAdded(task_id=str(self.id), checklist_id=str(checklist_id))
         )
+        return item
 
     def toggle_checklist_item(self, checklist_id: Id, item_id: Id) -> None:
         self._assert_can_modify()

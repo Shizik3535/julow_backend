@@ -814,6 +814,93 @@ async def add_project_member_with_role(
     return {"response": resp, "role_id": role_id}
 
 
+# ── Task helpers ─────────────────────────────────────────────────────────────
+
+
+async def create_task(
+    client: AsyncClient,
+    *,
+    ws_id: str,
+    project_id: str,
+    token: str,
+    title: str | None = None,
+    task_type: str = "task",
+    reporter_id: str | None = None,
+    parent_task_id: str | None = None,
+    epic_id: str | None = None,
+) -> dict:
+    """
+    Создаёт задачу через API.
+
+    Возвращает:
+        {"task_id": ..., "title": ..., "response": ...}
+    """
+    title = title or f"e2e-task-{uuid.uuid4().hex[:8]}"
+    resp = await client.post(
+        f"{API}/workspaces/{ws_id}/projects/{project_id}/tasks",
+        json={
+            "title": title,
+            "task_type": task_type,
+            "reporter_id": reporter_id,
+            "parent_task_id": parent_task_id,
+            "epic_id": epic_id,
+        },
+        headers=auth_headers(token)
+    )
+    data = resp.json().get("data", {})
+    return {"task_id": data.get("id", ""), "title": title, "response": resp}
+
+
+async def create_task_with_project(
+    client: AsyncClient,
+    *,
+    methodology: str = "scrum"
+) -> dict:
+    """
+    Регистрирует пользователя, логинит, создаёт workspace, проект и задачу.
+
+    Возвращает:
+        {"email", "password", "user_id", "access_token", "refresh_token",
+         "ws_id", "ws_name", "project_id", "project_name", "task_id", "title"}
+    """
+    proj = await create_project_with_owner(client, methodology=methodology)
+    task = await create_task(
+        client,
+        ws_id=proj["ws_id"],
+        project_id=proj["project_id"],
+        token=proj["access_token"]
+    )
+    return {**proj, "task_id": task["task_id"], "title": task["title"]}
+
+
+async def create_task_template(
+    client: AsyncClient,
+    *,
+    ws_id: str,
+    project_id: str,
+    token: str,
+    name: str | None = None,
+    task_type: str = "task",
+) -> dict:
+    """
+    Создаёт шаблон задачи через API.
+
+    Возвращает:
+        {"template_id": ..., "name": ..., "response": ...}
+    """
+    name = name or f"e2e-template-{uuid.uuid4().hex[:8]}"
+    resp = await client.post(
+        f"{API}/workspaces/{ws_id}/projects/{project_id}/task-templates",
+        json={
+            "name": name,
+            "task_type": task_type,
+        },
+        headers=auth_headers(token)
+    )
+    data = resp.json().get("data", {})
+    return {"template_id": data.get("id", ""), "name": name, "response": resp}
+
+
 # ── Fixtures ─────────────────────────────────────────────────────────────────
 
 

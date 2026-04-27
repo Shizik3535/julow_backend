@@ -334,7 +334,7 @@ class SqlTaskRepository(SqlAlchemyRepository[Task, TaskORM], TaskRepository):
         stmt = select(func.count()).select_from(TaskORM).where(
             and_(
                 TaskORM.project_id == project_uuid,
-                type_coerce(TaskORM.assignee_ids, JSONB).astext.contains(user_uuid_str),
+                TaskORM.assignee_ids.bool_op("@>")(type_coerce(user_uuid_str, JSONB)),
             )
         )
         result = await self._session.execute(stmt)
@@ -365,7 +365,7 @@ class SqlTaskRepository(SqlAlchemyRepository[Task, TaskORM], TaskRepository):
         stmt = select(func.count()).select_from(TaskORM).where(
             and_(
                 TaskORM.project_id == project_uuid,
-                type_coerce(TaskORM.assignee_ids, JSONB).astext.contains(user_uuid_str),
+                TaskORM.assignee_ids.bool_op("@>")(type_coerce(user_uuid_str, JSONB)),
             )
         )
         result = await self._session.execute(stmt)

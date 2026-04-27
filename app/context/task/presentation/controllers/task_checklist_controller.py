@@ -92,11 +92,12 @@ class TaskChecklistController(BaseController):
             "/{task_id}/checklists/{checklist_id}/items",
             self.add_checklist_item,
             methods=["POST"],
-            response_model=MessageResponse,
+            response_model=SuccessResponse[dict],
+            status_code=201,
             summary="Добавить пункт чек-листа",
             description="Добавляет пункт в чек-лист задачи.",
             responses={
-                200: {"description": "Пункт добавлен"},
+                201: {"description": "Пункт добавлен"},
                 401: {"description": "Не аутентифицирован", "model": ErrorResponse},
                 403: {"description": "Недостаточно прав", "model": ErrorResponse},
                 404: {"description": "Задача или чек-лист не найдены", "model": ErrorResponse},
@@ -188,7 +189,7 @@ class TaskChecklistController(BaseController):
         task_repo=Depends(get_task_repository),
         permission_checker=Depends(get_task_permission_checker),
         event_bus=Depends(get_task_event_bus),
-    ) -> MessageResponse:
+    ) -> SuccessResponse[dict]:
         """Добавить пункт чек-листа."""
         handler = AddChecklistItemHandler(
             task_repo=task_repo,
@@ -203,8 +204,8 @@ class TaskChecklistController(BaseController):
             assignee_id=body.assignee_id,
             due_date=body.due_date,
         )
-        await handler.handle(command)
-        return SuccessResponse(data=MessageData(message="Пункт чек-листа добавлен"))
+        item_id = await handler.handle(command)
+        return SuccessResponse(data={"id": item_id})
 
     async def toggle_checklist_item(
         self,

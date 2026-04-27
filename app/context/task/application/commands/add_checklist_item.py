@@ -33,8 +33,8 @@ class AddChecklistItemCommand(BaseCommand):
     due_date: str | None = None
 
 
-class AddChecklistItemHandler(BaseCommandHandler[AddChecklistItemCommand, None]):
-    """Обработчик добавления пункта чек-листа."""
+class AddChecklistItemHandler(BaseCommandHandler[AddChecklistItemCommand, str]):
+    """Обработчик добавления пункта чек-листа. Возвращает ID пункта."""
 
     REQUIRED_PERMISSION = "tasks.update_own"
 
@@ -44,7 +44,7 @@ class AddChecklistItemHandler(BaseCommandHandler[AddChecklistItemCommand, None])
         self._permission_checker = permission_checker
         self._event_bus = event_bus
 
-    async def handle(self, command: AddChecklistItemCommand) -> None:
+    async def handle(self, command: AddChecklistItemCommand) -> str:
         task = await self._task_repo.get_by_id(Id.from_string(command.task_id))
         if task is None:
             raise TaskNotFoundException(id=command.task_id)
@@ -58,7 +58,7 @@ class AddChecklistItemHandler(BaseCommandHandler[AddChecklistItemCommand, None])
         assignee_id = Id.from_string(command.assignee_id) if command.assignee_id else None
         item_due_date = date.fromisoformat(command.due_date) if command.due_date else None
 
-        task.add_checklist_item(
+        item = task.add_checklist_item(
             checklist_id=Id.from_string(command.checklist_id),
             text=command.text,
             assignee_id=assignee_id,
@@ -66,3 +66,4 @@ class AddChecklistItemHandler(BaseCommandHandler[AddChecklistItemCommand, None])
         )
         await self._task_repo.update(task)
         await self._event_bus.publish_all(task.clear_domain_events())
+        return str(item.id)

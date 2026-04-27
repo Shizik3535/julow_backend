@@ -1,0 +1,70 @@
+"""E2E-тесты: GET /tasks/{task_id} — Получение задачи."""
+
+import pytest
+from httpx import AsyncClient
+
+from tests.e2e.conftest import (
+    API,
+    auth_headers,
+    create_task,
+    register_and_login,
+)
+
+
+@pytest.mark.e2e
+class TestGetTask:
+    """Получение задачи."""
+
+    async def test_get_task_success(self, client: AsyncClient, project_owner):
+        """200 — задача получена (владелец)."""
+        proj = project_owner
+        task = await create_task(
+            client,
+            ws_id=proj["ws_id"],
+            project_id=proj["project_id"],
+            token=proj["access_token"]
+        )
+        resp = await client.get(
+            f"{API}/tasks/{task['task_id']}",
+            headers=auth_headers(proj["access_token"])
+        )
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert data["id"] == task["task_id"]
+
+    async def test_get_task_not_found(self, client: AsyncClient, project_owner):
+        """404 — задача не найдена."""
+        proj = project_owner
+        resp = await client.get(
+            f"{API}/tasks/00000000-0000-0000-0000-000000000000",
+            headers=auth_headers(proj["access_token"])
+        )
+        assert resp.status_code == 404
+
+    async def test_get_task_no_auth(self, client: AsyncClient, project_owner):
+        """401 — без токена авторизации."""
+        proj = project_owner
+        task = await create_task(
+            client,
+            ws_id=proj["ws_id"],
+            project_id=proj["project_id"],
+            token=proj["access_token"]
+        )
+        resp = await client.get(f"{API}/tasks/{task['task_id']}")
+        assert resp.status_code == 401
+
+    async def test_get_task_forbidden(self, client: AsyncClient, project_owner):
+        """403 — пользователь не участник проекта."""
+        proj = project_owner
+        task = await create_task(
+            client,
+            ws_id=proj["ws_id"],
+            project_id=proj["project_id"],
+            token=proj["access_token"]
+        )
+        stranger = await register_and_login(client)
+        resp = await client.get(
+            f"{API}/tasks/{task['task_id']}",
+            headers=auth_headers(stranger["access_token"])
+        )
+        assert resp.status_code == 403

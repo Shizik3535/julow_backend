@@ -22,6 +22,9 @@ class TaskProjectArchivedOrSuspendedException(ApplicationException):
 class TaskStatusTransitionNotAllowedException(ApplicationException):
     """Переход между workflow-статусами не разрешён."""
 
+    http_status_code = 409
+    error_code = "STATUS_TRANSITION_NOT_ALLOWED"
+
     def __init__(self, from_status_id: str, to_status_id: str) -> None:
         super().__init__(
             f"Переход статуса {from_status_id} → {to_status_id} не разрешён workflow"
