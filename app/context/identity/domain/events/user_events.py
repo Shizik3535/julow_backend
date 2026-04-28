@@ -64,3 +64,10 @@ class AccountReactivated(BaseDomainEvent):
     """Аккаунт реактивирован."""
 
     user_id: str = ""
+
+
+@dataclass(frozen=True)
+class UserDeleted(BaseDomainEvent):
+    """Пользователь удалён (окончательно, после grace period)."""
+
+    user_id: str = ""

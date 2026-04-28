@@ -9,7 +9,6 @@ from app.shared.domain.value_objects.url_vo import Url
 from app.context.profile.domain.value_objects.appearance_settings import AppearanceSettings
 from app.context.profile.domain.value_objects.localization_settings import LocalizationSettings
 from app.context.profile.domain.value_objects.navigation_settings import NavigationSettings
-from app.context.profile.domain.value_objects.notification_settings import NotificationSettings
 from app.context.profile.domain.value_objects.privacy_settings import PrivacySettings
 from app.context.profile.domain.value_objects.hotkey_config import HotkeyConfig
 from app.context.profile.domain.value_objects.sidebar_section import SidebarSection
@@ -22,7 +21,6 @@ from app.context.profile.domain.events.profile_events import (
     HotkeysChanged,
     LocalizationSettingsChanged,
     NavigationSettingsChanged,
-    NotificationSettingsChanged,
     PersonalInfoChanged,
     PinnedItemAdded,
     PinnedItemRemoved,
@@ -63,7 +61,6 @@ class UserProfile(AggregateRoot):
         appearance: Настройки внешнего вида.
         localization: Настройки локализации.
         navigation: Настройки навигации.
-        notifications: Настройки уведомлений.
         privacy: Настройки приватности.
         hotkeys: Конфигурация горячих клавиш.
         sidebar_sections: Секции sidebar.
@@ -80,7 +77,6 @@ class UserProfile(AggregateRoot):
     appearance: AppearanceSettings = field(default_factory=AppearanceSettings)
     localization: LocalizationSettings = field(default_factory=LocalizationSettings)
     navigation: NavigationSettings = field(default_factory=NavigationSettings)
-    notifications: NotificationSettings = field(default_factory=NotificationSettings)
     privacy: PrivacySettings = field(default_factory=PrivacySettings)
     hotkeys: list[HotkeyConfig] = field(default_factory=list)
     sidebar_sections: list[SidebarSection] = field(default_factory=list)
@@ -193,21 +189,6 @@ class UserProfile(AggregateRoot):
         if changed:
             self._register_event(
                 NavigationSettingsChanged(
-                    user_id=str(self.user_id),
-                    changed_fields=changed,
-                )
-            )
-
-    # --- Настройки уведомлений ---
-
-    def update_notifications(self, settings: NotificationSettings) -> None:
-        """Заменяет группу настроек уведомлений."""
-        changed = _changed_fields(self.notifications, settings)
-        self.notifications = settings
-        self.updated_at = datetime.now(tz=timezone.utc)
-        if changed:
-            self._register_event(
-                NotificationSettingsChanged(
                     user_id=str(self.user_id),
                     changed_fields=changed,
                 )

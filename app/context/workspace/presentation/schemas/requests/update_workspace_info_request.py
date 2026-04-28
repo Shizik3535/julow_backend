@@ -10,10 +10,9 @@ class UpdateWorkspaceInfoRequest(BaseModel):
     Атрибуты:
         name: Новое название.
         color: Основной цвет (HEX).
-        icon_url: URL иконки.
+        icon: Название иконки.
         display_name: Отображаемое имя.
         description: Описание.
-        logo_url: URL логотипа.
         cover_image_url: URL обложки.
         custom_css: Пользовательский CSS.
     """
@@ -22,9 +21,8 @@ class UpdateWorkspaceInfoRequest(BaseModel):
 
     name: str | None = Field(default=None, min_length=3, max_length=100, description="Название workspace")
     color: str | None = Field(default=None, description="Основной цвет (HEX)", examples=["#FF5500"])
-    icon_url: str | None = Field(default=None, description="URL иконки")
+    icon: str | None = Field(default=None, description="Название иконки")
     display_name: str | None = Field(default=None, description="Отображаемое имя")
     description: str | None = Field(default=None, max_length=500, description="Описание")
-    logo_url: str | None = Field(default=None, description="URL логотипа")
     cover_image_url: str | None = Field(default=None, description="URL обложки")
     custom_css: str | None = Field(default=None, description="Пользовательский CSS")

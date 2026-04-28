@@ -614,6 +614,58 @@
 
 ---
 
+## Notification BC — Уведомления
+
+Контроллер: `NotificationController` | Префикс: `/notifications`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/notifications/connection-info` | Информация о подключении к real-time уведомлениям (WebSocket URL, протокол, типы событий) |
+| GET | `/notifications/` | Получить список уведомлений с фильтрацией и пагинацией |
+| GET | `/notifications/unread-count` | Количество непрочитанных уведомлений (в т.ч. по workspace) |
+| PATCH | `/notifications/{notification_id}/read` | Пометить уведомление как прочитанное |
+| POST | `/notifications/read-all` | Пометить все уведомления как прочитанные |
+| PATCH | `/notifications/{notification_id}/archive` | Архивировать уведомление |
+
+---
+
+## Notification BC — Настройки уведомлений
+
+Контроллер: `NotificationSettingsController` | Префикс: `/notification-settings`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/notification-settings/preferences` | Получить настройки уведомлений |
+| POST | `/notification-settings/preferences` | Установить настройку (тип ↔ канал) |
+| GET | `/notification-settings/dnd` | Получить настройки «Не беспокоить» |
+| PUT | `/notification-settings/dnd` | Обновить расписание DND |
+| POST | `/notification-settings/dnd/disable` | Отключить DND |
+| GET | `/notification-settings/digest` | Получить настройки дайджеста |
+| PUT | `/notification-settings/digest` | Обновить настройки дайджеста |
+| GET | `/notification-settings/devices` | Список зарегистрированных устройств |
+| POST | `/notification-settings/devices` | Зарегистрировать push-токен устройства |
+| DELETE | `/notification-settings/devices/{device_token_id}` | Удалить устройство |
+
+---
+
+## WebSocket — Real-time уведомления
+
+| URI | Описание |
+|-----|----------|
+| `/ws/notifications?token=<jwt>` | WebSocket-эндпоинт для получения уведомлений в реальном времени |
+
+Протокол:
+- Сервер отправляет JSON: `{"event_type": "...", "payload": {...}}`
+- Клиент отправляет `"ping"` для heartbeat, сервер отвечает `"pong"`
+- Типы событий сервера: `notification.created`, `notification.read`, `notification.all_read`, `notification.archived`
+
+Подключение:
+1. Вызвать `GET /notifications/connection-info` для получения URL и параметров
+2. Подключиться к WebSocket: `new WebSocket(url + "?token=" + jwt)`
+3. Отправлять `"ping"` каждые 30 секунд для поддержания соединения
+
+---
+
 ## Сводка по Bounded Context'ам
 
 | BC | Контроллер | Кол-во endpoint'ов |
@@ -655,4 +707,6 @@
 | Task | TaskHistoryController | 3 |
 | Task | TaskTemplateController | 2 |
 | Task | ProjectTaskTemplateController | 4 |
-| **Итого** | | **266** |
+| Notification | NotificationController | 6 |
+| Notification | NotificationSettingsController | 10 |
+| **Итого** | | **282** |

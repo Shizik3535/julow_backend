@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import select
+from datetime import date as date_type
+from datetime import datetime, timedelta
+
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.shared.domain.exceptions.entity_not_found_exception import EntityNotFoundException
@@ -217,3 +220,19 @@ class SqlProjectRepository(
 
         await self._session.flush()
         return aggregate
+
+    async def get_projects_with_upcoming_deadline(self, within_hours: int) -> list[Project]:
+        """Найти проекты с дедлайном в ближайшие N часов (не архивированные, активные)."""
+        now = datetime.now(tz=None)
+        deadline_limit = now + timedelta(hours=within_hours)
+
+        stmt = select(ProjectORM).where(
+            and_(
+                ProjectORM.deadline.isnot(None),
+                ProjectORM.deadline <= deadline_limit.date(),
+                ProjectORM.deadline >= date_type.today(),
+                ProjectORM.status != "archived",
+            )
+        )
+        result = await self._session.execute(stmt)
+        return [await self._to_domain_with_owners(orm) for orm in result.scalars().all()]

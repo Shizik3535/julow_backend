@@ -3,7 +3,6 @@
 import pytest
 
 from app.shared.domain.value_objects.id_vo import Id
-from app.shared.domain.value_objects.url_vo import Url
 from app.context.organization.domain.aggregates.team import Team
 from app.context.organization.infrastructure.persistence.repositories.sql_team_repository import (
     SqlTeamRepository,
@@ -103,16 +102,16 @@ class TestSqlTeamRepositoryUpdate:
         assert found is not None
         assert found.lead_id == new_lead
 
-    async def test_update_icon_url(self, team_repo: SqlTeamRepository, make_team) -> None:
+    async def test_update_icon(self, team_repo: SqlTeamRepository, make_team) -> None:
         team = await make_team()
-        team.update(icon_url=Url("https://example.com/icon.png"))
+        team.update(icon="Code")
         team.clear_domain_events()
         await team_repo.update(team)
 
         found = await team_repo.get_by_id(team.id)
         assert found is not None
-        assert found.icon_url is not None
-        assert str(found.icon_url) == "https://example.com/icon.png"
+        assert found.icon is not None
+        assert found.icon == "Code"
 
     async def test_update_add_member(
         self, team_repo: SqlTeamRepository, make_team, _ensure_user

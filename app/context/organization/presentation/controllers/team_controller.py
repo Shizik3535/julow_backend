@@ -278,7 +278,7 @@ class TeamController(BaseController):
             name=body.name,
             description=body.description,
             lead_id=body.lead_id,
-            icon_url=body.icon_url,
+            icon=body.icon,
         )
         await handler.handle(command)
         return MessageResponse(message="Команда обновлена")

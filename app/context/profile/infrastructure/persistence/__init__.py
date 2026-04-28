@@ -1,7 +1,6 @@
 from app.context.profile.infrastructure.persistence.mappers import UserProfileMapper
 from app.context.profile.infrastructure.persistence.orm_models import (
     HotkeyConfigORM,
-    NotificationPreferenceORM,
     PinnedItemORM,
     SidebarSectionORM,
     SocialLinkORM,
@@ -11,7 +10,6 @@ from app.context.profile.infrastructure.persistence.repositories import SqlUserP
 
 __all__ = [
     "HotkeyConfigORM",
-    "NotificationPreferenceORM",
     "PinnedItemORM",
     "SidebarSectionORM",
     "SocialLinkORM",

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import Depends, Query
+from fastapi import Depends, Query, UploadFile
 
 from app.shared.presentation.base_controller import BaseController
 from app.shared.presentation.responses import (
@@ -19,6 +19,10 @@ from app.context.workspace.application.commands.create_workspace import (
 from app.context.workspace.application.commands.update_workspace_info import (
     UpdateWorkspaceInfoCommand,
     UpdateWorkspaceInfoHandler,
+)
+from app.context.workspace.application.commands.change_workspace_logo import (
+    ChangeWorkspaceLogoCommand,
+    ChangeWorkspaceLogoHandler,
 )
 from app.context.workspace.application.commands.update_workspace_security_policy import (
     UpdateWorkspaceSecurityPolicyCommand,
@@ -93,6 +97,7 @@ from app.context.workspace.presentation.dependencies import (
     get_ws_identity_user_port,
     get_ws_org_permission_checker_port,
     get_workspace_role_repository,
+    get_file_storage_port,
 )
 from app.context.workspace.presentation.schemas.requests.create_workspace_request import CreateWorkspaceRequest
 from app.context.workspace.presentation.schemas.requests.move_workspace_request import MoveWorkspaceRequest
@@ -198,6 +203,20 @@ class WorkspaceController(BaseController):
                 403: {"description": "Недостаточно прав", "model": ErrorResponse},
                 404: {"description": "Workspace не найден", "model": ErrorResponse},
                 422: {"description": "Ошибка валидации", "model": ErrorResponse},
+            },
+        )
+        self._router.add_api_route(
+            "/{ws_id}/logo",
+            self.change_logo,
+            methods=["POST"],
+            response_model=MessageResponse,
+            summary="Загрузить логотип workspace",
+            description="Загружает файл логотипа для workspace.",
+            responses={
+                200: {"description": "Логотип обновлён"},
+                401: {"description": "Не аутентифицирован", "model": ErrorResponse},
+                403: {"description": "Недостаточно прав", "model": ErrorResponse},
+                404: {"description": "Workspace не найден", "model": ErrorResponse},
             },
         )
         self._router.add_api_route(
@@ -514,15 +533,41 @@ class WorkspaceController(BaseController):
             workspace_id=ws_id,
             name=body.name,
             color=body.color,
-            icon_url=body.icon_url,
+            icon=body.icon,
             display_name=body.display_name,
             description=body.description,
-            logo_url=body.logo_url,
             cover_image_url=body.cover_image_url,
             custom_css=body.custom_css,
         )
         await handler.handle(command)
         return SuccessResponse(data={"message": "Информация workspace обновлена"})
+
+    async def change_logo(
+        self,
+        ws_id: str,
+        file: UploadFile,
+        caller_id: str = Depends(get_current_user_id),
+        ws_repo=Depends(get_workspace_repository),
+        permission_checker=Depends(get_workspace_permission_checker),
+        file_storage=Depends(get_file_storage_port),
+        event_bus=Depends(get_workspace_event_bus),
+    ) -> MessageResponse:
+        """Загрузить логотип workspace."""
+        file_data = await file.read()
+        handler = ChangeWorkspaceLogoHandler(
+            ws_repo=ws_repo,
+            file_storage=file_storage,
+            permission_checker=permission_checker,
+            event_bus=event_bus,
+        )
+        command = ChangeWorkspaceLogoCommand(
+            caller_id=caller_id,
+            workspace_id=ws_id,
+            file_data=file_data,
+            content_type=file.content_type or "image/png",
+        )
+        await handler.handle(command)
+        return SuccessResponse(data={"message": "Логотип workspace обновлён"})
 
     async def update_security_policy(
         self,

@@ -22,11 +22,6 @@ from app.context.profile.presentation.schemas.requests.update_localization_reque
 from app.context.profile.presentation.schemas.requests.update_navigation_request import (
     UpdateNavigationRequest,
 )
-from app.context.profile.presentation.schemas.requests.update_notifications_request import (
-    ChannelPreferenceInput,
-    TypePreferenceInput,
-    UpdateNotificationsRequest,
-)
 from app.context.profile.presentation.schemas.requests.update_personal_info_request import (
     UpdatePersonalInfoRequest,
 )
@@ -40,19 +35,16 @@ from app.context.profile.presentation.schemas.requests.update_sidebar_request im
 
 __all__ = [
     "AddSocialLinkRequest",
-    "ChannelPreferenceInput",
     "HotkeyInput",
     "PinItemRequest",
     "ReorderPinnedItemsRequest",
     "RemoveSocialLinkRequest",
     "SidebarSectionInput",
-    "TypePreferenceInput",
     "UnpinItemRequest",
     "UpdateAppearanceRequest",
     "UpdateHotkeysRequest",
     "UpdateLocalizationRequest",
     "UpdateNavigationRequest",
-    "UpdateNotificationsRequest",
     "UpdatePersonalInfoRequest",
     "UpdatePrivacyRequest",
     "UpdateSidebarRequest",

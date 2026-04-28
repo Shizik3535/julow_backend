@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date as date_type
+from datetime import datetime, timedelta
 
 from typing import Any
 
@@ -370,3 +371,35 @@ class SqlTaskRepository(SqlAlchemyRepository[Task, TaskORM], TaskRepository):
         )
         result = await self._session.execute(stmt)
         return result.scalar_one() > 0
+
+    async def get_by_assignee_in_project(self, user_id: Id, project_id: Id) -> list[Task]:
+        """Найти задачи, назначенные на пользователя в конкретном проекте."""
+        project_uuid = self._mapper._map_uuid(project_id)
+        user_uuid = self._mapper._map_uuid(user_id)
+        user_uuid_str = str(user_uuid)
+
+        stmt = select(TaskORM).where(
+            and_(
+                TaskORM.project_id == project_uuid,
+                TaskORM.assignee_ids.bool_op("@>")(type_coerce(user_uuid_str, JSONB)),
+            )
+        )
+        result = await self._session.execute(stmt)
+        return await self._to_domain_list_with_labels(result.scalars().all())
+
+    async def get_tasks_with_upcoming_deadline(self, within_hours: int) -> list[Task]:
+        """Найти задачи с дедлайном в ближайшие N часов (не просроченные, не завершённые, активные)."""
+        now = datetime.now(tz=None)  # naive for DB comparison
+        deadline_limit = now + timedelta(hours=within_hours)
+
+        stmt = select(TaskORM).where(
+            and_(
+                TaskORM.due_date.isnot(None),
+                TaskORM.due_date <= deadline_limit.date(),
+                TaskORM.due_date >= date_type.today(),
+                TaskORM.status == "active",
+                TaskORM.completed_at.is_(None),
+            )
+        )
+        result = await self._session.execute(stmt)
+        return await self._to_domain_list_with_labels(result.scalars().all())

@@ -211,3 +211,13 @@ async def get_current_user_id(
             detail="Невалидный или просроченный access-токен",
         )
     return str(payload.user_id)
+
+
+# ---------------------------------------------------------------------------
+# File storage
+# ---------------------------------------------------------------------------
+
+
+async def get_file_storage_port(container: Container = Depends(get_container)):
+    """Получить FileStoragePort из DI-контейнера."""
+    return container.file_storage_port()

@@ -16,7 +16,6 @@ from app.context.identity.infrastructure.persistence.orm_models.session_orm impo
 from app.context.identity.infrastructure.persistence.orm_models.role_orm import RoleORM  # noqa: F401
 from app.context.profile.infrastructure.persistence.orm_models.user_profile_orm import (  # noqa: F401
     HotkeyConfigORM,
-    NotificationPreferenceORM,
     PinnedItemORM,
     SidebarSectionORM,
     SocialLinkORM,
@@ -48,6 +47,12 @@ from app.context.workspace.infrastructure.persistence.orm_models.workspace_membe
     WorkspaceMembershipORM,
 )
 from app.context.workspace.infrastructure.persistence.orm_models.workspace_role_orm import WorkspaceRoleORM  # noqa: F401
+from app.context.notification.infrastructure.persistence.orm_models.notification_orm import NotificationORM  # noqa: F401
+from app.context.notification.infrastructure.persistence.orm_models.notification_preferences_orm import (  # noqa: F401
+    NotificationPreferencesORM,
+    PreferenceEntryORM,
+)
+from app.context.notification.infrastructure.persistence.orm_models.device_token_orm import DeviceTokenORM  # noqa: F401
 from app.context.workspace.infrastructure.persistence.orm_models.workspace_team_orm import WorkspaceTeamORM  # noqa: F401
 from app.context.workspace.infrastructure.persistence.orm_models.workspace_invitation_orm import WorkspaceInvitationORM  # noqa: F401
 from app.context.project.infrastructure.persistence.orm_models.project_orm import (  # noqa: F401

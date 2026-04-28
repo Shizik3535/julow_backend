@@ -31,3 +31,7 @@ class ProjectRepository(RepositoryPort[Project]):
     @abstractmethod
     async def search(self, offset: int = 0, limit: int = 100, filters: dict[str, Any] | None = None) -> list[Project]:
         """Поиск проектов с фильтрацией."""
+
+    @abstractmethod
+    async def get_projects_with_upcoming_deadline(self, within_hours: int) -> list[Project]:
+        """Найти проекты с дедлайном в ближайшие N часов (не архивированные, активные)."""

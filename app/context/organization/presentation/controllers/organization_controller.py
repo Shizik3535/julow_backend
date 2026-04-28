@@ -326,7 +326,7 @@ class OrganizationController(BaseController):
             org_id=org_id,
             name=body.name,
             personalization_color=body.personalization_color,
-            personalization_icon_url=body.personalization_icon_url,
+            personalization_icon=body.personalization_icon,
             personalization_display_name=body.personalization_display_name,
             personalization_custom_domain=body.personalization_custom_domain,
             branding_logo_url=body.branding_logo_url,

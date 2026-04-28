@@ -7,6 +7,9 @@ from app.context.task.infrastructure.integration.inboard.project_adapter import 
 from app.context.task.infrastructure.integration.inboard.project_membership_adapter import (
     ProjectMembershipAdapter,
 )
+from app.context.task.infrastructure.integration.inboard.reminder_window_adapter import (
+    ReminderWindowAdapter,
+)
 from app.context.task.infrastructure.integration.inboard.sprint_adapter import SprintAdapter
 
 __all__ = [
@@ -15,5 +18,6 @@ __all__ = [
     "IdentityUserAdapter",
     "ProjectAdapter",
     "ProjectMembershipAdapter",
+    "ReminderWindowAdapter",
     "SprintAdapter",
 ]

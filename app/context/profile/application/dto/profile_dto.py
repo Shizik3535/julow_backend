@@ -23,7 +23,6 @@ class ProfileDTO(BaseDTO):
         appearance: Настройки внешнего вида.
         localization: Настройки локализации.
         navigation: Настройки навигации.
-        notifications: Настройки уведомлений.
         privacy: Настройки приватности.
         hotkeys: Конфигурация горячих клавиш.
         sidebar_sections: Секции sidebar.
@@ -41,7 +40,6 @@ class ProfileDTO(BaseDTO):
     appearance: dict[str, Any] = {}
     localization: dict[str, Any] = {}
     navigation: dict[str, Any] = {}
-    notifications: dict[str, Any] = {}
     privacy: dict[str, Any] = {}
     hotkeys: list[dict[str, Any]] = []
     sidebar_sections: list[dict[str, Any]] = []

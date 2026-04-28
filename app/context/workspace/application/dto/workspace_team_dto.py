@@ -16,7 +16,7 @@ class WorkspaceTeamDTO(BaseDTO):
         description: Описание.
         lead_id: ID лидера.
         member_ids: Список ID участников.
-        icon_url: URL иконки.
+        icon: Название иконки.
         is_active: Активна ли команда.
         created_at: Время создания.
         updated_at: Время последнего обновления.
@@ -28,7 +28,7 @@ class WorkspaceTeamDTO(BaseDTO):
     description: str | None = None
     lead_id: str | None = None
     member_ids: list[str] | None = None
-    icon_url: str | None = None
+    icon: str | None = None
     is_active: bool = True
     created_at: datetime | None = None
     updated_at: datetime | None = None

@@ -26,6 +26,7 @@ from app.context.project.application.ports.integration.inboard.workspace_members
 from app.context.project.application.ports.integration.inboard.workspace_permission_checker_port import (
     WorkspacePermissionCheckerPort,
 )
+from app.context.project.application.ports.integration.inboard.reminder_window_port import ReminderWindowPort
 from app.context.project.application.ports.integration.inboard.workspace_port import (
     WorkspacePort,
 )
@@ -76,6 +77,9 @@ from app.context.project.infrastructure.integration.inboard.workspace_membership
 )
 from app.context.project.infrastructure.integration.inboard.workspace_permission_checker_adapter import (
     WorkspacePermissionCheckerAdapter,
+)
+from app.context.project.infrastructure.integration.inboard.reminder_window_adapter import (
+    ReminderWindowAdapter,
 )
 from app.context.project.infrastructure.integration.outboard.board_provider_adapter import (
     BoardProviderAdapter,
@@ -134,6 +138,9 @@ from app.context.project.infrastructure.persistence.repositories.sql_sprint_repo
 )
 from app.context.workspace.application.ports.integration.outboard.workspace_membership_provider import (
     WorkspaceMembershipProvider,
+)
+from app.context.notification.application.ports.integration.outboard.reminder_window_provider import (
+    ReminderWindowProvider,
 )
 from app.context.workspace.application.ports.integration.outboard.workspace_provider import (
     WorkspaceProvider,
@@ -313,3 +320,10 @@ def create_project_permission_checker(
         project_repo=project_repo,
         workspace_permission_checker=workspace_permission_checker,
     )
+
+
+def create_project_reminder_window_adapter(
+    reminder_window_provider: ReminderWindowProvider,
+) -> ReminderWindowPort:
+    """Создать ReminderWindowAdapter (inboard) для Project BC."""
+    return ReminderWindowAdapter(reminder_window_provider=reminder_window_provider)

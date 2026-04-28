@@ -11,7 +11,7 @@ class UpdateTeamRequest(BaseModel):
         name: Новое название.
         description: Новое описание.
         lead_id: Новый UUID лидера.
-        icon_url: Новый URL иконки.
+        icon: Название иконки.
     """
 
     model_config = ConfigDict(
@@ -20,7 +20,7 @@ class UpdateTeamRequest(BaseModel):
                 "name": "Backend Team Updated",
                 "description": "Обновлённое описание",
                 "lead_id": "770e8400-e29b-41d4-a716-446655440002",
-                "icon_url": "https://cdn.example.com/icons/team.png",
+                "icon": "Code",
             },
         },
     )
@@ -28,4 +28,4 @@ class UpdateTeamRequest(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255, description="Новое название")
     description: str | None = Field(default=None, max_length=1000, description="Новое описание")
     lead_id: str | None = Field(default=None, description="Новый UUID лидера")
-    icon_url: str | None = Field(default=None, max_length=2048, description="Новый URL иконки")
+    icon: str | None = Field(default=None, max_length=255, description="Новое название иконки")

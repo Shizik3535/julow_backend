@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 
 from app.shared.domain.base_aggregate import AggregateRoot
 from app.shared.domain.value_objects.id_vo import Id
-from app.shared.domain.value_objects.url_vo import Url
 from app.context.organization.domain.exceptions.team_exceptions import (
     TeamAlreadyActiveException,
     TeamAlreadyDeactivatedException,
@@ -42,7 +41,7 @@ class Team(AggregateRoot):
         description: Описание.
         lead_id: ID лидера команды.
         member_ids: Список ID участников.
-        icon_url: URL иконки.
+        icon: Название иконки.
         is_active: Активна ли команда.
         created_at: Время создания.
         updated_at: Время последнего обновления.
@@ -53,7 +52,7 @@ class Team(AggregateRoot):
     description: str | None = None
     lead_id: Id | None = None
     member_ids: list[Id] = field(default_factory=list)
-    icon_url: Url | None = None
+    icon: str | None = None
     is_active: bool = True
     created_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
@@ -85,7 +84,7 @@ class Team(AggregateRoot):
         name: str | None = None,
         description: str | None = None,
         lead_id: Id | None = None,
-        icon_url: Url | None = None,
+        icon: str | None = None,
     ) -> None:
         """Обновляет информацию команды."""
         changed: list[str] = []
@@ -98,9 +97,9 @@ class Team(AggregateRoot):
         if lead_id is not None and self.lead_id != lead_id:
             self.lead_id = lead_id
             changed.append("lead_id")
-        if icon_url is not None and self.icon_url != icon_url:
-            self.icon_url = icon_url
-            changed.append("icon_url")
+        if icon is not None and self.icon != icon:
+            self.icon = icon
+            changed.append("icon")
         if changed:
             self.updated_at = datetime.now(tz=timezone.utc)
             self._register_event(

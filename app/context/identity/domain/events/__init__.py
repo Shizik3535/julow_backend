@@ -6,6 +6,7 @@ from app.context.identity.domain.events.user_events import (
     PasswordChanged,
     RoleAssigned,
     RoleRemoved,
+    UserDeleted,
     UserRegistered,
 )
 from app.context.identity.domain.events.auth_events import (
@@ -55,5 +56,6 @@ __all__ = [
     "TrustedDeviceRemoved",
     "UserLockedOut",
     "UserLoggedIn",
+    "UserDeleted",
     "UserRegistered",
 ]

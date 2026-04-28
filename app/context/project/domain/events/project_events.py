@@ -103,3 +103,11 @@ class MilestoneStatusChanged(BaseDomainEvent):
     project_id: str = ""
     milestone_id: str = ""
     new_status: MilestoneStatus = MilestoneStatus.NOT_STARTED
+
+
+@dataclass(frozen=True)
+class ProjectDeadlineApproaching(BaseDomainEvent):
+    """Приближение дедлайна проекта."""
+
+    project_id: str = ""
+    deadline: str = ""

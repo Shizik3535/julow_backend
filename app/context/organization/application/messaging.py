@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from app.core.di.container import Container
 
 ORGANIZATION_EVENTS_TOPIC = "organization.events"
-ORGANIZATION_CONSUMER_GROUP = "organization-bc"
 
 IDENTITY_EVENTS_TOPIC = "identity.events"
 
@@ -39,9 +38,13 @@ def organization_subscriptions(container: "Container") -> list[Subscription]:
     Подписки Organization BC на топики других BC.
 
     - Identity BC → AccountDeletionRequested: очистка членств удалённого пользователя.
+    - Identity BC → UserDeleted: окончательная очистка членств.
     """
     from app.context.organization.application.event_handlers.on_account_deletion_requested_cleanup_memberships import (
         OnAccountDeletionRequestedCleanupMemberships,
+    )
+    from app.context.organization.application.event_handlers.on_user_deleted_cleanup_memberships import (
+        OnUserDeletedCleanupMemberships,
     )
 
     def _build_on_account_deletion(session: AsyncSession) -> MessageHandlerFn:
@@ -55,10 +58,26 @@ def organization_subscriptions(container: "Container") -> list[Subscription]:
 
         return _run
 
+    def _build_on_user_deleted(session: AsyncSession) -> MessageHandlerFn:
+        membership_repo = container.org_membership_repo(session=session)
+        handler = OnUserDeletedCleanupMemberships(
+            membership_repo=membership_repo,
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
     return [
         Subscription(
             topic=IDENTITY_EVENTS_TOPIC,
-            group_id=ORGANIZATION_CONSUMER_GROUP,
+            group_id="organization-bc--account-deletion",
             build_handler=_build_on_account_deletion,
+        ),
+        Subscription(
+            topic=IDENTITY_EVENTS_TOPIC,
+            group_id="organization-bc--user-deleted",
+            build_handler=_build_on_user_deleted,
         ),
     ]

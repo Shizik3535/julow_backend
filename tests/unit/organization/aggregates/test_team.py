@@ -3,7 +3,6 @@
 import pytest
 
 from app.shared.domain.value_objects.id_vo import Id
-from app.shared.domain.value_objects.url_vo import Url
 from app.context.organization.domain.aggregates.team import Team
 from app.context.organization.domain.exceptions.team_exceptions import TeamMemberAlreadyExistsException
 from app.context.organization.domain.events.team_events import (
@@ -66,10 +65,9 @@ class TestTeamUpdate:
         team.update(lead_id=new_lead)
         assert team.lead_id == new_lead
 
-    def test_update_icon_url(self, team: Team) -> None:
-        url = Url("https://example.com/icon.png")
-        team.update(icon_url=url)
-        assert team.icon_url == url
+    def test_update_icon(self, team: Team) -> None:
+        team.update(icon="Code")
+        assert team.icon == "Code"
 
     def test_update_emits_team_updated(self, team: Team) -> None:
         team.update(name="NewName")

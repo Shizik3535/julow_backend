@@ -16,7 +16,7 @@ class TeamResponse(BaseModel):
         description: Описание.
         lead_id: UUID лидера команды.
         member_ids: Список UUID участников.
-        icon_url: URL иконки.
+        icon: Название иконки.
         is_active: Активна ли команда.
         created_at: Дата создания (UTC).
         updated_at: Дата последнего обновления (UTC).
@@ -53,10 +53,10 @@ class TeamResponse(BaseModel):
         default_factory=list,
         description="Список UUID участников",
     )
-    icon_url: str | None = Field(
+    icon: str | None = Field(
         default=None,
-        description="URL иконки",
-        examples=["https://cdn.example.com/icons/team.png"],
+        description="Название иконки",
+        examples=["Code"],
     )
     is_active: bool = Field(default=True, description="Активна ли команда")
     created_at: datetime = Field(..., description="Дата создания (UTC)")

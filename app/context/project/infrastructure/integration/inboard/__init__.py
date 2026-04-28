@@ -4,6 +4,9 @@ from app.context.project.infrastructure.integration.inboard.identity_user_adapte
 from app.context.project.infrastructure.integration.inboard.organization_membership_adapter import (
     OrganizationMembershipAdapter,
 )
+from app.context.project.infrastructure.integration.inboard.reminder_window_adapter import (
+    ReminderWindowAdapter,
+)
 from app.context.project.infrastructure.integration.inboard.workspace_adapter import (
     WorkspaceAdapter,
 )
@@ -17,6 +20,7 @@ from app.context.project.infrastructure.integration.inboard.workspace_permission
 __all__ = [
     "IdentityUserAdapter",
     "OrganizationMembershipAdapter",
+    "ReminderWindowAdapter",
     "WorkspaceAdapter",
     "WorkspaceMembershipAdapter",
     "WorkspacePermissionCheckerAdapter",

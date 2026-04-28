@@ -11,7 +11,6 @@ from app.context.profile.domain.events.profile_events import (
     HotkeysChanged,
     LocalizationSettingsChanged,
     NavigationSettingsChanged,
-    NotificationSettingsChanged,
     PersonalInfoChanged,
     PinnedItemAdded,
     PinnedItemRemoved,
@@ -27,7 +26,6 @@ from app.context.profile.domain.exceptions.profile_exceptions import (
 from app.context.profile.domain.value_objects.appearance_settings import AppearanceSettings
 from app.context.profile.domain.value_objects.localization_settings import LocalizationSettings
 from app.context.profile.domain.value_objects.navigation_settings import NavigationSettings
-from app.context.profile.domain.value_objects.notification_settings import NotificationSettings
 from app.context.profile.domain.value_objects.privacy_settings import PrivacySettings
 from app.context.profile.domain.value_objects.theme import Theme
 from app.context.profile.domain.value_objects.interface_density import InterfaceDensity
@@ -259,47 +257,6 @@ class TestUserProfileNavigation:
         profile.update_navigation(new_settings)
         events = profile.clear_domain_events()
         assert any(isinstance(e, NavigationSettingsChanged) for e in events)
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Настройки уведомлений
-# ═══════════════════════════════════════════════════════════════════════════
-
-
-@pytest.mark.unit
-class TestUserProfileNotifications:
-    def test_update_notifications(self, profile: UserProfile) -> None:
-        new_settings = NotificationSettings()
-        profile.update_notifications(new_settings)
-        assert profile.notifications == new_settings
-
-    def test_update_notifications_emits_event(self, profile: UserProfile) -> None:
-        new_settings = NotificationSettings()
-        profile.update_notifications(new_settings)
-        events = profile.clear_domain_events()
-        # Default settings equal, so no event
-        assert not any(isinstance(e, NotificationSettingsChanged) for e in events)
-
-    def test_update_notifications_with_change_emits_event(self, profile: UserProfile) -> None:
-        from app.context.profile.domain.value_objects.type_preference import TypePreference
-        from app.context.profile.domain.value_objects.channel_preference import ChannelPreference
-        from app.context.profile.domain.value_objects.notification_type import NotificationType
-        from app.context.profile.domain.value_objects.notification_channel import NotificationChannel
-        new_settings = NotificationSettings(
-            type_preferences=[
-                TypePreference(
-                    notification_type=NotificationType.TASK_ASSIGNED,
-                    channels=[
-                        ChannelPreference(channel=NotificationChannel.IN_APP, is_enabled=False),
-                        ChannelPreference(channel=NotificationChannel.EMAIL, is_enabled=True),
-                    ],
-                    is_enabled=False,
-                ),
-            ]
-        )
-        profile.update_notifications(new_settings)
-        events = profile.clear_domain_events()
-        assert any(isinstance(e, NotificationSettingsChanged) for e in events)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

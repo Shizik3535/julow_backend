@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from app.shared.domain.value_objects.id_vo import Id
-from app.shared.domain.value_objects.url_vo import Url
 from app.shared.infrastructure.persistence.sqlalchemy_base_mapper import BaseMapper
 
 from app.context.organization.domain.aggregates.team import Team
@@ -22,7 +21,7 @@ class TeamMapper(BaseMapper[Team, TeamORM]):
             description=orm_model.description,
             lead_id=self._map_id(orm_model.lead_id) if orm_model.lead_id else None,
             member_ids=[],  # заполняется в repo через association table
-            icon_url=Url(orm_model.icon_url) if orm_model.icon_url else None,
+            icon=orm_model.icon if orm_model.icon else None,
             is_active=orm_model.is_active,
             created_at=orm_model.created_at,
             updated_at=orm_model.updated_at,
@@ -35,7 +34,7 @@ class TeamMapper(BaseMapper[Team, TeamORM]):
             name=aggregate.name,
             description=aggregate.description,
             lead_id=self._map_uuid(aggregate.lead_id) if aggregate.lead_id else None,
-            icon_url=str(aggregate.icon_url) if aggregate.icon_url else None,
+            icon=aggregate.icon,
             is_active=aggregate.is_active,
             created_at=aggregate.created_at,
             updated_at=aggregate.updated_at,

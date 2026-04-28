@@ -13,7 +13,6 @@ from app.context.profile.domain.aggregates.user_profile import UserProfile
 from app.context.profile.domain.value_objects.appearance_settings import AppearanceSettings
 from app.context.profile.domain.value_objects.localization_settings import LocalizationSettings
 from app.context.profile.domain.value_objects.navigation_settings import NavigationSettings
-from app.context.profile.domain.value_objects.notification_settings import NotificationSettings
 from app.context.profile.domain.value_objects.privacy_settings import PrivacySettings
 from app.context.profile.domain.value_objects.theme import Theme
 from app.context.profile.domain.value_objects.interface_density import InterfaceDensity

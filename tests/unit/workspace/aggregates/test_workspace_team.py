@@ -3,7 +3,6 @@
 import pytest
 
 from app.shared.domain.value_objects.id_vo import Id
-from app.shared.domain.value_objects.url_vo import Url
 from app.context.workspace.domain.aggregates.workspace_team import WorkspaceTeam
 from app.context.workspace.domain.events.workspace_team_events import (
     WorkspaceTeamCreated,
@@ -57,10 +56,9 @@ class TestTeamUpdate:
         team.update(lead_id=new_lead)
         assert team.lead_id == new_lead
 
-    def test_update_icon_url(self, team: WorkspaceTeam) -> None:
-        url = Url("https://example.com/icon.png")
-        team.update(icon_url=url)
-        assert team.icon_url == url
+    def test_update_icon(self, team: WorkspaceTeam) -> None:
+        team.update(icon="Code")
+        assert team.icon == "Code"
 
     def test_update_emits_event(self, team: WorkspaceTeam) -> None:
         team.update(name="NewName")

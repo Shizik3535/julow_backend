@@ -30,29 +30,6 @@ class NavigationSettingsResponse(BaseModel):
     start_page: str = Field(..., description="Идентификатор стартовой страницы", examples=["dashboard"])
 
 
-class ChannelPreferenceResponse(BaseModel):
-    """Настройка канала доставки уведомления."""
-
-    channel: str = Field(..., description="Канал доставки", examples=["email"])
-    is_enabled: bool = Field(..., description="Включён ли канал")
-
-
-class TypePreferenceResponse(BaseModel):
-    """Настройка типа уведомления."""
-
-    notification_type: str = Field(..., description="Тип уведомления", examples=["task_assigned"])
-    is_enabled: bool = Field(..., description="Включён ли тип")
-    channels: list[ChannelPreferenceResponse] = Field(default_factory=list, description="Настройки каналов")
-
-
-class NotificationSettingsResponse(BaseModel):
-    """Настройки уведомлений."""
-
-    type_preferences: list[TypePreferenceResponse] = Field(
-        default_factory=list, description="Настройки по типам уведомлений"
-    )
-
-
 class PrivacySettingsResponse(BaseModel):
     """Настройки приватности."""
 
@@ -96,7 +73,6 @@ class ProfileSettingsResponse(BaseModel):
         appearance: Настройки внешнего вида.
         localization: Настройки локализации.
         navigation: Настройки навигации.
-        notifications: Настройки уведомлений.
         privacy: Настройки приватности.
         hotkeys: Конфигурация горячих клавиш.
         sidebar_sections: Секции sidebar.
@@ -113,7 +89,6 @@ class ProfileSettingsResponse(BaseModel):
     appearance: AppearanceSettingsResponse = Field(..., description="Настройки внешнего вида")
     localization: LocalizationSettingsResponse = Field(..., description="Настройки локализации")
     navigation: NavigationSettingsResponse = Field(..., description="Настройки навигации")
-    notifications: NotificationSettingsResponse = Field(..., description="Настройки уведомлений")
     privacy: PrivacySettingsResponse = Field(..., description="Настройки приватности")
     hotkeys: list[HotkeyResponse] = Field(default_factory=list, description="Горячие клавиши")
     sidebar_sections: list[SidebarSectionResponse] = Field(

@@ -34,3 +34,15 @@ class ProjectMembershipProvider(ABC):
         Возвращает:
             ID роли или None, если пользователь не состоит в проекте.
         """
+
+    @abstractmethod
+    async def get_project_member_ids(self, project_id: str) -> list[str]:
+        """
+        Получить список user_id всех активных участников проекта.
+
+        Аргументы:
+            project_id: Идентификатор проекта.
+
+        Возвращает:
+            Список user_id активных участников.
+        """

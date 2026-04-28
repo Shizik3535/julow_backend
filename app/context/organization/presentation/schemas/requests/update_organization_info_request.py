@@ -10,7 +10,7 @@ class UpdateOrganizationInfoRequest(BaseModel):
     Атрибуты:
         name: Новое название (None — без изменений).
         personalization_color: Акцентный цвет (#RRGGBB).
-        personalization_icon_url: URL иконки.
+        personalization_icon: Название иконки.
         personalization_display_name: Отображаемое имя.
         personalization_custom_domain: Кастомный домен.
         branding_logo_url: URL логотипа.
@@ -31,7 +31,7 @@ class UpdateOrganizationInfoRequest(BaseModel):
 
     name: str | None = Field(default=None, min_length=1, max_length=255, description="Новое название")
     personalization_color: str | None = Field(default=None, max_length=7, description="Акцентный цвет (#RRGGBB)", examples=["#3366FF"])
-    personalization_icon_url: str | None = Field(default=None, max_length=2048, description="URL иконки")
+    personalization_icon: str | None = Field(default=None, max_length=255, description="Название иконки")
     personalization_display_name: str | None = Field(default=None, max_length=255, description="Отображаемое имя")
     personalization_custom_domain: str | None = Field(default=None, max_length=255, description="Кастомный домен")
     branding_logo_url: str | None = Field(default=None, max_length=2048, description="URL логотипа")

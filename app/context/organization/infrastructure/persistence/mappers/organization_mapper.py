@@ -42,7 +42,7 @@ class OrganizationMapper(BaseMapper[Organization, OrganizationORM]):
         # OrgPersonalization
         personalization = OrgPersonalization(
             color=AccentColor(hex=orm_model.pers_color_hex) if orm_model.pers_color_hex else None,
-            icon_url=Url(orm_model.pers_icon_url) if orm_model.pers_icon_url else None,
+            icon=orm_model.pers_icon if orm_model.pers_icon else None,
             display_name=orm_model.pers_display_name,
             custom_domain=orm_model.pers_custom_domain,
             branding=branding,
@@ -94,7 +94,7 @@ class OrganizationMapper(BaseMapper[Organization, OrganizationORM]):
             status=aggregate.status.value,
             # OrgPersonalization
             pers_color_hex=str(pers.color) if pers.color else None,
-            pers_icon_url=str(pers.icon_url) if pers.icon_url else None,
+            pers_icon=pers.icon if pers.icon else None,
             pers_display_name=pers.display_name,
             pers_custom_domain=pers.custom_domain,
             # OrgBranding

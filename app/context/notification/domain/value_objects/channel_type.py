@@ -11,8 +11,10 @@ class ChannelType(Enum):
         IN_APP: В приложении
         EMAIL: Email
         PUSH: Push-уведомление
+        WEBHOOK: Webhook
     """
 
     IN_APP = "in_app"
     EMAIL = "email"
     PUSH = "push"
+    WEBHOOK = "webhook"

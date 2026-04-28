@@ -42,7 +42,7 @@ Workspace BC отвечает за рабочие пространства: со
 
 | VO | Тип | Описание | Исходное требование |
 |---|---|---|---|
-| `WorkspacePersonalization` | frozen dataclass | color: AccentColor, icon_url: Url \| None, display_name: str \| None, description: str \| None, branding: WorkspaceBranding \| None | §4.4 |
+| `WorkspacePersonalization` | frozen dataclass | color: AccentColor, icon: str \| None, display_name: str \| None, description: str \| None, branding: WorkspaceBranding \| None | §4.4 |
 | `WorkspaceBranding` | frozen dataclass | logo_url: Url \| None, cover_image_url: Url \| None, custom_css: str \| None | §4.4 |
 
 ### SecurityPolicy (VO group)
@@ -248,14 +248,14 @@ Workspace BC отвечает за рабочие пространства: со
 - description: str | None
 - lead_id: Id | None
 - member_ids: list[Id]
-- icon_url: Url | None
+- icon: str | None
 - is_active: bool
 - created_at: datetime
 - updated_at: datetime
 
 Методы:
 - `create(workspace_id, name, lead_id=None)` → `WorkspaceTeam` (factory)
-- `update(name=None, description=None, lead_id=None, icon_url=None)`
+- `update(name=None, description=None, lead_id=None, icon=None)`
 - `add_member(user_id)`
 - `remove_member(user_id)`
 - `deactivate()`

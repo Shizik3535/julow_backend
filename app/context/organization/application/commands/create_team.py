@@ -68,7 +68,7 @@ class CreateTeamHandler(BaseCommandHandler[CreateTeamCommand, TeamDTO]):
             description=team.description,
             lead_id=str(team.lead_id) if team.lead_id else None,
             member_ids=[str(mid) for mid in team.member_ids],
-            icon_url=str(team.icon_url) if team.icon_url else None,
+            icon=str(team.icon) if team.icon else None,
             is_active=team.is_active,
             created_at=team.created_at,
             updated_at=team.updated_at,

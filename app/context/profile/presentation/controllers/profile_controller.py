@@ -45,11 +45,6 @@ from app.context.profile.application.commands.update_navigation import (
     UpdateNavigationCommand,
     UpdateNavigationHandler,
 )
-from app.context.profile.application.commands.update_notifications import (
-    TypePreferenceInput as TypePreferenceCommandInput,
-    UpdateNotificationsCommand,
-    UpdateNotificationsHandler,
-)
 from app.context.profile.application.commands.update_personal_info import (
     UpdatePersonalInfoCommand,
     UpdatePersonalInfoHandler,
@@ -97,9 +92,6 @@ from app.context.profile.presentation.schemas.requests.update_localization_reque
 from app.context.profile.presentation.schemas.requests.update_navigation_request import (
     UpdateNavigationRequest,
 )
-from app.context.profile.presentation.schemas.requests.update_notifications_request import (
-    UpdateNotificationsRequest,
-)
 from app.context.profile.presentation.schemas.requests.update_personal_info_request import (
     UpdatePersonalInfoRequest,
 )
@@ -112,16 +104,13 @@ from app.context.profile.presentation.schemas.requests.update_sidebar_request im
 from app.context.profile.presentation.schemas.responses.profile_response import ProfileResponse
 from app.context.profile.presentation.schemas.responses.profile_settings_response import (
     AppearanceSettingsResponse,
-    ChannelPreferenceResponse,
     HotkeyResponse,
     LocalizationSettingsResponse,
     NavigationSettingsResponse,
-    NotificationSettingsResponse,
     PinnedItemResponse,
     PrivacySettingsResponse,
     ProfileSettingsResponse,
     SidebarSectionResponse,
-    TypePreferenceResponse,
 )
 
 
@@ -140,7 +129,6 @@ class ProfileController(BaseController):
         PUT    /profile/me/appearance                 — Обновить настройки внешнего вида
         PUT    /profile/me/localization               — Обновить настройки локализации
         PUT    /profile/me/navigation                 — Обновить настройки навигации
-        PUT    /profile/me/notifications              — Обновить настройки уведомлений
         PUT    /profile/me/privacy                    — Обновить настройки приватности
         PUT    /profile/me/hotkeys                    — Обновить горячие клавиши
         PUT    /profile/me/sidebar                    — Обновить конфигурацию sidebar
@@ -178,7 +166,7 @@ class ProfileController(BaseController):
             summary="Получить настройки профиля",
             description=(
                 "Возвращает все настройки профиля: внешний вид, локализацию, "
-                "навигацию, уведомления, приватность, горячие клавиши, sidebar, закреплённые."
+                "навигацию, приватность, горячие клавиши, sidebar, закреплённые."
             ),
             responses={
                 200: {"description": "Настройки профиля"},
@@ -319,26 +307,6 @@ class ProfileController(BaseController):
             },
         )
 
-        # --- Notifications ---
-        self._router.add_api_route(
-            "/me/notifications",
-            self.update_notifications,
-            methods=["PUT"],
-            response_model=MessageResponse,
-            summary="Обновить настройки уведомлений",
-            description=(
-                "Заменяет настройки уведомлений целиком. "
-                "Для каждого типа уведомления указывается, включён ли он, "
-                "и какие каналы доставки активны."
-            ),
-            responses={
-                200: {"description": "Настройки обновлены"},
-                401: {"description": "Не аутентифицирован", "model": ErrorResponse},
-                404: {"description": "Профиль не найден", "model": ErrorResponse},
-                422: {"description": "Ошибка валидации", "model": ErrorResponse},
-            },
-        )
-
         # --- Privacy ---
         self._router.add_api_route(
             "/me/privacy",
@@ -464,19 +432,6 @@ class ProfileController(BaseController):
             appearance=AppearanceSettingsResponse(**dto.appearance),
             localization=LocalizationSettingsResponse(**dto.localization),
             navigation=NavigationSettingsResponse(**dto.navigation),
-            notifications=NotificationSettingsResponse(
-                type_preferences=[
-                    TypePreferenceResponse(
-                        notification_type=tp["notification_type"],
-                        is_enabled=tp["is_enabled"],
-                        channels=[
-                            ChannelPreferenceResponse(channel=ch["channel"], is_enabled=ch["is_enabled"])
-                            for ch in tp["channels"]
-                        ],
-                    )
-                    for tp in dto.notifications.get("type_preferences", [])
-                ],
-            ),
             privacy=PrivacySettingsResponse(**dto.privacy),
             hotkeys=[
                 HotkeyResponse(action=hk["action"], key_combination=hk["key_combination"], is_enabled=hk["is_enabled"])
@@ -679,34 +634,6 @@ class ProfileController(BaseController):
         )
         await handler.handle(command)
         return SuccessResponse(data={"message": "Настройки навигации обновлены"})
-
-    # ------------------------------------------------------------------
-    # Notifications
-    # ------------------------------------------------------------------
-
-    async def update_notifications(
-        self,
-        body: UpdateNotificationsRequest,
-        user_id: str = Depends(get_current_user_id),
-        profile_repo=Depends(get_profile_repository),
-        event_bus=Depends(get_profile_event_bus),
-    ) -> MessageResponse:
-        """Обновить настройки уведомлений."""
-        handler = UpdateNotificationsHandler(profile_repo=profile_repo, event_bus=event_bus)
-        type_prefs = [
-            TypePreferenceCommandInput(
-                notification_type=tp.notification_type,
-                is_enabled=tp.is_enabled,
-                channels={ch.channel: ch.is_enabled for ch in tp.channels},
-            )
-            for tp in body.type_preferences
-        ]
-        command = UpdateNotificationsCommand(
-            user_id=user_id,
-            type_preferences=type_prefs,
-        )
-        await handler.handle(command)
-        return SuccessResponse(data={"message": "Настройки уведомлений обновлены"})
 
     # ------------------------------------------------------------------
     # Privacy

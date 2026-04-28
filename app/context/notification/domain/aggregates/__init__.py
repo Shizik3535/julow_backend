@@ -1,7 +1,9 @@
+from app.context.notification.domain.aggregates.device_token import DeviceToken
 from app.context.notification.domain.aggregates.notification import Notification
 from app.context.notification.domain.aggregates.notification_preferences import NotificationPreferences
 
 __all__ = [
+    "DeviceToken",
     "Notification",
     "NotificationPreferences",
 ]

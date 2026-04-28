@@ -35,7 +35,7 @@ class OrganizationORM(BaseORMModel):
 
     # --- OrgPersonalization (embedded VO) ---
     pers_color_hex: Mapped[str | None] = mapped_column(String(7), nullable=True)
-    pers_icon_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    pers_icon: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     pers_display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     pers_custom_domain: Mapped[str | None] = mapped_column(String(255), nullable=True)
     # OrgBranding (nested VO inside OrgPersonalization)

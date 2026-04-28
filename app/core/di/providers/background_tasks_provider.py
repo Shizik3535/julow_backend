@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from app.core.config.celery_settings import CelerySettings
 
@@ -28,6 +29,16 @@ def create_celery_app(settings: CelerySettings) -> Celery:
         task_track_started=True,
         task_acks_late=True,
         worker_prefetch_multiplier=1,
+        beat_schedule={
+            "check-task-deadlines": {
+                "task": "scheduling.check_task_deadlines",
+                "schedule": crontab(minute=0),  # каждый час
+            },
+            "check-project-deadlines": {
+                "task": "scheduling.check_project_deadlines",
+                "schedule": crontab(minute=30),  # каждый час со сдвигом
+            },
+        },
     )
 
     return app

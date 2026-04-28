@@ -9,12 +9,12 @@ class NotificationPriority(Enum):
 
     Значения:
         LOW: Низкий
-        MEDIUM: Средний
+        NORMAL: Обычный
         HIGH: Высокий
         URGENT: Срочный
     """
 
     LOW = "low"
-    MEDIUM = "medium"
+    NORMAL = "normal"
     HIGH = "high"
     URGENT = "urgent"

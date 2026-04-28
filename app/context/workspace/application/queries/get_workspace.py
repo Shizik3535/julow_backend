@@ -59,7 +59,7 @@ class GetWorkspaceHandler(BaseQueryHandler[GetWorkspaceQuery, WorkspaceDTO]):
             parent_workspace_id=str(ws.parent_workspace_id) if ws.parent_workspace_id else None,
             personalization={
                 "color": ws.personalization.color.value if ws.personalization.color else None,
-                "icon_url": str(ws.personalization.icon_url) if ws.personalization.icon_url else None,
+                "icon": ws.personalization.icon if ws.personalization.icon else None,
                 "display_name": ws.personalization.display_name,
                 "description": ws.personalization.description,
                 "branding": {

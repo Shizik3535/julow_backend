@@ -12,7 +12,7 @@
 
 1. **OrgRole — entity, не enum** — роли организации как сущности с `is_system` флагом. Предустановленные = `is_system=True`. Кастомные = запись, не правка домена.
 2. **Policies — VO group** — `SecurityPolicy`, `MembershipPolicy` как группы настроек. Новые настройки = поле в VO.
-3. **OrgPersonalization — VO group** — `logo_url`, `icon_url`, `primary_color`, `description` вынесены в один VO.
+3. **OrgPersonalization — VO group** — `logo_url`, `icon`, `primary_color`, `description` вынесены в один VO.
 4. **SSOProvider — enum** — вместо `protocol: str`. Новые провайдеры = значение enum.
 5. **StorageProvider — enum** — вместо `provider: str`. Новые провайдеры = значение enum.
 6. **Credentials — по ссылке** — `encrypted_key_ref` / `encrypted_secret_ref` хранят vault-ссылки, не сами ключи.
@@ -149,7 +149,7 @@
 ```python
 class OrgPersonalization:
     logo_url: Url | None
-    icon_url: Url | None
+    icon: str | None
     primary_color: AccentColor | None
     description: str | None  # до 500 символов
 
@@ -717,7 +717,7 @@ PUT /api/v1/organizations/{org_id}/branding
 | slug | VARCHAR(100) | UNIQUE, NOT NULL | Lowercase, a-z0-9- |
 | description | VARCHAR(500) | NULLABLE | |
 | logo_url | VARCHAR(500) | NULLABLE | |
-| icon_url | VARCHAR(500) | NULLABLE | |
+| icon | VARCHAR(500) | NULLABLE | |
 | primary_color | VARCHAR(7) | NULLABLE | #RRGGBB |
 | owner_id | UUID | FK → users.id, NOT NULL | |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'active' | |

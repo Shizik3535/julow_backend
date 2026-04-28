@@ -61,9 +61,6 @@ class UserProfileORM(BaseORMModel):
     sidebar_sections: Mapped[list[SidebarSectionORM]] = relationship(
         back_populates="profile", cascade="all, delete-orphan", lazy="selectin",
     )
-    notification_preferences: Mapped[list[NotificationPreferenceORM]] = relationship(
-        back_populates="profile", cascade="all, delete-orphan", lazy="selectin",
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -148,25 +145,3 @@ class SidebarSectionORM(BaseORMModel):
     order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     profile: Mapped[UserProfileORM] = relationship(back_populates="sidebar_sections")
-
-
-# ---------------------------------------------------------------------------
-# NotificationPreference
-# ---------------------------------------------------------------------------
-
-class NotificationPreferenceORM(BaseORMModel):
-    """ORM-модель таблицы profile_notification_preferences."""
-
-    __tablename__ = "profile_notification_preferences"
-    __table_args__ = (
-        UniqueConstraint("profile_id", "notification_type", name="uq_profile_notification_prefs_type"),
-    )
-
-    profile_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True,
-    )
-    notification_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    is_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    channels: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-
-    profile: Mapped[UserProfileORM] = relationship(back_populates="notification_preferences")

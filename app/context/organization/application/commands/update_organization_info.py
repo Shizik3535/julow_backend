@@ -21,7 +21,7 @@ class UpdateOrganizationInfoCommand(BaseCommand):
         org_id: ID организации.
         name: Новое название (None — без изменений).
         personalization_color: Акцентный цвет (#RRGGBB).
-        personalization_icon_url: URL иконки.
+        personalization_icon: Название иконки.
         personalization_display_name: Отображаемое имя.
         personalization_custom_domain: Кастомный домен.
         branding_logo_url: URL логотипа.
@@ -34,7 +34,7 @@ class UpdateOrganizationInfoCommand(BaseCommand):
     org_id: str
     name: str | None = None
     personalization_color: str | None = None
-    personalization_icon_url: str | None = None
+    personalization_icon: str | None = None
     personalization_display_name: str | None = None
     personalization_custom_domain: str | None = None
     branding_logo_url: str | None = None
@@ -71,7 +71,7 @@ class UpdateOrganizationInfoHandler(BaseCommandHandler[UpdateOrganizationInfoCom
         personalization: OrgPersonalization | None = None
         has_pers = any([
             command.personalization_color is not None,
-            command.personalization_icon_url is not None,
+            command.personalization_icon is not None,
             command.personalization_display_name is not None,
             command.personalization_custom_domain is not None,
             command.branding_logo_url is not None,
@@ -98,7 +98,7 @@ class UpdateOrganizationInfoHandler(BaseCommandHandler[UpdateOrganizationInfoCom
 
             personalization = OrgPersonalization(
                 color=AccentColor(hex=command.personalization_color) if command.personalization_color is not None else org.personalization.color,
-                icon_url=Url(command.personalization_icon_url) if command.personalization_icon_url is not None else org.personalization.icon_url,
+                icon=command.personalization_icon if command.personalization_icon is not None else org.personalization.icon,
                 display_name=command.personalization_display_name if command.personalization_display_name is not None else org.personalization.display_name,
                 custom_domain=command.personalization_custom_domain if command.personalization_custom_domain is not None else org.personalization.custom_domain,
                 branding=branding if branding is not None else org.personalization.branding,

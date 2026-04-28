@@ -199,7 +199,7 @@ Communication BC отвечает за комментарии к любым су
 - chat_type: ChatType
 - name: str | None (обязательно для GROUP/CHANNEL/ANNOUNCEMENT)
 - description: str | None
-- icon_url: Url | None
+- icon: str | None
 - color: AccentColor | None
 - workspace_id: Id | None (opaque, для CHANNEL/ANNOUNCEMENT)
 - members: list[ChatMember]
@@ -214,7 +214,7 @@ Communication BC отвечает за комментарии к любым су
 - `create_group(name, creator_id)` → `Chat` (factory, chat_type=GROUP)
 - `create_channel(name, workspace_id, creator_id)` → `Chat` (factory, chat_type=CHANNEL)
 - `create_announcement(name, workspace_id, creator_id)` → `Chat` (factory, chat_type=ANNOUNCEMENT)
-- `update_info(name=None, description=None, icon_url=None, color=None)`
+- `update_info(name=None, description=None, icon=None, color=None)`
 - `add_member(user_id)` — только для GROUP/CHANNEL
 - `remove_member(user_id)` — только для GROUP/CHANNEL
 - `change_member_role(user_id, new_role: ChatMemberRole)` — только OWNER/ADMIN могут

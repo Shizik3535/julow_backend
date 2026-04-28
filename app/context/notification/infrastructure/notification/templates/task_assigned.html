@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Задача назначена{% endblock %}
+
+{% block content %}
+<h2>Вам назначена задача</h2>
+<p>{{ body }}</p>
+{% if link %}
+<p><a href="{{ link }}" class="btn">Открыть задачу</a></p>
+{% endif %}
+{% endblock %}

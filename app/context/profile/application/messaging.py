@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 
 
 PROFILE_EVENTS_TOPIC = "profile.events"
-PROFILE_CONSUMER_GROUP = "profile-bc"
 
 
 def build_profile_event_bus(broker: MessageBrokerPort) -> DomainEventBus:
@@ -63,12 +62,12 @@ def profile_subscriptions(container: "Container") -> list[Subscription]:
     return [
         Subscription(
             topic=IDENTITY_EVENTS_TOPIC,
-            group_id=PROFILE_CONSUMER_GROUP,
+            group_id="profile-bc--user-registered",
             build_handler=_build_on_user_registered,
         ),
         Subscription(
             topic=IDENTITY_EVENTS_TOPIC,
-            group_id=PROFILE_CONSUMER_GROUP,
+            group_id="profile-bc--user-deleted",
             build_handler=_build_on_user_deleted,
         ),
     ]

@@ -45,14 +45,6 @@ class NavigationSettingsChanged(BaseDomainEvent):
 
 
 @dataclass(frozen=True)
-class NotificationSettingsChanged(BaseDomainEvent):
-    """Настройки уведомлений изменены."""
-
-    user_id: str = ""
-    changed_fields: list[str] = field(default_factory=list)
-
-
-@dataclass(frozen=True)
 class PrivacySettingsChanged(BaseDomainEvent):
     """Настройки приватности изменены."""
 

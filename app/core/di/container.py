@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import asyncio
+
 from dependency_injector import containers, providers
 
 from app.context.identity.application.messaging import (
     build_identity_event_bus,
     identity_subscriptions,
+)
+from app.context.notification.application.messaging import (
+    build_notification_event_bus,
+    notification_subscriptions,
 )
 from app.context.organization.application.messaging import (
     build_organization_event_bus,
@@ -48,6 +54,22 @@ from app.core.di.providers.identity_provider import (
     create_user_mapper,
     create_user_provider,
     create_user_repository,
+)
+from app.core.di.providers.notification_provider import (
+    create_device_token_mapper,
+    create_device_token_repository,
+    create_identity_user_adapter,
+    create_notification_mapper,
+    create_notification_preferences_mapper,
+    create_notification_preferences_provider_adapter,
+    create_notification_preferences_repository,
+    create_notification_repository,
+    create_notification_sender_adapter,
+    create_project_member_adapter,
+    create_reminder_window_provider_adapter,
+    create_task_participant_adapter,
+    create_websocket_adapter,
+    create_websocket_manager,
 )
 from app.core.di.providers.messaging_provider import create_kafka_producer
 from app.core.di.providers.organization_provider import (
@@ -120,6 +142,7 @@ from app.core.di.providers.project_provider import (
     create_project_permission_checker,
     create_project_permission_provider,
     create_project_provider_adapter,
+    create_project_reminder_window_adapter,
     create_project_repository,
     create_project_role_mapper,
     create_project_role_provider_adapter,
@@ -140,10 +163,12 @@ from app.core.di.providers.task_provider import (
     create_task_epic_adapter,
     create_task_identity_user_adapter,
     create_task_mapper,
+    create_task_participant_provider_adapter,
     create_task_permission_checker,
     create_task_project_adapter,
     create_task_project_membership_adapter,
     create_task_provider_adapter,
+    create_task_reminder_window_adapter,
     create_task_repository,
     create_task_sprint_adapter,
     create_task_template_mapper,
@@ -660,6 +685,80 @@ class Container(containers.DeclarativeContainer):
         create_project_permission_provider,
         checker=project_permission_checker,
     )
+    # ==================================================================
+    # Notification BC
+    # ==================================================================
+
+    # Notification BC - Event Bus
+    notification_event_bus = providers.Singleton(
+        build_notification_event_bus,
+        broker=message_broker_port,
+    )
+
+    # Notification BC - Mappers (Singleton)
+    notification_mapper = providers.Singleton(create_notification_mapper)
+    notification_preferences_mapper = providers.Singleton(create_notification_preferences_mapper)
+    device_token_mapper = providers.Singleton(create_device_token_mapper)
+
+    # Notification BC - Repositories (Factory with session)
+    notification_repo = providers.Factory(
+        create_notification_repository,
+        session=db_session_factory,
+        mapper=notification_mapper,
+    )
+    notification_preferences_repo = providers.Factory(
+        create_notification_preferences_repository,
+        session=db_session_factory,
+        mapper=notification_preferences_mapper,
+    )
+    device_token_repo = providers.Factory(
+        create_device_token_repository,
+        session=db_session_factory,
+        mapper=device_token_mapper,
+    )
+
+    # Notification BC - WebSocket (Singleton)
+    websocket_manager = providers.Singleton(create_websocket_manager)
+    websocket_port = providers.Singleton(
+        create_websocket_adapter,
+        manager=websocket_manager,
+    )
+
+    # Notification BC - Integration Adapters (Factory)
+    notification_identity_user_port = providers.Factory(
+        create_identity_user_adapter,
+        identity_user_provider=identity_user_provider,
+    )
+    notification_preferences_provider = providers.Factory(
+        create_notification_preferences_provider_adapter,
+        preferences_repo=notification_preferences_repo,
+        session_factory=db_session_factory,
+    )
+    reminder_window_provider = providers.Factory(
+        create_reminder_window_provider_adapter,
+        preferences_repo=notification_preferences_repo,
+        session_factory=db_session_factory,
+    )
+
+    # Reminder window adapters (depend on reminder_window_provider from Notification BC)
+    project_reminder_window_port = providers.Factory(
+        create_project_reminder_window_adapter,
+        reminder_window_provider=reminder_window_provider,
+    )
+    task_reminder_window_port = providers.Factory(
+        create_task_reminder_window_adapter,
+        reminder_window_provider=reminder_window_provider,
+    )
+
+    # Notification BC - Notification Sender (Factory)
+    notification_sender_port = providers.Factory(
+        create_notification_sender_adapter,
+        websocket_port=websocket_port,
+        email_port=email_port,
+        push_port=push_port,
+        preferences_provider=notification_preferences_provider,
+        identity_user_port=notification_identity_user_port,
+    )
 
     # ==================================================================
     # Task BC
@@ -698,6 +797,10 @@ class Container(containers.DeclarativeContainer):
         create_task_provider_adapter,
         repo=task_repo,
     )
+    task_participant_provider = providers.Factory(
+        create_task_participant_provider_adapter,
+        repo=task_repo,
+    )
 
     # Task BC - Integration inboard adapters
     task_identity_user_port = providers.Factory(
@@ -731,6 +834,17 @@ class Container(containers.DeclarativeContainer):
         project_permission_provider=project_permission_provider,
     )
 
+    # Notification BC - Integration Adapters that depend on Task/Project BC providers
+    notification_task_participant_port = providers.Factory(
+        create_task_participant_adapter,
+        task_participant_provider=task_participant_provider,
+    )
+    notification_project_member_port = providers.Factory(
+        create_project_member_adapter,
+        project_membership_provider=project_membership_provider,
+        project_provider=project_provider,
+    )
+
 
 # ------------------------------------------------------------------
 # Messaging wiring — см. wire_messaging() ниже.
@@ -762,7 +876,9 @@ async def wire_messaging(container: Container) -> None:
         *workspace_subscriptions(container),
         *project_subscriptions(container),
         *task_subscriptions(container),
+        *notification_subscriptions(container),
     ]
 
-    for sub in subscriptions:
-        await subscribe_with_uow(broker, session_factory, sub)
+    await asyncio.gather(
+        *(subscribe_with_uow(broker, session_factory, sub) for sub in subscriptions)
+    )

@@ -68,19 +68,6 @@ class GetProfileHandler(BaseQueryHandler[GetProfileQuery, ProfileDTO]):
             navigation={
                 "start_page": str(profile.navigation.start_page),
             },
-            notifications={
-                "type_preferences": [
-                    {
-                        "notification_type": tp.notification_type.value,
-                        "is_enabled": tp.is_enabled,
-                        "channels": [
-                            {"channel": ch.channel.value, "is_enabled": ch.is_enabled}
-                            for ch in tp.channels
-                        ],
-                    }
-                    for tp in profile.notifications.type_preferences
-                ],
-            },
             privacy={
                 "profile_visibility": profile.privacy.profile_visibility.value,
                 "online_status_visibility": profile.privacy.online_status_visibility.value,

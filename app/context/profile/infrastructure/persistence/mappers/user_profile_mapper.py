@@ -12,7 +12,6 @@ from app.context.profile.domain.entities.pinned_item import PinnedItem
 from app.context.profile.domain.entities.social_link import SocialLink
 from app.context.profile.domain.value_objects.activity_tracking_consent import ActivityTrackingConsent
 from app.context.profile.domain.value_objects.appearance_settings import AppearanceSettings
-from app.context.profile.domain.value_objects.channel_preference import ChannelPreference
 from app.context.profile.domain.value_objects.custom_theme import CustomTheme
 from app.context.profile.domain.value_objects.date_format import DateFormat
 from app.context.profile.domain.value_objects.hotkey_action import HotkeyAction
@@ -20,9 +19,6 @@ from app.context.profile.domain.value_objects.hotkey_config import HotkeyConfig
 from app.context.profile.domain.value_objects.interface_density import InterfaceDensity
 from app.context.profile.domain.value_objects.localization_settings import LocalizationSettings
 from app.context.profile.domain.value_objects.navigation_settings import NavigationSettings
-from app.context.profile.domain.value_objects.notification_channel import NotificationChannel
-from app.context.profile.domain.value_objects.notification_settings import NotificationSettings
-from app.context.profile.domain.value_objects.notification_type import NotificationType
 from app.context.profile.domain.value_objects.online_status_visibility import OnlineStatusVisibility
 from app.context.profile.domain.value_objects.pinned_target_type import PinnedTargetType
 from app.context.profile.domain.value_objects.privacy_settings import PrivacySettings
@@ -31,12 +27,10 @@ from app.context.profile.domain.value_objects.sidebar_section import SidebarSect
 from app.context.profile.domain.value_objects.start_page import StartPage
 from app.context.profile.domain.value_objects.theme import Theme
 from app.context.profile.domain.value_objects.time_format import TimeFormat
-from app.context.profile.domain.value_objects.type_preference import TypePreference
 from app.context.profile.domain.value_objects.week_start_day import WeekStartDay
 
 from app.context.profile.infrastructure.persistence.orm_models.user_profile_orm import (
     HotkeyConfigORM,
-    NotificationPreferenceORM,
     PinnedItemORM,
     SidebarSectionORM,
     SocialLinkORM,
@@ -83,13 +77,6 @@ class UserProfileMapper(BaseMapper[UserProfile, UserProfileORM]):
             online_status_visibility=OnlineStatusVisibility(orm_model.online_status_visibility),
             activity_tracking_consent=ActivityTrackingConsent(orm_model.activity_tracking_consent),
         )
-
-        notifications = NotificationSettings(
-            type_preferences=[
-                self._notification_orm_to_domain(n)
-                for n in orm_model.notification_preferences
-            ],
-        ) if orm_model.notification_preferences else NotificationSettings()
 
         social_links = [
             SocialLink(
@@ -141,7 +128,6 @@ class UserProfileMapper(BaseMapper[UserProfile, UserProfileORM]):
             appearance=appearance,
             localization=localization,
             navigation=navigation,
-            notifications=notifications,
             privacy=privacy,
             hotkeys=hotkeys,
             sidebar_sections=sidebar_sections,
@@ -197,31 +183,8 @@ class UserProfileMapper(BaseMapper[UserProfile, UserProfileORM]):
         orm.pinned_items = [self._pinned_item_to_orm(pi, aggregate.id) for pi in aggregate.pinned_items]
         orm.hotkeys = [self._hotkey_to_orm(hk, aggregate.id) for hk in aggregate.hotkeys]
         orm.sidebar_sections = [self._sidebar_to_orm(ss, aggregate.id) for ss in aggregate.sidebar_sections]
-        orm.notification_preferences = [
-            self._notification_domain_to_orm(tp, aggregate.id)
-            for tp in aggregate.notifications.type_preferences
-        ]
 
         return orm
-
-    # ------------------------------------------------------------------
-    # Child mappers: ORM → Domain
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _notification_orm_to_domain(orm: NotificationPreferenceORM) -> TypePreference:
-        channels = [
-            ChannelPreference(
-                channel=NotificationChannel(ch_name),
-                is_enabled=ch_enabled,
-            )
-            for ch_name, ch_enabled in (orm.channels or {}).items()
-        ]
-        return TypePreference(
-            notification_type=NotificationType(orm.notification_type),
-            channels=channels,
-            is_enabled=orm.is_enabled,
-        )
 
     # ------------------------------------------------------------------
     # Child mappers: Domain → ORM
@@ -263,14 +226,4 @@ class UserProfileMapper(BaseMapper[UserProfile, UserProfileORM]):
             is_collapsed=ss.is_collapsed,
             item_ids=[str(iid) for iid in ss.item_ids],
             order=ss.order,
-        )
-
-    def _notification_domain_to_orm(self, tp: TypePreference, profile_id: Id) -> NotificationPreferenceORM:
-        channels = {cp.channel.value: cp.is_enabled for cp in tp.channels}
-        return NotificationPreferenceORM(
-            id=self._map_uuid(Id.generate()),
-            profile_id=self._map_uuid(profile_id),
-            notification_type=tp.notification_type.value,
-            is_enabled=tp.is_enabled,
-            channels=channels,
         )

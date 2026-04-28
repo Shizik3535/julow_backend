@@ -16,7 +16,7 @@ class WorkspaceTeamResponse(BaseModel):
         description: Описание.
         lead_id: ID лидера.
         member_ids: Список ID участников.
-        icon_url: URL иконки.
+        icon: Название иконки.
         is_active: Активна ли команда.
         created_at: Время создания.
         updated_at: Время последнего обновления.
@@ -49,10 +49,10 @@ class WorkspaceTeamResponse(BaseModel):
         default=None,
         description="Список UUID участников команды",
     )
-    icon_url: str | None = Field(
+    icon: str | None = Field(
         default=None,
-        description="URL иконки команды",
-        examples=["https://example.com/icon.png"],
+        description="Название иконки команды",
+        examples=["Code"],
     )
     is_active: bool = Field(default=True, description="Активна ли команда")
     created_at: datetime | None = Field(None, description="Дата создания (UTC)")

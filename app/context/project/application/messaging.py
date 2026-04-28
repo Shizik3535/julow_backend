@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from app.core.di.container import Container
 
 PROJECT_EVENTS_TOPIC = "project.events"
-PROJECT_CONSUMER_GROUP = "project-bc"
 
 WORKSPACE_EVENTS_TOPIC = "workspace.events"
 
@@ -38,13 +37,67 @@ def project_subscriptions(container: "Container") -> list[Subscription]:
     """
     Подписки Project BC на топики других BC и свой топик.
 
-    - Workspace BC → OnWorkspaceMemberRemoved: деактивация участников проекта.
+    - Workspace BC → WorkspaceArchived: архивирование проектов.
+    - Workspace BC → WorkspaceDeletionRequested: удаление проектов.
+    - Workspace BC → WorkspaceRestored: восстановление проектов.
+    - Workspace BC → WorkspaceMemberRemoved: удаление участников из проектов.
     - Project BC (self) → OnAutomationRuleTriggered: запуск автоматизаций.
     """
-    def _build_on_workspace_member_removed(session: AsyncSession) -> MessageHandlerFn:
+    from app.context.project.application.event_handlers.on_workspace_archived_cascade import (
+        OnWorkspaceArchivedCascade,
+    )
+    from app.context.project.application.event_handlers.on_workspace_deletion_requested_cascade import (
+        OnWorkspaceDeletionRequestedCascade,
+    )
+    from app.context.project.application.event_handlers.on_workspace_restored_cascade import (
+        OnWorkspaceRestoredCascade,
+    )
+    from app.context.project.application.event_handlers.on_workspace_member_removed_cascade import (
+        OnWorkspaceMemberRemovedCascade,
+    )
+
+    def _build_on_workspace_archived(session: AsyncSession) -> MessageHandlerFn:
+        handler = OnWorkspaceArchivedCascade(
+            project_repo=container.project_repo(session=session),
+            event_bus=container.project_event_bus(),
+        )
+
         async def _run(message: dict[str, Any]) -> None:
-            # TODO: реализовать OnWorkspaceMemberRemoved handler
-            pass
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_workspace_deletion_requested(session: AsyncSession) -> MessageHandlerFn:
+        handler = OnWorkspaceDeletionRequestedCascade(
+            project_repo=container.project_repo(session=session),
+            event_bus=container.project_event_bus(),
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_workspace_restored(session: AsyncSession) -> MessageHandlerFn:
+        handler = OnWorkspaceRestoredCascade(
+            project_repo=container.project_repo(session=session),
+            event_bus=container.project_event_bus(),
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_workspace_member_removed(session: AsyncSession) -> MessageHandlerFn:
+        handler = OnWorkspaceMemberRemovedCascade(
+            project_repo=container.project_repo(session=session),
+            membership_repo=container.project_membership_repo(session=session),
+            event_bus=container.project_event_bus(),
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
 
         return _run
 
@@ -58,12 +111,27 @@ def project_subscriptions(container: "Container") -> list[Subscription]:
     return [
         Subscription(
             topic=WORKSPACE_EVENTS_TOPIC,
-            group_id=PROJECT_CONSUMER_GROUP,
+            group_id="project-bc--workspace-archived",
+            build_handler=_build_on_workspace_archived,
+        ),
+        Subscription(
+            topic=WORKSPACE_EVENTS_TOPIC,
+            group_id="project-bc--workspace-deletion-requested",
+            build_handler=_build_on_workspace_deletion_requested,
+        ),
+        Subscription(
+            topic=WORKSPACE_EVENTS_TOPIC,
+            group_id="project-bc--workspace-restored",
+            build_handler=_build_on_workspace_restored,
+        ),
+        Subscription(
+            topic=WORKSPACE_EVENTS_TOPIC,
+            group_id="project-bc--workspace-member-removed",
             build_handler=_build_on_workspace_member_removed,
         ),
         Subscription(
             topic=PROJECT_EVENTS_TOPIC,
-            group_id=PROJECT_CONSUMER_GROUP,
+            group_id="project-bc--automation-rule-triggered",
             build_handler=_build_on_automation_rule_triggered,
         ),
     ]

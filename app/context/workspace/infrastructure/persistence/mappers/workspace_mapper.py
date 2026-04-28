@@ -70,7 +70,7 @@ class WorkspaceMapper(BaseMapper[Workspace, WorkspaceORM]):
         branding = self._branding_to_domain(orm)
         return WorkspacePersonalization(
             color=Color(orm.color) if orm.color else None,
-            icon_url=Url(orm.icon_url) if orm.icon_url else None,
+            icon=orm.icon if orm.icon else None,
             display_name=orm.display_name,
             description=orm.description,
             branding=branding,
@@ -79,7 +79,7 @@ class WorkspaceMapper(BaseMapper[Workspace, WorkspaceORM]):
     def _personalization_to_orm_dict(self, p: WorkspacePersonalization) -> dict:
         d: dict = {
             "color": str(p.color) if p.color else None,
-            "icon_url": str(p.icon_url) if p.icon_url else None,
+            "icon": p.icon if p.icon else None,
             "display_name": p.display_name,
             "description": p.description,
         }

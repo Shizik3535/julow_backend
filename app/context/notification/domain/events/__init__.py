@@ -1,19 +1,25 @@
 from app.context.notification.domain.events.notification_events import (
+    AllNotificationsRead,
+    DeviceTokenRegistered,
+    DeviceTokenRemoved,
     DigestSent,
-    DoNotDisturbDisabled,
-    DoNotDisturbEnabled,
+    DigestSettingsUpdated,
+    DndSettingsUpdated,
+    NotificationArchived,
     NotificationCreated,
-    NotificationMarkedAllRead,
-    NotificationPreferencesUpdated,
+    NotificationPreferenceUpdated,
     NotificationRead,
 )
 
 __all__ = [
+    "AllNotificationsRead",
+    "DeviceTokenRegistered",
+    "DeviceTokenRemoved",
     "DigestSent",
-    "DoNotDisturbDisabled",
-    "DoNotDisturbEnabled",
+    "DigestSettingsUpdated",
+    "DndSettingsUpdated",
+    "NotificationArchived",
     "NotificationCreated",
-    "NotificationMarkedAllRead",
-    "NotificationPreferencesUpdated",
+    "NotificationPreferenceUpdated",
     "NotificationRead",
 ]

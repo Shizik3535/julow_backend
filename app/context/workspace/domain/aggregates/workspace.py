@@ -5,9 +5,11 @@ from datetime import datetime, timezone
 
 from app.shared.domain.base_aggregate import AggregateRoot
 from app.shared.domain.value_objects.id_vo import Id
+from app.shared.domain.value_objects.url_vo import Url
 from app.context.workspace.domain.value_objects.workspace_status import WorkspaceStatus
 from app.context.workspace.domain.value_objects.workspace_type import WorkspaceType
 from app.context.workspace.domain.value_objects.workspace_personalization import WorkspacePersonalization
+from app.context.workspace.domain.value_objects.workspace_branding import WorkspaceBranding
 from app.context.workspace.domain.value_objects.security_policy import SecurityPolicy
 from app.context.workspace.domain.value_objects.membership_policy import MembershipPolicy
 from app.context.workspace.domain.value_objects.workspace_limits import WorkspaceLimits
@@ -163,6 +165,33 @@ class Workspace(AggregateRoot):
                 self._register_event(
                     WorkspacePersonalizationChanged(workspace_id=str(self.id), changed_fields=pers_changed)
                 )
+
+    # --- Логотип ---
+
+    def change_logo(self, logo_url: Url) -> None:
+        """Обновляет URL логотипа workspace."""
+        self._assert_can_modify()
+        branding = self.personalization.branding or WorkspaceBranding()
+        new_branding = WorkspaceBranding(
+            logo_url=logo_url,
+            cover_image_url=branding.cover_image_url,
+            custom_css=branding.custom_css,
+        )
+        new_personalization = WorkspacePersonalization(
+            color=self.personalization.color,
+            icon=self.personalization.icon,
+            display_name=self.personalization.display_name,
+            description=self.personalization.description,
+            branding=new_branding,
+        )
+        self.personalization = new_personalization
+        self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            WorkspaceInfoChanged(workspace_id=str(self.id), changed_fields=["personalization.branding.logo_url"])
+        )
+        self._register_event(
+            WorkspacePersonalizationChanged(workspace_id=str(self.id), changed_fields=["branding.logo_url"])
+        )
 
     # --- Владельцы ---
 

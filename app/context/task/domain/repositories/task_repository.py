@@ -70,3 +70,11 @@ class TaskRepository(RepositoryPort[Task]):
     @abstractmethod
     async def is_assignee_in_project(self, project_id: Id, user_id: Id) -> bool:
         """Проверить, является ли пользователь исполнителем хотя бы одной задачи проекта."""
+
+    @abstractmethod
+    async def get_by_assignee_in_project(self, user_id: Id, project_id: Id) -> list[Task]:
+        """Найти задачи, назначенные на пользователя в конкретном проекте."""
+
+    @abstractmethod
+    async def get_tasks_with_upcoming_deadline(self, within_hours: int) -> list[Task]:
+        """Найти задачи с дедлайном в ближайшие N часов (не просроченные, не завершённые, активные)."""

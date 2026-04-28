@@ -3,7 +3,6 @@
 import pytest
 
 from app.shared.domain.value_objects.color_vo import Color
-from app.shared.domain.value_objects.url_vo import Url
 from app.context.workspace.domain.value_objects.workspace_branding import WorkspaceBranding
 from app.context.workspace.domain.value_objects.workspace_personalization import WorkspacePersonalization
 
@@ -13,24 +12,24 @@ class TestWorkspacePersonalization:
     def test_defaults(self) -> None:
         pers = WorkspacePersonalization()
         assert pers.color is None
-        assert pers.icon_url is None
+        assert pers.icon is None
         assert pers.display_name is None
         assert pers.description is None
         assert pers.branding is None
 
     def test_custom_values(self) -> None:
         color = Color("#FF5500")
-        icon = Url("https://example.com/icon.png")
+        icon = "Code"
         branding = WorkspaceBranding(custom_css="body {}")
         pers = WorkspacePersonalization(
             color=color,
-            icon_url=icon,
+            icon=icon,
             display_name="My WS",
             description="Desc",
             branding=branding,
         )
         assert pers.color == color
-        assert pers.icon_url == icon
+        assert pers.icon == icon
         assert pers.display_name == "My WS"
         assert pers.description == "Desc"
         assert pers.branding == branding

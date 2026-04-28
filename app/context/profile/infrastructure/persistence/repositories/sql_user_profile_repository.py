@@ -13,7 +13,6 @@ from app.context.profile.domain.repositories.user_profile_repository import User
 from app.context.profile.infrastructure.persistence.mappers.user_profile_mapper import UserProfileMapper
 from app.context.profile.infrastructure.persistence.orm_models.user_profile_orm import (
     HotkeyConfigORM,
-    NotificationPreferenceORM,
     PinnedItemORM,
     SidebarSectionORM,
     SocialLinkORM,
@@ -179,28 +178,6 @@ class SqlUserProfileRepository(SqlAlchemyRepository[UserProfile, UserProfileORM]
             else:
                 orm_model.sidebar_sections.append(
                     self._mapper._sidebar_to_orm(ss, aggregate.id)
-                )
-
-        # --- notification_preferences (нет стабильного id → мэтч по notification_type) ---
-        existing_np: dict[str, NotificationPreferenceORM] = {
-            np.notification_type: np for np in list(orm_model.notification_preferences)
-        }
-        desired_types = {
-            tp.notification_type.value for tp in aggregate.notifications.type_preferences
-        }
-        for orm_np in list(orm_model.notification_preferences):
-            if orm_np.notification_type not in desired_types:
-                orm_model.notification_preferences.remove(orm_np)
-        for tp in aggregate.notifications.type_preferences:
-            ntype = tp.notification_type.value
-            channels = {cp.channel.value: cp.is_enabled for cp in tp.channels}
-            if ntype in existing_np:
-                orm_np = existing_np[ntype]
-                orm_np.is_enabled = tp.is_enabled
-                orm_np.channels = channels
-            else:
-                orm_model.notification_preferences.append(
-                    self._mapper._notification_domain_to_orm(tp, aggregate.id)
                 )
 
         await self._session.flush()

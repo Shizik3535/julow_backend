@@ -11,7 +11,7 @@ class CreateTeamRequest(BaseModel):
         name: Название команды.
         description: Описание.
         lead_id: UUID лидера.
-        icon_url: URL иконки.
+        icon: Название иконки.
     """
 
     model_config = ConfigDict(
@@ -20,7 +20,7 @@ class CreateTeamRequest(BaseModel):
                 "name": "Backend Team",
                 "description": "Команда разработки бэкенда",
                 "lead_id": "550e8400-e29b-41d4-a716-446655440000",
-                "icon_url": None,
+                "icon": None,
             },
         },
     )
@@ -43,8 +43,8 @@ class CreateTeamRequest(BaseModel):
         description="UUID лидера команды",
         examples=["550e8400-e29b-41d4-a716-446655440000"],
     )
-    icon_url: str | None = Field(
+    icon: str | None = Field(
         default=None,
-        max_length=2048,
-        description="URL иконки",
+        max_length=255,
+        description="Название иконки",
     )

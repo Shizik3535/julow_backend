@@ -61,7 +61,7 @@ class GetWorkspaceTeamsHandler(BaseQueryHandler[GetWorkspaceTeamsQuery, Workspac
                 description=t.description,
                 lead_id=str(t.lead_id) if t.lead_id else None,
                 member_ids=[str(mid) for mid in t.member_ids],
-                icon_url=str(t.icon_url) if t.icon_url else None,
+                icon=t.icon if t.icon else None,
                 is_active=t.is_active,
                 created_at=t.created_at,
                 updated_at=t.updated_at,

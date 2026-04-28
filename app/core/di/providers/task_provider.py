@@ -24,6 +24,9 @@ from app.context.project.application.ports.integration.outboard.project_provider
 from app.context.project.application.ports.integration.outboard.sprint_provider import (
     SprintProvider,
 )
+from app.context.notification.application.ports.integration.outboard.reminder_window_provider import (
+    ReminderWindowProvider,
+)
 from app.context.task.application.ports.authorization.task_permission_checker_port import (
     TaskPermissionCheckerPort,
 )
@@ -37,7 +40,9 @@ from app.context.task.application.ports.integration.inboard.project_membership_p
 )
 from app.context.task.application.ports.integration.inboard.project_port import ProjectPort
 from app.context.task.application.ports.integration.inboard.sprint_port import SprintPort
+from app.context.task.application.ports.integration.inboard.reminder_window_port import ReminderWindowPort
 from app.context.task.application.ports.integration.outboard.task_provider import TaskProvider
+from app.context.task.application.ports.integration.outboard.task_participant_provider import TaskParticipantProvider
 from app.context.task.domain.repositories.changelog_repository import ChangelogRepository
 from app.context.task.domain.repositories.task_repository import TaskRepository
 from app.context.task.domain.repositories.task_template_repository import TaskTemplateRepository
@@ -51,11 +56,17 @@ from app.context.task.infrastructure.integration.inboard.project_membership_adap
     ProjectMembershipAdapter,
 )
 from app.context.task.infrastructure.integration.inboard.sprint_adapter import SprintAdapter
+from app.context.task.infrastructure.integration.inboard.reminder_window_adapter import (
+    ReminderWindowAdapter,
+)
 from app.context.task.infrastructure.authorization.task_role_based_permission_checker import (
     TaskRoleBasedPermissionChecker,
 )
 from app.context.task.infrastructure.integration.outboard.task_provider_adapter import (
     TaskProviderAdapter,
+)
+from app.context.task.infrastructure.integration.outboard.task_participant_provider_adapter import (
+    TaskParticipantProviderAdapter,
 )
 from app.context.task.infrastructure.persistence.mappers.changelog_mapper import ChangelogMapper
 from app.context.task.infrastructure.persistence.mappers.task_mapper import TaskMapper
@@ -118,6 +129,11 @@ def create_task_provider_adapter(repo: TaskRepository) -> TaskProvider:
     return TaskProviderAdapter(repo=repo)
 
 
+def create_task_participant_provider_adapter(repo: TaskRepository) -> TaskParticipantProvider:
+    """Создать TaskParticipantProviderAdapter (outboard)."""
+    return TaskParticipantProviderAdapter(repo=repo)
+
+
 # --- Inboard adapters ---
 
 def create_task_identity_user_adapter(
@@ -147,6 +163,13 @@ def create_task_board_adapter(board_provider: BoardProvider) -> BoardPort:
 def create_task_sprint_adapter(sprint_provider: SprintProvider) -> SprintPort:
     """Создать SprintAdapter (inboard) для Task BC."""
     return SprintAdapter(sprint_provider=sprint_provider)
+
+
+def create_task_reminder_window_adapter(
+    reminder_window_provider: ReminderWindowProvider,
+) -> ReminderWindowPort:
+    """Создать ReminderWindowAdapter (inboard) для Task BC."""
+    return ReminderWindowAdapter(reminder_window_provider=reminder_window_provider)
 
 
 def create_task_epic_adapter(epic_provider: EpicProvider) -> EpicPort:

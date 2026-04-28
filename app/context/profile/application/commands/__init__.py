@@ -39,11 +39,6 @@ from app.context.profile.application.commands.update_navigation import (
     UpdateNavigationCommand,
     UpdateNavigationHandler,
 )
-from app.context.profile.application.commands.update_notifications import (
-    TypePreferenceInput,
-    UpdateNotificationsCommand,
-    UpdateNotificationsHandler,
-)
 from app.context.profile.application.commands.update_personal_info import (
     UpdatePersonalInfoCommand,
     UpdatePersonalInfoHandler,
@@ -71,7 +66,6 @@ __all__ = [
     "RemoveSocialLinkCommand",
     "RemoveSocialLinkHandler",
     "SidebarSectionInput",
-    "TypePreferenceInput",
     "UnpinItemCommand",
     "UnpinItemHandler",
     "UpdateAppearanceCommand",
@@ -82,8 +76,6 @@ __all__ = [
     "UpdateLocalizationHandler",
     "UpdateNavigationCommand",
     "UpdateNavigationHandler",
-    "UpdateNotificationsCommand",
-    "UpdateNotificationsHandler",
     "UpdatePersonalInfoCommand",
     "UpdatePersonalInfoHandler",
     "UpdatePrivacyCommand",

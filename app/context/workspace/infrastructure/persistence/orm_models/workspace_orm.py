@@ -22,7 +22,7 @@ class WorkspaceORM(BaseORMModel):
 
     # WorkspacePersonalization → скалярные колонки
     color: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    icon_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    icon: Mapped[str | None] = mapped_column(Text, nullable=True)
     display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 

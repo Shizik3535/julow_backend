@@ -173,7 +173,7 @@
 - chat_type: ChatType
 - name: str | None (обязательно для GROUP/CHANNEL/ANNOUNCEMENT)
 - description: str | None
-- icon_url: Url | None
+- icon: str | None
 - color: AccentColor | None
 - workspace_id: Id | None (для CHANNEL/ANNOUNCEMENT)
 - members: list[ChatMember]
@@ -185,7 +185,7 @@
 
 Методы:
 - `create_dm(user_a, user_b)` / `create_group(name, creator_id)` / `create_channel(name, ws_id, creator_id)` / `create_announcement(name, ws_id, creator_id)`
-- `update_info(name=None, description=None, icon_url=None, color=None)`
+- `update_info(name=None, description=None, icon=None, color=None)`
 - `add_member(user_id)` / `remove_member(user_id)` — только GROUP/CHANNEL
 - `change_member_role(user_id, new_role)` — OWNER/ADMIN
 - `mark_as_read(user_id, read_at)`

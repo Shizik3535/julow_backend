@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 
+from app.api.v1.ws import ws_router
+
 # Единое место для сборки всех endpoint'ов API v1.
 #
 # Каждый Bounded Context регистрирует свои роуты через
@@ -159,3 +161,18 @@ api_v1_router.include_router(_task_metadata_controller.router)
 api_v1_router.include_router(_task_history_controller.router)
 api_v1_router.include_router(_task_template_controller.router)
 api_v1_router.include_router(_project_task_template_controller.router)
+
+# Notification BC
+from app.context.notification.presentation.controllers import (
+    NotificationController,
+    NotificationSettingsController,
+)
+
+_notification_controller = NotificationController()
+_notification_settings_controller = NotificationSettingsController()
+
+api_v1_router.include_router(_notification_controller.router)
+api_v1_router.include_router(_notification_settings_controller.router)
+
+# WebSocket
+api_v1_router.include_router(ws_router)

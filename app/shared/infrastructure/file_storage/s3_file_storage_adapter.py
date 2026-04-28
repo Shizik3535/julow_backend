@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from aiobotocore.session import AioSession
+from botocore.exceptions import ClientError
 
 from app.core.logging import get_logger
 from app.shared.application.ports.file_storage.file_storage_dto import FileInfo
@@ -36,6 +37,20 @@ class S3FileStorageAdapter(FileStoragePort):
         self._client_kwargs = client_kwargs
         self._bucket_name = bucket_name
         self._public_url_base = public_url_base
+
+    async def ensure_bucket(self) -> None:
+        """Создать бакет, если он не существует."""
+        async with self._session.create_client("s3", **self._client_kwargs) as client:
+            try:
+                await client.head_bucket(Bucket=self._bucket_name)
+                logger.debug("Bucket already exists", bucket=self._bucket_name)
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code", "")
+                if error_code in ("404", "NoSuchBucket"):
+                    await client.create_bucket(Bucket=self._bucket_name)
+                    logger.info("Bucket created", bucket=self._bucket_name)
+                else:
+                    raise
 
     async def upload(self, key: str, data: bytes, content_type: str = "application/octet-stream") -> FileInfo:
         async with self._session.create_client("s3", **self._client_kwargs) as client:

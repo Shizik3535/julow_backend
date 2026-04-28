@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 
 from app.shared.domain.base_aggregate import AggregateRoot
 from app.shared.domain.value_objects.id_vo import Id
-from app.shared.domain.value_objects.url_vo import Url
 from app.shared.domain.value_objects.color_vo import Color
 from app.context.communication.domain.value_objects.chat_type import ChatType
 from app.context.communication.domain.value_objects.chat_member_role import ChatMemberRole
@@ -41,7 +40,7 @@ class Chat(AggregateRoot):
         chat_type: Тип чата.
         name: Название (обязательно для GROUP/CHANNEL/ANNOUNCEMENT).
         description: Описание.
-        icon_url: URL иконки.
+        icon: Название иконки.
         color: Цвет (из shared kernel).
         workspace_id: Opaque ID workspace (для CHANNEL/ANNOUNCEMENT).
         members: Список участников.
@@ -55,7 +54,7 @@ class Chat(AggregateRoot):
     chat_type: ChatType = ChatType.DM
     name: str | None = None
     description: str | None = None
-    icon_url: Url | None = None
+    icon: str | None = None
     color: Color | None = None
     workspace_id: Id | None = None
     members: list[ChatMember] = field(default_factory=list)
@@ -132,7 +131,7 @@ class Chat(AggregateRoot):
         self,
         name: str | None = None,
         description: str | None = None,
-        icon_url: Url | None = None,
+        icon: str | None = None,
         color: Color | None = None,
     ) -> None:
         self._assert_not_archived()
@@ -143,9 +142,9 @@ class Chat(AggregateRoot):
         if description is not None and self.description != description:
             self.description = description
             changed.append("description")
-        if icon_url is not None and self.icon_url != icon_url:
-            self.icon_url = icon_url
-            changed.append("icon_url")
+        if icon is not None and self.icon != icon:
+            self.icon = icon
+            changed.append("icon")
         if color is not None and self.color != color:
             self.color = color
             changed.append("color")

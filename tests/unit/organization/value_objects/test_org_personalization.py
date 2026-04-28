@@ -2,7 +2,6 @@
 
 import pytest
 
-from app.shared.domain.value_objects.url_vo import Url
 from app.context.organization.domain.value_objects.accent_color import AccentColor
 from app.context.organization.domain.value_objects.org_branding import OrgBranding
 from app.context.organization.domain.value_objects.org_personalization import OrgPersonalization
@@ -13,7 +12,7 @@ class TestOrgPersonalization:
     def test_defaults(self) -> None:
         pers = OrgPersonalization()
         assert pers.color is None
-        assert pers.icon_url is None
+        assert pers.icon is None
         assert pers.display_name is None
         assert pers.custom_domain is None
         assert pers.branding is None
@@ -22,7 +21,7 @@ class TestOrgPersonalization:
         branding = OrgBranding(login_message="Hello")
         pers = OrgPersonalization(
             color=AccentColor("#6366F1"),
-            icon_url=Url("https://example.com/icon.png"),
+            icon="Code",
             display_name="My Org",
             custom_domain="org.example.com",
             branding=branding,

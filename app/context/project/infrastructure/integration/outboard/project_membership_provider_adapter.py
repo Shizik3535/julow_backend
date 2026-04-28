@@ -48,3 +48,7 @@ class ProjectMembershipProviderAdapter(ProjectMembershipProvider):
         if member is None:
             return None
         return str(member.role_id)
+
+    async def get_project_member_ids(self, project_id: str) -> list[str]:
+        memberships = await self._repo.get_members_by_project(Id.from_string(project_id))
+        return [str(m.user_id) for m in memberships if m.is_active]

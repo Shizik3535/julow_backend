@@ -49,7 +49,7 @@ class GetOrganizationHandler(BaseQueryHandler[GetOrganizationQuery, Organization
             owner_ids=[str(oid) for oid in org.owner_ids],
             personalization={
                 "color": org.personalization.color.hex if org.personalization.color else None,
-                "icon_url": str(org.personalization.icon_url) if org.personalization.icon_url else None,
+                "icon": org.personalization.icon if org.personalization.icon else None,
                 "display_name": org.personalization.display_name,
                 "custom_domain": org.personalization.custom_domain,
                 "branding": (

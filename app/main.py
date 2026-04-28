@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -21,14 +22,37 @@ async def lifespan(app: FastAPI):
 
     container: Container = app.state.container
 
-    # Start message broker
     broker = container.message_broker_port()
-    await broker.start()
-    logger.info("Message broker started")
 
-    # Wire BC subscriptions to the broker (каждый BC сам знает что слушает)
-    await wire_messaging(container)
-    logger.info("Messaging wired")
+    async def _start_messaging() -> None:
+        await broker.start()
+        logger.info("Message broker started")
+        await wire_messaging(container)
+        logger.info("Messaging wired")
+
+    async def _ensure_s3_bucket() -> None:
+        file_storage = container.file_storage_port()
+        await file_storage.ensure_bucket()
+        logger.info("S3 bucket ensured")
+
+    async def _init_websocket() -> None:
+        from app.api.v1.ws import set_websocket_manager, set_auth_token_port
+        ws_manager = container.websocket_manager()
+        set_websocket_manager(ws_manager)
+        auth_token_port = container.auth_token_port()
+        set_auth_token_port(auth_token_port)
+        logger.info("WebSocket manager initialized")
+
+    async def _register_celery_tasks() -> None:
+        from app.context.task.infrastructure.scheduling.celery_tasks import check_task_deadlines_task
+        from app.context.project.infrastructure.scheduling.celery_tasks import check_project_deadlines_task
+
+        celery_adapter = container.background_tasks_port()
+        celery_adapter.register_task("scheduling.check_task_deadlines", check_task_deadlines_task)
+        celery_adapter.register_task("scheduling.check_project_deadlines", check_project_deadlines_task)
+        logger.info("Celery scheduled tasks registered")
+
+    await asyncio.gather(_start_messaging(), _ensure_s3_bucket(), _init_websocket(), _register_celery_tasks())
 
     yield
 

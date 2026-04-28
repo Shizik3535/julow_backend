@@ -33,14 +33,18 @@ def build_task_event_bus(broker: MessageBrokerPort) -> DomainEventBus:
 
 # --- Подписки ---
 
-TASK_CONSUMER_GROUP = "task-bc"
-
 
 def task_subscriptions(container: "Container") -> list[Subscription]:
     """Подписки Task BC на топики других BC."""
 
     from app.context.project.application.messaging import PROJECT_EVENTS_TOPIC
     from app.context.task.application.event_handlers.on_project_archived import OnProjectArchived
+    from app.context.task.application.event_handlers.on_project_deletion_requested_cascade import (
+        OnProjectDeletionRequestedCascade,
+    )
+    from app.context.task.application.event_handlers.on_project_member_removed_unassign import (
+        OnProjectMemberRemovedUnassign,
+    )
     from app.context.task.application.event_handlers.on_sprint_completed import OnSprintCompleted
     from app.context.task.application.event_handlers.on_sprint_cancelled import OnSprintCancelled
     from app.context.task.application.event_handlers.on_workflow_status_removed import OnWorkflowStatusRemoved
@@ -53,6 +57,8 @@ def task_subscriptions(container: "Container") -> list[Subscription]:
 
         handlers = [
             OnProjectArchived(task_repo=task_repo, event_bus=event_bus),
+            OnProjectDeletionRequestedCascade(task_repo=task_repo, event_bus=event_bus),
+            OnProjectMemberRemovedUnassign(task_repo=task_repo, event_bus=event_bus),
             OnSprintCompleted(task_repo=task_repo, event_bus=event_bus),
             OnSprintCancelled(task_repo=task_repo, event_bus=event_bus),
             OnWorkflowStatusRemoved(task_repo=task_repo, board_port=board_port, event_bus=event_bus),
@@ -68,7 +74,7 @@ def task_subscriptions(container: "Container") -> list[Subscription]:
     return [
         Subscription(
             topic=PROJECT_EVENTS_TOPIC,
-            group_id=TASK_CONSUMER_GROUP,
+            group_id="task-bc--project-events",
             build_handler=_build_project_events_handler,
         ),
     ]

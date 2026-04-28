@@ -16,6 +16,7 @@ env/
 *.swo
 *~
 .windsurf/
+.kiro/
 
 # Environment variables
 .env

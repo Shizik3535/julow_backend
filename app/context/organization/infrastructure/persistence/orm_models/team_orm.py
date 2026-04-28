@@ -36,5 +36,5 @@ class TeamORM(BaseORMModel):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     lead_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
-    icon_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    icon: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
