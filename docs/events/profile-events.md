@@ -11,7 +11,6 @@
 | `AppearanceSettingsChanged` | Настройки внешнего вида изменены | `user_id`, `changed_fields` |
 | `LocalizationSettingsChanged` | Настройки локализации изменены | `user_id`, `changed_fields` |
 | `NavigationSettingsChanged` | Настройки навигации изменены | `user_id`, `changed_fields` |
-| `NotificationSettingsChanged` | Настройки уведомлений изменены | `user_id`, `changed_fields` |
 | `PrivacySettingsChanged` | Настройки приватности изменены | `user_id`, `changed_fields` |
 | `AvatarChanged` | Аватар изменён | `user_id` |
 | `PersonalInfoChanged` | Персональные данные изменены (bio, job_title, social_links) | `user_id`, `changed_fields` |
@@ -20,7 +19,7 @@
 | `PinnedItemRemoved` | Элемент откреплён | `user_id`, `target_type`, `target_id` |
 | `SidebarConfigUpdated` | Sidebar обновлён | `user_id` |
 
-**Итого: 13 событий**
+**Итого: 12 событий**
 
 ---
 

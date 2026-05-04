@@ -189,7 +189,14 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_project_deadline_approaching(session: AsyncSession) -> MessageHandlerFn:
         repo = container.notification_repo(session=session)
-        project_member_port = container.notification_project_member_port()
+        project_membership_repo = container.project_membership_repo(session=session)
+        project_membership_provider = container.project_membership_provider(repo=project_membership_repo)
+        project_repo = container.project_repo(session=session)
+        project_provider_inst = container.project_provider(repo=project_repo)
+        project_member_port = container.notification_project_member_port(
+            project_membership_provider=project_membership_provider,
+            project_provider=project_provider_inst,
+        )
         handler = OnProjectDeadlineApproachingNotify(notification_repo=repo, event_bus=container.notification_event_bus(), project_member_port=project_member_port)
 
         async def _run(message: dict[str, Any]) -> None:
@@ -259,7 +266,9 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_task_status_changed(session: AsyncSession) -> MessageHandlerFn:
         repo = container.notification_repo(session=session)
-        task_participant_port = container.notification_task_participant_port()
+        task_repo = container.task_repo(session=session)
+        task_participant_provider = container.task_participant_provider(repo=task_repo)
+        task_participant_port = container.notification_task_participant_port(task_participant_provider=task_participant_provider)
         handler = OnTaskStatusChangedNotify(notification_repo=repo, event_bus=container.notification_event_bus(), task_participant_port=task_participant_port)
 
         async def _run(message: dict[str, Any]) -> None:
@@ -269,7 +278,9 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_task_comment_added(session: AsyncSession) -> MessageHandlerFn:
         repo = container.notification_repo(session=session)
-        task_participant_port = container.notification_task_participant_port()
+        task_repo = container.task_repo(session=session)
+        task_participant_provider = container.task_participant_provider(repo=task_repo)
+        task_participant_port = container.notification_task_participant_port(task_participant_provider=task_participant_provider)
         handler = OnTaskCommentAddedNotify(notification_repo=repo, event_bus=container.notification_event_bus(), task_participant_port=task_participant_port)
 
         async def _run(message: dict[str, Any]) -> None:
@@ -279,7 +290,9 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_task_deadline_approaching(session: AsyncSession) -> MessageHandlerFn:
         repo = container.notification_repo(session=session)
-        task_participant_port = container.notification_task_participant_port()
+        task_repo = container.task_repo(session=session)
+        task_participant_provider = container.task_participant_provider(repo=task_repo)
+        task_participant_port = container.notification_task_participant_port(task_participant_provider=task_participant_provider)
         handler = OnTaskDeadlineApproachingNotify(notification_repo=repo, event_bus=container.notification_event_bus(), task_participant_port=task_participant_port)
 
         async def _run(message: dict[str, Any]) -> None:
@@ -289,7 +302,9 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_task_overdue(session: AsyncSession) -> MessageHandlerFn:
         repo = container.notification_repo(session=session)
-        task_participant_port = container.notification_task_participant_port()
+        task_repo = container.task_repo(session=session)
+        task_participant_provider = container.task_participant_provider(repo=task_repo)
+        task_participant_port = container.notification_task_participant_port(task_participant_provider=task_participant_provider)
         handler = OnTaskOverdueNotify(notification_repo=repo, event_bus=container.notification_event_bus(), task_participant_port=task_participant_port)
 
         async def _run(message: dict[str, Any]) -> None:
@@ -299,7 +314,9 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_task_info_changed(session: AsyncSession) -> MessageHandlerFn:
         repo = container.notification_repo(session=session)
-        task_participant_port = container.notification_task_participant_port()
+        task_repo = container.task_repo(session=session)
+        task_participant_provider = container.task_participant_provider(repo=task_repo)
+        task_participant_port = container.notification_task_participant_port(task_participant_provider=task_participant_provider)
         handler = OnTaskInfoChangedNotify(notification_repo=repo, event_bus=container.notification_event_bus(), task_participant_port=task_participant_port)
 
         async def _run(message: dict[str, Any]) -> None:
@@ -336,19 +353,30 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
                 return
 
             try:
-                # Enum'ы могут прийти как "task_assigned" (.value) или "NotificationType.TASK_ASSIGNED" (str(enum))
-                if notification_type_raw.startswith("NotificationType."):
-                    notification_type_raw = notification_type_raw.split(".", 1)[1]
+                # Enum'ы могут прийти как enum-объект, "task_assigned" (.value) или "NotificationType.TASK_ASSIGNED" (str(enum))
+                if isinstance(notification_type_raw, NotificationType):
+                    notification_type_raw = notification_type_raw.value
+                else:
+                    notification_type_raw = str(notification_type_raw)
+                    if notification_type_raw.startswith("NotificationType."):
+                        notification_type_raw = notification_type_raw.split(".", 1)[1]
 
-                priority_raw = payload.get("priority", "normal")
-                if isinstance(priority_raw, str) and priority_raw.startswith("NotificationPriority."):
-                    priority_raw = priority_raw.split(".", 1)[1]
+                priority_raw_val = payload.get("priority", "normal")
+                if isinstance(priority_raw_val, NotificationPriority):
+                    priority_raw = priority_raw_val.value
+                else:
+                    priority_raw = str(priority_raw_val)
+                    if priority_raw.startswith("NotificationPriority."):
+                        priority_raw = priority_raw.split(".", 1)[1]
 
                 channels_raw = payload.get("channels", ["in_app"])
-                channels = [
-                    ChannelType(ch.split(".", 1)[1] if "." in ch else ch)
-                    for ch in channels_raw
-                ]
+                channels = []
+                for ch in channels_raw:
+                    if isinstance(ch, ChannelType):
+                        channels.append(ch)
+                    else:
+                        ch_str = str(ch)
+                        channels.append(ChannelType(ch_str.split(".", 1)[1] if "." in ch_str else ch_str))
 
                 event = NotificationCreated(
                     notification_id=notification_id,

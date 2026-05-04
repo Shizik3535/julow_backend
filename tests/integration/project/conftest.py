@@ -269,11 +269,11 @@ def make_project_with_membership(
         await board_repo.add(board)
 
         system_roles = [
-            ProjectRole.create_custom(
-                project_id=project.id,
+            ProjectRole.create_system(
                 name=str(tmpl["name"]),
                 permissions=list(tmpl["permissions"]),  # type: ignore[arg-type]
                 description=tmpl["description"],  # type: ignore[arg-type]
+                project_id=project.id,
             )
             for tmpl in SYSTEM_PROJECT_ROLES
         ]

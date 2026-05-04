@@ -37,7 +37,7 @@ class TestTaskWithChecklistFlow:
             json={"text": "Item 1"},
             headers=auth_headers(token)
         )
-        assert item1_resp.status_code == 200
+        assert item1_resp.status_code == 201
 
         item_id = item1_resp.json()["data"].get("id", "00000000-0000-0000-0000-000000000001")
 

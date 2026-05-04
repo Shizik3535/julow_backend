@@ -22,18 +22,26 @@ def check_project_deadlines_task() -> None:
         from app.core.di.container import Container
 
         container = Container()
-        project_repo = container.project_repo()
-        membership_repo = container.project_membership_repo()
-        reminder_window_port = container.project_reminder_window_port()
-        cache_port = container.cache_port()
-        event_bus = container.project_event_bus()
+        session_factory = container.db_session_factory()
 
-        await check_project_deadlines(
-            project_repo=project_repo,
-            membership_repo=membership_repo,
-            reminder_window_port=reminder_window_port,
-            cache_port=cache_port,
-            event_bus=event_bus,
-        )
+        async with session_factory() as session:
+            try:
+                project_repo = container.project_repo(session=session)
+                membership_repo = container.project_membership_repo(session=session)
+                reminder_window_port = container.project_reminder_window_port()
+                cache_port = container.cache_port()
+                event_bus = container.project_event_bus()
+
+                await check_project_deadlines(
+                    project_repo=project_repo,
+                    membership_repo=membership_repo,
+                    reminder_window_port=reminder_window_port,
+                    cache_port=cache_port,
+                    event_bus=event_bus,
+                )
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
 
     asyncio.run(_run())

@@ -119,7 +119,6 @@ async def db_engine(app_settings):
         from app.context.identity.infrastructure.persistence.seed.system_roles import SYSTEM_ROLES as _ROLES
         from app.context.organization.infrastructure.persistence.seed.org_roles import SYSTEM_ORG_ROLES as _ORG_ROLES
         from app.context.workspace.infrastructure.persistence.seed.system_workspace_roles import SYSTEM_WORKSPACE_ROLES as _WS_ROLES
-        from app.context.project.infrastructure.persistence.seed.system_project_roles import SYSTEM_PROJECT_ROLES as _PROJ_ROLES
         async with engine.begin() as _conn:
             for _role in _ROLES:
                 await _conn.execute(
@@ -165,24 +164,6 @@ async def db_engine(app_settings):
                     {
                         "id": str(_role["id"]),
                         "workspace_id": _role["workspace_id"],
-                        "name": _role["name"],
-                        "permissions": _json.dumps(_role["permissions"]),
-                        "is_system": _role["is_system"],
-                        "description": _role["description"],
-                    },
-                )
-            for _role in _PROJ_ROLES:
-                await _conn.execute(
-                    _sa_text(
-                        "INSERT INTO project_roles "
-                        "(id, project_id, name, permissions, is_system, description, created_at, updated_at) "
-                        "VALUES (CAST(:id AS uuid), :project_id, :name, CAST(:permissions AS jsonb), "
-                        ":is_system, :description, now(), now()) "
-                        "ON CONFLICT (id) DO NOTHING"
-                    ),
-                    {
-                        "id": str(_role["id"]),
-                        "project_id": _role["project_id"],
                         "name": _role["name"],
                         "permissions": _json.dumps(_role["permissions"]),
                         "is_system": _role["is_system"],

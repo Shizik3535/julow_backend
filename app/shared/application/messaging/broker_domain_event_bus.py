@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from enum import Enum
 from typing import Any
 
 from app.core.logging import get_logger
@@ -29,14 +30,26 @@ class BrokerDomainEventBus(DomainEventBus):
         self._broker = broker
         self._topic = topic
 
+    @staticmethod
+    def _convert_enums(obj: Any) -> Any:
+        """Рекурсивно конвертирует Enum-значения в строки для JSON-сериализации."""
+        if isinstance(obj, Enum):
+            return obj.value
+        if isinstance(obj, dict):
+            return {k: BrokerDomainEventBus._convert_enums(v) for k, v in obj.items()}
+        if isinstance(obj, list | tuple):
+            return [BrokerDomainEventBus._convert_enums(v) for v in obj]
+        return obj
+
     async def publish_all(self, events: list[BaseDomainEvent]) -> None:
         for event in events:
             event_type = type(event).__name__
+            payload = BrokerDomainEventBus._convert_enums(asdict(event))
             message: dict[str, Any] = {
                 "event_type": event_type,
                 "event_id": str(event.event_id),
                 "occurred_at": event.occurred_at.isoformat(),
-                "payload": asdict(event),
+                "payload": payload,
             }
             key = str(getattr(event, "user_id")) if hasattr(event, "user_id") else None
 

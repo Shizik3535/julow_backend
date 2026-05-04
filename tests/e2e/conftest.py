@@ -139,7 +139,6 @@ async def _db_tables(app):
     from app.context.identity.infrastructure.persistence.seed.system_roles import SYSTEM_ROLES as _ROLES
     from app.context.organization.infrastructure.persistence.seed.org_roles import SYSTEM_ORG_ROLES as _ORG_ROLES
     from app.context.workspace.infrastructure.persistence.seed.system_workspace_roles import SYSTEM_WORKSPACE_ROLES as _WS_ROLES
-    from app.context.project.infrastructure.persistence.seed.system_project_roles import SYSTEM_PROJECT_ROLES as _PROJ_ROLES
     async with engine.begin() as _conn:
         for _role in _ROLES:
             await _conn.execute(
@@ -191,24 +190,6 @@ async def _db_tables(app):
                     "description": _role["description"],
                 }
             )
-        for _role in _PROJ_ROLES:
-            await _conn.execute(
-                _sa_text(
-                    "INSERT INTO project_roles "
-                    "(id, project_id, name, permissions, is_system, description, created_at, updated_at) "
-                    "VALUES (CAST(:id AS uuid), :project_id, :name, CAST(:permissions AS jsonb), "
-                    ":is_system, :description, now(), now()) "
-                    "ON CONFLICT (id) DO NOTHING"
-                ),
-                {
-                    "id": str(_role["id"]),
-                    "project_id": _role["project_id"],
-                    "name": _role["name"],
-                    "permissions": _json.dumps(_role["permissions"]),
-                    "is_system": _role["is_system"],
-                    "description": _role["description"],
-                }
-            )
 
     # Wire messaging manually — httpx ASGITransport does not trigger
     # ASGI lifespan, so broker.start() / wire_messaging() never run.
@@ -232,7 +213,7 @@ async def client(app, _db_tables) -> AsyncGenerator[AsyncClient, Any]:
 
 
 # Таблицы, которые НЕ нужно TRUNCATE (seeded при старте сессии)
-_SEEDED_TABLES = frozenset({"roles", "org_roles", "workspace_roles", "project_roles"})
+_SEEDED_TABLES = frozenset({"roles", "org_roles", "workspace_roles"})
 
 
 async def _truncate_and_reseed_fast(app) -> None:
@@ -260,7 +241,6 @@ async def _truncate_and_reseed_fast(app) -> None:
     from app.context.identity.infrastructure.persistence.seed.system_roles import SYSTEM_ROLES as _ROLES
     from app.context.organization.infrastructure.persistence.seed.org_roles import SYSTEM_ORG_ROLES as _ORG_ROLES
     from app.context.workspace.infrastructure.persistence.seed.system_workspace_roles import SYSTEM_WORKSPACE_ROLES as _WS_ROLES
-    from app.context.project.infrastructure.persistence.seed.system_project_roles import SYSTEM_PROJECT_ROLES as _PROJ_ROLES
     
     async with engine.begin() as _conn:
         # Batch insert для roles
@@ -330,29 +310,6 @@ async def _truncate_and_reseed_fast(app) -> None:
                 ws_roles_data
             )
         
-        # Batch insert для project_roles
-        if _PROJ_ROLES:
-            proj_roles_data = [
-                {
-                    "id": str(_role["id"]),
-                    "project_id": _role["project_id"],
-                    "name": _role["name"],
-                    "permissions": _json.dumps(_role["permissions"]),
-                    "is_system": _role["is_system"],
-                    "description": _role["description"],
-                }
-                for _role in _PROJ_ROLES
-            ]
-            await _conn.execute(
-                _sa_text(
-                    "INSERT INTO project_roles "
-                    "(id, project_id, name, permissions, is_system, description, created_at, updated_at) "
-                    "VALUES (CAST(:id AS uuid), :project_id, :name, CAST(:permissions AS jsonb), "
-                    ":is_system, :description, now(), now()) "
-                    "ON CONFLICT (id) DO NOTHING"
-                ),
-                proj_roles_data
-            )
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -962,7 +919,7 @@ async def project_owner(client) -> dict:
         {"email", "password", "user_id", "access_token", "refresh_token",
          "ws_id", "ws_name", "project_id", "project_name"}
     """
-    return await create_project_with_owner(client, methodology="scrum")
+    return await create_project_with_owner(client, methodology="hybrid")
 
 
 @pytest_asyncio.fixture

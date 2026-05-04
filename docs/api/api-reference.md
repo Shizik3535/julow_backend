@@ -92,7 +92,6 @@
 | PUT | `/profile/me/appearance` | Заменить настройки внешнего вида (тема, акцент, плотность) |
 | PUT | `/profile/me/localization` | Заменить настройки локализации (язык, часовой пояс, формат даты/времени) |
 | PUT | `/profile/me/navigation` | Заменить настройки навигации (стартовая страница) |
-| PUT | `/profile/me/notifications` | Заменить настройки уведомлений (типы, каналы доставки) |
 | PUT | `/profile/me/privacy` | Заменить настройки приватности (видимость профиля, онлайн-статус, трекинг) |
 | PUT | `/profile/me/hotkeys` | Заменить конфигурацию горячих клавиш |
 | PUT | `/profile/me/sidebar` | Заменить конфигурацию секций sidebar |
@@ -154,6 +153,7 @@
 | GET | `/orgs/invitations/token/{token}` | Получить приглашение по токену ссылки |
 | POST | `/orgs/invitations/{invitation_id}/accept` | Принять приглашение (пользователь добавляется в организацию) |
 | POST | `/orgs/invitations/{invitation_id}/decline` | Отклонить приглашение |
+| GET | `/orgs/invitations/mine` | Мои приглашения в организации (PENDING по email, ACCEPTED/DECLINED по user_id) |
 
 ---
 
@@ -239,6 +239,7 @@
 | POST | `/workspaces/{ws_id}/reactivate` | Реактивировать приостановленный workspace |
 | POST | `/workspaces/{ws_id}/request-deletion` | Запросить удаление workspace. Статус → `pending_deletion` |
 | POST | `/workspaces/{ws_id}/transfer-ownership` | Передать владение другому пользователю |
+| POST | `/workspaces/{ws_id}/logo` | Загрузить логотип workspace |
 | POST | `/workspaces/{ws_id}/move` | Переместить в иерархии (под нового родителя или отсоединить) |
 | GET | `/workspaces/{ws_id}/settings` | Получить настройки (политики безопасности, членства, лимиты) |
 | GET | `/workspaces/{ws_id}/children` | Список дочерних workspace |
@@ -278,6 +279,7 @@
 | GET | `/workspaces/invitations/token/{token}` | Получить приглашение по токену ссылки |
 | POST | `/workspaces/invitations/{invitation_id}/accept` | Принять приглашение (пользователь добавляется в workspace) |
 | POST | `/workspaces/invitations/{invitation_id}/decline` | Отклонить приглашение |
+| GET | `/workspaces/invitations/mine` | Мои приглашения в workspace (PENDING по email, ACCEPTED/DECLINED по user_id) |
 
 ---
 
@@ -407,6 +409,8 @@
 | PATCH | `/workspaces/{ws_id}/projects/{project_id}/sprints/{sprint_id}/goal` | Обновить цель спринта |
 | PATCH | `/workspaces/{ws_id}/projects/{project_id}/sprints/{sprint_id}/date-range` | Обновить даты спринта |
 | POST | `/workspaces/{ws_id}/projects/{project_id}/sprints/{sprint_id}/retro` | Создать ретроспективу спринта |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/sprints/{sprint_id}/complete` | Завершить спринт |
+| POST | `/workspaces/{ws_id}/projects/{project_id}/sprints/{sprint_id}/cancel` | Отменить спринт |
 
 ---
 
@@ -637,6 +641,8 @@
 |-------|-----|----------|
 | GET | `/notification-settings/preferences` | Получить настройки уведомлений |
 | POST | `/notification-settings/preferences` | Установить настройку (тип ↔ канал) |
+| PUT | `/notification-settings/reminder-window` | Установить окно напоминания о дедлайне (кол-во часов) |
+| GET | `/notification-settings/types` | Получить доступные типы уведомлений |
 | GET | `/notification-settings/dnd` | Получить настройки «Не беспокоить» |
 | PUT | `/notification-settings/dnd` | Обновить расписание DND |
 | POST | `/notification-settings/dnd/disable` | Отключить DND |
@@ -674,17 +680,17 @@
 | Identity | AccountController | 11 |
 | Identity | SecurityController | 13 |
 | Identity | AdminController | 3 |
-| Profile | ProfileController | 17 |
+| Profile | ProfileController | 16 |
 | Organization | OrganizationController | 10 |
 | Organization | MemberController | 10 |
-| Organization | InvitationController | 8 |
+| Organization | InvitationController | 9 |
 | Organization | DepartmentController | 7 |
 | Organization | TeamController | 8 |
 | Organization | RoleController | 5 |
 | Organization | IntegrationController | 7 |
-| Workspace | WorkspaceController | 18 |
+| Workspace | WorkspaceController | 19 |
 | Workspace | WorkspaceMemberController | 8 |
-| Workspace | WorkspaceInvitationController | 8 |
+| Workspace | WorkspaceInvitationController | 9 |
 | Workspace | WorkspaceTeamController | 8 |
 | Workspace | WorkspaceRoleController | 5 |
 | Workspace | OrgWorkspaceController | 1 |
@@ -692,7 +698,7 @@
 | Project | ProjectController | 21 |
 | Project | ProjectMemberController | 7 |
 | Project | ProjectRoleController | 5 |
-| Project | SprintController | 8 |
+| Project | SprintController | 10 |
 | Project | EpicController | 5 |
 | Project | ProjectBoardController | 15 |
 | Project | RetroTemplateController | 1 |
@@ -708,5 +714,5 @@
 | Task | TaskTemplateController | 2 |
 | Task | ProjectTaskTemplateController | 4 |
 | Notification | NotificationController | 6 |
-| Notification | NotificationSettingsController | 10 |
-| **Итого** | | **282** |
+| Notification | NotificationSettingsController | 12 |
+| **Итого** | | **286** |

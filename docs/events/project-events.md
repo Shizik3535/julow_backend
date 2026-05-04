@@ -18,6 +18,7 @@
 | `MilestoneCreated` | Milestone создан | `project_id`, `milestone_id` |
 | `MilestoneUpdated` | Milestone обновлён | `project_id`, `milestone_id`, `changed_fields` |
 | `MilestoneStatusChanged` | Статус milestone изменён | `project_id`, `milestone_id`, `new_status` |
+| `ProjectDeadlineApproaching` | Приближение дедлайна проекта | `project_id`, `deadline` |
 
 ### Project Membership Events
 
@@ -86,7 +87,7 @@
 | `RetroTemplateUpdated` | Шаблон ретроспективы обновлён | `template_name` |
 | `RetroTemplateDeleted` | Шаблон ретроспективы удалён | `template_name` |
 
-**Итого: 46 событий**
+**Итого: 47 событий**
 
 ---
 
@@ -103,5 +104,9 @@
 | Обработчик | Источник (BC) | Событие | Топик | Описание |
 |---|---|---|---|---|
 | `OnWorkspaceMemberRemoved` | Workspace BC | `WorkspaceMemberRemoved` | `workspace.events` | Удаляет участника из всех проектов workspace при его удалении из workspace. Владельцы проектов пропускаются (не удаляются). |
+| `OnWorkspaceArchivedCascade` | Workspace BC | `WorkspaceArchived` | `workspace.events` | Архивирует все проекты workspace при архивации workspace. Уже архивированные проекты пропускаются. |
+| `OnWorkspaceDeletionRequestedCascade` | Workspace BC | `WorkspaceDeletionRequested` | `workspace.events` | Мягко удаляет все проекты workspace при запросе удаления workspace. Уже помеченные на удаление пропускаются. |
+| `OnWorkspaceMemberRemovedCascade` | Workspace BC | `WorkspaceMemberRemoved` | `workspace.events` | Каскадное удаление участника из всех проектов workspace (dict-based обработчик). Владельцы проектов пропускаются. |
+| `OnWorkspaceRestoredCascade` | Workspace BC | `WorkspaceRestored` | `workspace.events` | Восстанавливает все архивированные проекты workspace при восстановлении workspace. Не архивированные проекты пропускаются. |
 
-**Итого: 2 подписки** (1 внутренняя + 1 кросс-BC из Workspace BC)
+**Итого: 6 подписок** (1 внутренняя + 5 кросс-BC из Workspace BC)

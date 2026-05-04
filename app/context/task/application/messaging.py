@@ -52,7 +52,9 @@ def task_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_project_events_handler(session: AsyncSession) -> MessageHandlerFn:
         task_repo = container.task_repo(session=session)
-        board_port = container.task_board_port()
+        board_repo = container.board_repo(session=session)
+        board_provider = container.board_provider(repo=board_repo)
+        board_port = container.task_board_port(board_provider=board_provider)
         event_bus = build_task_event_bus(container.message_broker_port())
 
         handlers = [

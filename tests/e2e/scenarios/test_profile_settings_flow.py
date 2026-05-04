@@ -37,26 +37,7 @@ class TestProfileSettingsFlow:
         )
         assert resp2.status_code == 200
 
-        # 3. Обновляем уведомления
-        resp3 = await client.put(
-            f"{API}/profile/me/notifications",
-            json={
-                "type_preferences": [
-                    {
-                        "notification_type": "mention",
-                        "is_enabled": True,
-                        "channels": [
-                            {"channel": "in_app", "is_enabled": True},
-                            {"channel": "email", "is_enabled": False},
-                        ],
-                    },
-                ],
-            },
-            headers=headers
-        )
-        assert resp3.status_code == 200
-
-        # 4. Обновляем приватность
+        # 3. Обновляем приватность
         resp4 = await client.put(
             f"{API}/profile/me/privacy",
             json={
@@ -68,7 +49,7 @@ class TestProfileSettingsFlow:
         )
         assert resp4.status_code == 200
 
-        # 5. Проверяем, что профиль доступен
+        # 4. Проверяем, что профиль доступен
         profile_resp = await client.get(
             f"{API}/profile/me", headers=headers
         )

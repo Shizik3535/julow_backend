@@ -76,5 +76,7 @@
 | `OnSprintCompleted` | Project BC | `SprintCompleted` | `project.events` | Убирает `sprint_id` у задач завершённого спринта. Если есть `next_sprint_id` — переносит задачи в следующий спринт, иначе убирает из спринта. |
 | `OnEpicCancelled` | Project BC | `EpicStatusChanged` (status=CANCELLED) | `project.events` | Убирает `epic_id` у задач, привязанных к отменённому эпику. |
 | `OnWorkflowStatusRemoved` | Project BC | `WorkflowStatusRemoved` | `project.events` | Сбрасывает `status_id` у задач с удалённым статусом на default (через `BoardPort`). Если default нет — обнуляет. |
+| `OnProjectDeletionRequestedCascade` | Project BC | `ProjectDeletionRequested` | `project.events` | Мягко удаляет все задачи проекта при запросе удаления проекта. Уже удалённые задачи пропускаются. |
+| `OnProjectMemberRemovedUnassign` | Project BC | `ProjectMemberRemoved` | `project.events` | Снимает назначение пользователя со всех задач проекта при удалении участника из проекта. |
 
-**Итого: 6 подписок** (1 внутренняя + 5 кросс-BC из Project BC)
+**Итого: 8 подписок** (1 внутренняя + 7 кросс-BC из Project BC)

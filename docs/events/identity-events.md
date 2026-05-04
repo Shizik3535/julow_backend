@@ -14,6 +14,7 @@
 | `AccountDeletionRequested` | Запрос удаления аккаунта | `user_id` |
 | `AccountDisabled` | Аккаунт деактивирован | `user_id` |
 | `AccountReactivated` | Аккаунт реактивирован | `user_id` |
+| `UserDeleted` | Пользователь удалён (окончательно, после grace period) | `user_id` |
 
 ### Auth Events
 
@@ -42,7 +43,7 @@
 | `AllOtherSessionsTerminated` | Все другие сессии завершены, кроме текущей | `user_id`, `current_session_id` |
 | `SessionRefreshed` | Сессия обновлена (refresh token) | `user_id` |
 
-**Итого: 23 события**
+**Итого: 24 события**
 
 ---
 

@@ -61,7 +61,7 @@
 | `WorkspaceTeamMemberAdded` | Участник добавлен в команду workspace | `workspace_id`, `team_id`, `user_id` |
 | `WorkspaceTeamMemberRemoved` | Участник удалён из команды workspace | `workspace_id`, `team_id`, `user_id` |
 
-**Итого: 33 события**
+**Итого: 34 события**
 
 ---
 
@@ -79,5 +79,8 @@
 | Обработчик | Источник (BC) | Событие | Топик | Описание |
 |---|---|---|---|---|
 | `OnOrgMemberJoinedAutoAdd` | Organization BC | `OrgMemberJoined` | `organization.events` | Если workspace привязан к организации и `auto_add_from_org=True`, автоматически добавляет нового участника организации в workspace. Идемпотентно — пропускает, если участник уже в workspace. |
+| `OnOrgMemberDeactivatedCascade` | Organization BC | `OrgMemberDeactivated` | `organization.events` | Деактивирует пользователя во всех workspace организации при деактивации участника организации. Уже деактивированные пропускаются. |
+| `OnOrgMemberRemovedCascade` | Organization BC | `OrgMemberRemoved` | `organization.events` | Удаляет пользователя из всех workspace организации при удалении участника из организации. Владельцы workspace пропускаются. |
+| `OnUserDeletedCleanupMemberships` | Identity BC | `UserDeleted` | `identity.events` | Окончательно удаляет пользователя из всех workspace при удалении аккаунта. Идемпотентно. |
 
-**Итого: 3 подписки** (2 внутренние + 1 кросс-BC из Organization BC)
+**Итого: 6 подписок** (2 внутренние + 4 кросс-BC: 3 из Organization BC + 1 из Identity BC)

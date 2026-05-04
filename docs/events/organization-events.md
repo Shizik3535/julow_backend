@@ -81,7 +81,7 @@
 | `OrgStorageUpdated` | Хранилище обновлено | `org_id`, `changed_fields` |
 | `OrgStorageQuotaExceeded` | Квота хранилища превышена | `org_id` |
 
-**Итого: 30 событий**
+**Итого: 39 событий**
 
 ---
 
@@ -89,6 +89,7 @@
 
 | Обработчик | Источник (BC) | Событие | Топик | Описание |
 |---|---|---|---|---|
-| `OnAccountDeletionRequestedCleanupMemberships` | Identity BC | `AccountDeletionRequested` | `identity.events` | Удаляет пользователя из всех организаций при удалении аккаунта. Идемпотентно. |
+| `OnAccountDeletionRequestedCleanupMemberships` | Identity BC | `AccountDeletionRequested` | `identity.events` | Удаляет пользователя из всех организаций при запросе удаления аккаунта. Идемпотентно. |
+| `OnUserDeletedCleanupMemberships` | Identity BC | `UserDeleted` | `identity.events` | Окончательно удаляет пользователя из всех организаций после grace period. Идемпотентно. |
 
-**Итого: 1 подписка**
+**Итого: 2 подписки** (обе из Identity BC)

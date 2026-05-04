@@ -30,22 +30,19 @@ class TestSqlProjectRoleRepositoryAdd:
 class TestSqlProjectRoleRepositorySearch:
     """Тесты поиска."""
 
-    async def test_get_system_roles(self, role_repo: SqlProjectRoleRepository) -> None:
-        roles = await role_repo.get_system_roles()
-        assert len(roles) > 0
-        assert all(r.is_system for r in roles)
-
     async def test_get_by_project(self, role_repo: SqlProjectRoleRepository, make_project_role) -> None:
         role = await make_project_role()
         roles = await role_repo.get_by_project(role.project_id)
         assert len(roles) >= 1
         assert any(r.id == role.id for r in roles)
 
-    async def test_get_by_name(self, role_repo: SqlProjectRoleRepository) -> None:
+    async def test_get_by_name(self, role_repo: SqlProjectRoleRepository, make_project_with_membership) -> None:
+        proj_data = await make_project_with_membership()
+        owner_role_id = proj_data["system_roles"][0].id
         found = await role_repo.get_by_name("owner")
         assert found is not None
         assert found.name == "owner"
-        assert found.is_system is True
+        assert found.id == owner_role_id
 
     async def test_get_by_name_not_found(self, role_repo: SqlProjectRoleRepository) -> None:
         found = await role_repo.get_by_name("nonexistent-role")
