@@ -15,7 +15,11 @@ from app.context.identity.application.ports.integration.outboard.identity_permis
 from app.context.identity.application.ports.notification.identity_notification_port import (
     IdentityNotificationPort,
 )
+from app.context.identity.application.ports.integration.inboard.organization_sso_port import (
+    OrganizationSSOPort,
+)
 from app.context.identity.application.ports.oauth.oauth_port import OAuthPort
+from app.context.identity.application.ports.sso.sso_port import SSOPort
 from app.context.identity.application.ports.two_fa.totp_port import TOTPPort
 from app.context.identity.domain.repositories.role_repository import RoleRepository
 from app.context.identity.domain.repositories.session_repository import SessionRepository
@@ -36,7 +40,14 @@ from app.context.identity.infrastructure.integration.outboard.user_provider_adap
 from app.context.identity.infrastructure.notification.identity_notification_adapter import (
     IdentityNotificationAdapter,
 )
+from app.context.identity.infrastructure.integration.inboard.organization_sso_adapter import (
+    OrganizationSSOAdapter,
+)
 from app.context.identity.infrastructure.oauth.oauth_adapter import HttpxOAuthAdapter
+from app.context.identity.infrastructure.sso.composite_sso_adapter import CompositeSSOAdapter
+from app.context.identity.infrastructure.sso.ldap_adapter import LdapSSOAdapter
+from app.context.identity.infrastructure.sso.oidc_adapter import OidcSSOAdapter
+from app.context.identity.infrastructure.sso.saml_adapter import SamlSSOAdapter
 from app.context.identity.infrastructure.persistence.mappers.role_mapper import RoleMapper
 from app.context.identity.infrastructure.persistence.mappers.session_mapper import SessionMapper
 from app.context.identity.infrastructure.persistence.mappers.user_auth_mapper import UserAuthMapper
@@ -176,3 +187,22 @@ def create_permission_provider(
     """Создать PermissionProviderAdapter (outboard)."""
     return PermissionProviderAdapter(permission_checker=permission_checker)
 
+
+# --- SSO ---
+
+def create_sso_adapter() -> SSOPort:
+    """Создать CompositeSSOAdapter с SAML, OIDC и LDAP адаптерами."""
+    return CompositeSSOAdapter(
+        adapters=[
+            SamlSSOAdapter(),
+            OidcSSOAdapter(),
+            LdapSSOAdapter(),
+        ]
+    )
+
+
+def create_identity_org_sso_adapter(
+    org_sso_provider,
+) -> OrganizationSSOPort:
+    """Создать OrganizationSSOAdapter (inboard) для Identity BC."""
+    return OrganizationSSOAdapter(org_sso_provider=org_sso_provider)

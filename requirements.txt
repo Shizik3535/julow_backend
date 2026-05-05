@@ -37,3 +37,7 @@ celery
 
 # ── Encription ─────────────────────────────────
 cryptography
+
+# ── SSO ───────────────────────────────────────
+python3-saml
+ldap3

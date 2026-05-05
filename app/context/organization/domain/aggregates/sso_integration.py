@@ -39,6 +39,9 @@ class SSOIntegration(AggregateRoot):
     is_active: bool = True
     group_mapping: dict[str, str] | None = None
     attribute_mapping: dict[str, str] | None = None
+    email_domains: list[str] = field(default_factory=list)
+    auto_provision: bool = False
+    default_role_id: Id | None = None
     added_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
     added_by: Id = field(default_factory=Id.generate)
     created_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
@@ -57,6 +60,9 @@ class SSOIntegration(AggregateRoot):
         added_by: Id,
         group_mapping: dict[str, str] | None = None,
         attribute_mapping: dict[str, str] | None = None,
+        email_domains: list[str] | None = None,
+        auto_provision: bool = False,
+        default_role_id: Id | None = None,
     ) -> SSOIntegration:
         """Создаёт SSO-интеграцию."""
         integration = cls(
@@ -68,6 +74,9 @@ class SSOIntegration(AggregateRoot):
             added_by=added_by,
             group_mapping=group_mapping,
             attribute_mapping=attribute_mapping,
+            email_domains=email_domains or [],
+            auto_provision=auto_provision,
+            default_role_id=default_role_id,
         )
         integration._register_event(
             SSOIntegrationAdded(org_id=str(org_id), provider=provider)

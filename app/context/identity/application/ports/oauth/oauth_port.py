@@ -24,11 +24,27 @@ class OAuthPort(ABC):
     """
     BC-специфичный порт для работы с OAuth-провайдерами.
 
-    Абстрагирует обмен authorization code на access token
-    и получение профиля пользователя от провайдера.
+    Абстрагирует генерацию URL авторизации, обмен authorization code
+    на access token и получение профиля пользователя от провайдера.
 
     Реализация (адаптер) находится в infrastructure-слое Identity BC.
     """
+
+    @abstractmethod
+    def get_authorize_url(
+        self, provider: str, redirect_uri: str, state: str | None = None
+    ) -> str:
+        """
+        Сгенерировать URL авторизации для редиректа пользователя на провайдера.
+
+        Аргументы:
+            provider: Название провайдера (oauth_google, oauth_github, ...).
+            redirect_uri: URI перенаправления после авторизации.
+            state: Опциональный state-параметр для защиты от CSRF.
+
+        Возвращает:
+            Полный URL для редиректа пользователя на страницу авторизации провайдера.
+        """
 
     @abstractmethod
     async def exchange_code(

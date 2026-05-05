@@ -1,2 +1,7 @@
-# Inboard-адаптеры Identity BC (потребление данных от других BC).
-# Пока пусто — Identity BC не получает данных от других BC синхронно.
+from app.context.identity.infrastructure.integration.inboard.organization_sso_adapter import (
+    OrganizationSSOAdapter,
+)
+
+__all__ = [
+    "OrganizationSSOAdapter",
+]

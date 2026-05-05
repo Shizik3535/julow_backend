@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.shared.domain.value_objects.id_vo import Id
 from app.shared.infrastructure.persistence.sqlalchemy_base_mapper import BaseMapper
 
 from app.context.organization.domain.aggregates.sso_integration import SSOIntegration
@@ -23,6 +24,9 @@ class SSOIntegrationMapper(BaseMapper[SSOIntegration, SSOIntegrationORM]):
             is_active=orm_model.is_active,
             group_mapping=orm_model.group_mapping,
             attribute_mapping=orm_model.attribute_mapping,
+            email_domains=orm_model.email_domains or [],
+            auto_provision=orm_model.auto_provision,
+            default_role_id=self._map_id(orm_model.default_role_id) if orm_model.default_role_id else None,
             added_at=orm_model.added_at,
             added_by=self._map_id(orm_model.added_by),
             created_at=orm_model.created_at,
@@ -40,6 +44,9 @@ class SSOIntegrationMapper(BaseMapper[SSOIntegration, SSOIntegrationORM]):
             is_active=aggregate.is_active,
             group_mapping=aggregate.group_mapping,
             attribute_mapping=aggregate.attribute_mapping,
+            email_domains=aggregate.email_domains if aggregate.email_domains else None,
+            auto_provision=aggregate.auto_provision,
+            default_role_id=self._map_uuid(aggregate.default_role_id) if aggregate.default_role_id else None,
             added_at=aggregate.added_at,
             added_by=self._map_uuid(aggregate.added_by),
             created_at=aggregate.created_at,

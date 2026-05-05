@@ -23,3 +23,7 @@ class SSOIntegrationRepository(RepositoryPort[SSOIntegration]):
     @abstractmethod
     async def get_by_org_and_provider(self, org_id: Id, provider: SSOProvider) -> SSOIntegration | None:
         """Найти SSO-интеграцию по org_id и провайдеру."""
+
+    @abstractmethod
+    async def get_active_by_email_domain(self, email_domain: str) -> SSOIntegration | None:
+        """Найти активную SSO-интеграцию по email-домену."""

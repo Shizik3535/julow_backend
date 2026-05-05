@@ -45,3 +45,38 @@ def check_project_deadlines_task() -> None:
                 raise
 
     asyncio.run(_run())
+
+
+def check_overdue_projects_task() -> None:
+    """
+    Celery-обёртка для check_overdue_projects.
+
+    Вызывается Celery Beat каждый час со сдвигом.
+    """
+    from app.context.project.infrastructure.scheduling.check_overdue_projects import check_overdue_projects
+
+    async def _run() -> None:
+        from app.core.di.container import Container
+
+        container = Container()
+        session_factory = container.db_session_factory()
+
+        async with session_factory() as session:
+            try:
+                project_repo = container.project_repo(session=session)
+                membership_repo = container.project_membership_repo(session=session)
+                cache_port = container.cache_port()
+                event_bus = container.project_event_bus()
+
+                await check_overdue_projects(
+                    project_repo=project_repo,
+                    membership_repo=membership_repo,
+                    cache_port=cache_port,
+                    event_bus=event_bus,
+                )
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+
+    asyncio.run(_run())

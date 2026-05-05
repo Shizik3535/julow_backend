@@ -9,6 +9,10 @@ from app.context.identity.application.ports.oauth import (
     OAuthPort,
     OAuthUserInfo,
 )
+from app.context.identity.application.ports.sso import (
+    SSOPort,
+    SSOUserInfo,
+)
 from app.context.identity.application.ports.two_fa import (
     TOTPPort,
 )
@@ -19,5 +23,7 @@ __all__ = [
     "IdentityUserProvider",
     "OAuthPort",
     "OAuthUserInfo",
+    "SSOPort",
+    "SSOUserInfo",
     "TOTPPort",
 ]

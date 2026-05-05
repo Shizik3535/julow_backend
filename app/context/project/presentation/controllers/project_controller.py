@@ -94,6 +94,10 @@ from app.context.project.application.queries.get_archived_projects import (
     GetArchivedProjectsHandler,
     GetArchivedProjectsQuery,
 )
+from app.context.project.application.queries.get_overdue_projects import (
+    GetOverdueProjectsHandler,
+    GetOverdueProjectsQuery,
+)
 from app.context.project.presentation.dependencies import (
     get_current_user_id,
     get_project_event_bus,
@@ -160,6 +164,7 @@ class ProjectController(BaseController):
         POST   /                                         — Создать проект
         GET    /                                         — Список проектов workspace
         GET    /archived                                 — Архивированные проекты
+        GET    /overdue                                  — Просроченные проекты
         GET    /{project_id}                             — Получить проект
         PATCH  /{project_id}                             — Обновить информацию
         POST   /{project_id}/archive                     — Архивировать
@@ -200,6 +205,17 @@ class ProjectController(BaseController):
             "/archived", self.list_archived_projects, methods=["GET"],
             response_model=SuccessResponse[list[ProjectResponse]],
             summary="Архивированные проекты",
+        )
+        self._router.add_api_route(
+            "/overdue", self.list_overdue_projects, methods=["GET"],
+            response_model=SuccessResponse[list[ProjectResponse]],
+            summary="Просроченные проекты workspace",
+            description="Возвращает просроченные проекты в рамках workspace (требует разрешение).",
+            responses={
+                200: {"description": "Список просроченных проектов"},
+                401: {"description": "Не аутентифицирован", "model": ErrorResponse},
+                403: {"description": "Нет доступа", "model": ErrorResponse},
+            },
         )
         self._router.add_api_route(
             "/{project_id}", self.get_project, methods=["GET"],
@@ -349,6 +365,19 @@ class ProjectController(BaseController):
     ) -> SuccessResponse[list[ProjectResponse]]:
         handler = GetArchivedProjectsHandler(project_repo=project_repo, permission_checker=permission_checker)
         query = GetArchivedProjectsQuery(caller_id=caller_id, workspace_id=ws_id)
+        dto = await handler.handle(query)
+        items = [ProjectResponse.model_validate(item.__dict__) for item in dto.items]
+        return SuccessResponse(data=items)
+
+    async def list_overdue_projects(
+        self,
+        ws_id: str,
+        caller_id: str = Depends(get_current_user_id),
+        project_repo=Depends(get_project_repository),
+        permission_checker=Depends(get_project_permission_checker),
+    ) -> SuccessResponse[list[ProjectResponse]]:
+        handler = GetOverdueProjectsHandler(project_repo=project_repo, permission_checker=permission_checker)
+        query = GetOverdueProjectsQuery(caller_id=caller_id, workspace_id=ws_id)
         dto = await handler.handle(query)
         items = [ProjectResponse.model_validate(item.__dict__) for item in dto.items]
         return SuccessResponse(data=items)

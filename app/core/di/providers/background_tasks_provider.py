@@ -34,9 +34,17 @@ def create_celery_app(settings: CelerySettings) -> Celery:
                 "task": "scheduling.check_task_deadlines",
                 "schedule": crontab(minute=0),  # каждый час
             },
+            "check-overdue-tasks": {
+                "task": "scheduling.check_overdue_tasks",
+                "schedule": crontab(minute=15),  # каждый час со сдвигом
+            },
             "check-project-deadlines": {
                 "task": "scheduling.check_project_deadlines",
                 "schedule": crontab(minute=30),  # каждый час со сдвигом
+            },
+            "check-overdue-projects": {
+                "task": "scheduling.check_overdue_projects",
+                "schedule": crontab(minute=45),  # каждый час со сдвигом
             },
         },
     )

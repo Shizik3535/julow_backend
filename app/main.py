@@ -44,12 +44,14 @@ async def lifespan(app: FastAPI):
         logger.info("WebSocket manager initialized")
 
     async def _register_celery_tasks() -> None:
-        from app.context.task.infrastructure.scheduling.celery_tasks import check_task_deadlines_task
-        from app.context.project.infrastructure.scheduling.celery_tasks import check_project_deadlines_task
+        from app.context.task.infrastructure.scheduling.celery_tasks import check_task_deadlines_task, check_overdue_tasks_task
+        from app.context.project.infrastructure.scheduling.celery_tasks import check_project_deadlines_task, check_overdue_projects_task
 
         celery_adapter = container.background_tasks_port()
         celery_adapter.register_task("scheduling.check_task_deadlines", check_task_deadlines_task)
         celery_adapter.register_task("scheduling.check_project_deadlines", check_project_deadlines_task)
+        celery_adapter.register_task("scheduling.check_overdue_tasks", check_overdue_tasks_task)
+        celery_adapter.register_task("scheduling.check_overdue_projects", check_overdue_projects_task)
         logger.info("Celery scheduled tasks registered")
 
     await asyncio.gather(_start_messaging(), _ensure_s3_bucket(), _init_websocket(), _register_celery_tasks())

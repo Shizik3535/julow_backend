@@ -13,6 +13,10 @@ from app.context.project.application.queries.get_projects_by_member import (
     GetProjectsByMemberHandler,
     GetProjectsByMemberQuery,
 )
+from app.context.project.application.queries.get_overdue_projects import (
+    GetOverdueProjectsHandler,
+    GetOverdueProjectsQuery,
+)
 from app.context.project.application.queries.search_projects import (
     SearchProjectsHandler,
     SearchProjectsQuery,
@@ -32,8 +36,9 @@ class MyProjectsController(BaseController):
     Контроллер «Мои проекты» и глобального поиска.
 
     Endpoint'ы:
-        GET /projects/mine  — Проекты текущего пользователя
-        GET /projects/      — Глобальный поиск проектов
+        GET /projects/mine          — Проекты текущего пользователя
+        GET /projects/mine/overdue  — Мои просроченные проекты
+        GET /projects/              — Глобальный поиск проектов
     """
 
     def __init__(self) -> None:
@@ -48,6 +53,18 @@ class MyProjectsController(BaseController):
             summary="Мои проекты",
             description="Возвращает все проекты, где текущий пользователь является участником.",
             responses={401: {"description": "Не аутентифицирован", "model": ErrorResponse}},
+        )
+        self._router.add_api_route(
+            "/mine/overdue",
+            self.get_my_overdue_projects,
+            methods=["GET"],
+            response_model=SuccessResponse[list[ProjectResponse]],
+            summary="Мои просроченные проекты",
+            description="Просроченные проекты, в которых текущий пользователь — участник или владелец.",
+            responses={
+                200: {"description": "Список просроченных проектов"},
+                401: {"description": "Не аутентифицирован", "model": ErrorResponse},
+            },
         )
         self._router.add_api_route(
             "/",
@@ -67,6 +84,18 @@ class MyProjectsController(BaseController):
     ) -> SuccessResponse[list[ProjectResponse]]:
         handler = GetProjectsByMemberHandler(project_repo=project_repo, permission_checker=permission_checker)
         query = GetProjectsByMemberQuery(caller_id=caller_id, user_id=caller_id)
+        dto = await handler.handle(query)
+        items = [ProjectResponse.model_validate(item.__dict__) for item in dto.items]
+        return SuccessResponse(data=items)
+
+    async def get_my_overdue_projects(
+        self,
+        caller_id: str = Depends(get_current_user_id),
+        project_repo=Depends(get_project_repository),
+        permission_checker=Depends(get_project_permission_checker),
+    ) -> SuccessResponse[list[ProjectResponse]]:
+        handler = GetOverdueProjectsHandler(project_repo=project_repo, permission_checker=permission_checker)
+        query = GetOverdueProjectsQuery(caller_id=caller_id)
         dto = await handler.handle(query)
         items = [ProjectResponse.model_validate(item.__dict__) for item in dto.items]
         return SuccessResponse(data=items)

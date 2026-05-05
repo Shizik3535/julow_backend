@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import Depends, Request
+from fastapi import Depends, Path, Query, Request
 
 from app.shared.presentation.base_controller import BaseController
 from app.shared.presentation.responses import ErrorResponse, MessageResponse, SuccessResponse
@@ -8,6 +8,18 @@ from app.shared.presentation.responses import ErrorResponse, MessageResponse, Su
 from app.context.identity.application.commands.confirm_email import (
     ConfirmEmailCommand,
     ConfirmEmailHandler,
+)
+from app.context.identity.application.commands.initiate_sso_login import (
+    InitiateSSOLoginCommand,
+    InitiateSSOLoginHandler,
+)
+from app.context.identity.application.commands.login_oauth import (
+    LoginOAuthCommand,
+    LoginOAuthHandler,
+)
+from app.context.identity.application.commands.login_sso_callback import (
+    LoginSSOCallbackCommand,
+    LoginSSOCallbackHandler,
 )
 from app.context.identity.application.commands.login_user import (
     LoginUserCommand,
@@ -35,9 +47,12 @@ from app.context.identity.presentation.dependencies import (
     get_failed_login_policy,
     get_identity_event_bus,
     get_identity_notification_port,
+    get_oauth_port,
+    get_organization_sso_port,
     get_password_port,
     get_role_repository,
     get_session_repository,
+    get_sso_port,
     get_user_auth_repository,
     get_user_repository,
 )
@@ -47,7 +62,10 @@ from app.context.identity.presentation.schemas.requests.refresh_session_request 
 from app.context.identity.presentation.schemas.requests.confirm_email_request import (
     ConfirmEmailRequest,
 )
+from app.context.identity.presentation.schemas.requests.login_oauth_request import LoginOAuthRequest
 from app.context.identity.presentation.schemas.requests.login_request import LoginRequest
+from app.context.identity.presentation.schemas.requests.login_sso_callback_request import LoginSSOCallbackRequest
+from app.context.identity.presentation.schemas.requests.login_sso_request import LoginSSORequest
 from app.context.identity.presentation.schemas.requests.password_reset_confirm_request import (
     PasswordResetConfirmRequest,
 )
@@ -56,6 +74,8 @@ from app.context.identity.presentation.schemas.requests.password_reset_request i
 )
 from app.context.identity.presentation.schemas.requests.register_request import RegisterRequest
 from app.context.identity.presentation.schemas.responses.login_response import LoginResponse
+from app.context.identity.presentation.schemas.responses.oauth_authorize_response import OAuthAuthorizeResponse
+from app.context.identity.presentation.schemas.responses.sso_authorize_response import SSOAuthorizeResponse
 from app.context.identity.presentation.schemas.responses.user_response import UserResponse
 
 
@@ -64,18 +84,38 @@ class AuthController(BaseController):
     Контроллер аутентификации Identity BC.
 
     Endpoint'ы:
-        POST /auth/register                — Регистрация нового пользователя
-        POST /auth/login                   — Вход в систему
-        POST /auth/refresh                 — Обновление пары токенов
-        POST /auth/confirm-email           — Подтверждение email-адреса
-        POST /auth/password-reset/request  — Запрос сброса пароля
-        POST /auth/password-reset/confirm  — Подтверждение сброса пароля
+        GET  /auth/oauth/{provider}/authorize  — URL авторизации OAuth-провайдера
+        POST /auth/register                    — Регистрация нового пользователя
+        POST /auth/login                       — Вход в систему
+        POST /auth/login/oauth                 — Вход через OAuth-провайдер
+        POST /auth/login/sso                   — Инициация SSO-логина
+        POST /auth/login/sso/callback          — Callback от SSO IdP
+        POST /auth/refresh                     — Обновление пары токенов
+        POST /auth/confirm-email               — Подтверждение email-адреса
+        POST /auth/password-reset/request      — Запрос сброса пароля
+        POST /auth/password-reset/confirm      — Подтверждение сброса пароля
     """
 
     def __init__(self) -> None:
         super().__init__(prefix="/auth", tags=["Identity / Auth"])
 
     def _register_routes(self) -> None:
+        self._router.add_api_route(
+            "/oauth/{provider}/authorize",
+            self.oauth_authorize,
+            methods=["GET"],
+            response_model=SuccessResponse[OAuthAuthorizeResponse],
+            summary="URL авторизации OAuth-провайдера",
+            description=(
+                "Возвращает URL для редиректа пользователя на страницу авторизации OAuth-провайдера. "
+                "Фронтенд редиректит пользователя на этот URL, после авторизации "
+                "провайдер возвращает authorization code, который отправляется на POST /auth/login/oauth."
+            ),
+            responses={
+                200: {"description": "URL авторизации"},
+                400: {"description": "Неизвестный OAuth-провайдер", "model": ErrorResponse},
+            },
+        )
         self._router.add_api_route(
             "/register",
             self.register,
@@ -110,6 +150,59 @@ class AuthController(BaseController):
             responses={
                 200: {"description": "Успешная аутентификация"},
                 401: {"description": "Неверные учётные данные", "model": ErrorResponse},
+                403: {"description": "Аккаунт заблокирован", "model": ErrorResponse},
+            },
+        )
+        self._router.add_api_route(
+            "/login/oauth",
+            self.login_oauth,
+            methods=["POST"],
+            response_model=SuccessResponse[LoginResponse],
+            summary="Вход через OAuth-провайдер",
+            description=(
+                "Аутентифицирует пользователя через OAuth-провайдер. "
+                "Обменивает authorization code на access token, получает профиль пользователя. "
+                "Если пользователь уже привязан — выполняет вход. "
+                "Если email совпадает с существующим аккаунтом — привязывает OAuth и выполняет вход. "
+                "Если новый пользователь — автоматически регистрирует и выполняет вход. "
+                "IP-адрес и User-Agent извлекаются из запроса автоматически."
+            ),
+            responses={
+                200: {"description": "Успешная аутентификация"},
+                401: {"description": "Невалидный authorization code", "model": ErrorResponse},
+                403: {"description": "Аккаунт заблокирован", "model": ErrorResponse},
+            },
+        )
+        self._router.add_api_route(
+            "/login/sso",
+            self.login_sso,
+            methods=["POST"],
+            response_model=SuccessResponse[SSOAuthorizeResponse],
+            summary="Инициация SSO-логина",
+            description=(
+                "Определяет SSO-провайдера по email-домену и возвращает URL для редиректа на IdP. "
+                "Фронтенд редиректит пользователя на этот URL для аутентификации. "
+                "После аутентификации IdP вызывает POST /auth/login/sso/callback."
+            ),
+            responses={
+                200: {"description": "URL для редиректа на IdP"},
+                401: {"description": "SSO не настроен для данного email-домена", "model": ErrorResponse},
+            },
+        )
+        self._router.add_api_route(
+            "/login/sso/callback",
+            self.login_sso_callback,
+            methods=["POST"],
+            response_model=SuccessResponse[LoginResponse],
+            summary="Callback от SSO IdP",
+            description=(
+                "Обрабатывает ответ от SSO IdP. "
+                "Если пользователь уже привязан — выполняет вход. "
+                "Если новый пользователь и auto_provision включён — авто-регистрация и вход."
+            ),
+            responses={
+                200: {"description": "Успешная аутентификация"},
+                401: {"description": "Ошибка SSO-аутентификации", "model": ErrorResponse},
                 403: {"description": "Аккаунт заблокирован", "model": ErrorResponse},
             },
         )
@@ -178,6 +271,25 @@ class AuthController(BaseController):
             },
         )
 
+    async def oauth_authorize(
+        self,
+        provider: str = Path(..., description="Название OAuth-провайдера", examples=["oauth_google"]),
+        redirect_uri: str | None = Query(None, description="URI перенаправления после авторизации"),
+        state: str | None = Query(None, description="State-параметр для защиты от CSRF"),
+        oauth_port=Depends(get_oauth_port),
+    ) -> SuccessResponse[OAuthAuthorizeResponse]:
+        """Получить URL авторизации OAuth-провайдера."""
+        if redirect_uri is None:
+            redirect_uri = ""
+        authorize_url = oauth_port.get_authorize_url(
+            provider=provider,
+            redirect_uri=redirect_uri,
+            state=state,
+        )
+        return SuccessResponse(
+            data=OAuthAuthorizeResponse(provider=provider, authorize_url=authorize_url)
+        )
+
     async def register(
         self,
         body: RegisterRequest,
@@ -215,6 +327,7 @@ class AuthController(BaseController):
         auth_token_port=Depends(get_auth_token_port),
         failed_login_policy=Depends(get_failed_login_policy),
         event_bus=Depends(get_identity_event_bus),
+        org_sso_port=Depends(get_organization_sso_port),
     ) -> SuccessResponse[LoginResponse]:
         """Вход в систему."""
         handler = LoginUserHandler(
@@ -225,6 +338,7 @@ class AuthController(BaseController):
             auth_token_port=auth_token_port,
             failed_login_policy=failed_login_policy,
             event_bus=event_bus,
+            org_sso_port=org_sso_port,
         )
         command = LoginUserCommand(
             email=body.email,
@@ -232,6 +346,112 @@ class AuthController(BaseController):
             ip=request.client.host if request.client else "127.0.0.1",
             user_agent=request.headers.get("user-agent", "unknown"),
             is_remember_me=body.is_remember_me,
+        )
+        dto = await handler.handle(command)
+        user_resp = UserResponse.model_validate(dto.user.model_dump())
+        login_resp = LoginResponse(
+            user=user_resp,
+            access_token=dto.access_token,
+            refresh_token=dto.refresh_token,
+            access_expires_in=dto.access_expires_in,
+            refresh_expires_in=dto.refresh_expires_in,
+        )
+        return SuccessResponse(data=login_resp)
+
+    async def login_oauth(
+        self,
+        body: LoginOAuthRequest,
+        request: Request,
+        user_repo=Depends(get_user_repository),
+        user_auth_repo=Depends(get_user_auth_repository),
+        session_repo=Depends(get_session_repository),
+        role_repo=Depends(get_role_repository),
+        oauth_port=Depends(get_oauth_port),
+        auth_token_port=Depends(get_auth_token_port),
+        failed_login_policy=Depends(get_failed_login_policy),
+        event_bus=Depends(get_identity_event_bus),
+    ) -> SuccessResponse[LoginResponse]:
+        """Вход через OAuth-провайдер."""
+        handler = LoginOAuthHandler(
+            user_repo=user_repo,
+            user_auth_repo=user_auth_repo,
+            session_repo=session_repo,
+            role_repo=role_repo,
+            oauth_port=oauth_port,
+            auth_token_port=auth_token_port,
+            failed_login_policy=failed_login_policy,
+            event_bus=event_bus,
+        )
+        command = LoginOAuthCommand(
+            provider=body.provider,
+            authorization_code=body.authorization_code,
+            redirect_uri=body.redirect_uri,
+            ip=request.client.host if request.client else "127.0.0.1",
+            user_agent=request.headers.get("user-agent", "unknown"),
+            is_remember_me=body.is_remember_me,
+        )
+        dto = await handler.handle(command)
+        user_resp = UserResponse.model_validate(dto.user.model_dump())
+        login_resp = LoginResponse(
+            user=user_resp,
+            access_token=dto.access_token,
+            refresh_token=dto.refresh_token,
+            access_expires_in=dto.access_expires_in,
+            refresh_expires_in=dto.refresh_expires_in,
+        )
+        return SuccessResponse(data=login_resp)
+
+    async def login_sso(
+        self,
+        body: LoginSSORequest,
+        request: Request,
+        org_sso_port=Depends(get_organization_sso_port),
+        sso_port=Depends(get_sso_port),
+    ) -> SuccessResponse[SSOAuthorizeResponse]:
+        """Инициация SSO-логина."""
+        callback_url = str(request.url_for("login_sso_callback"))
+        handler = InitiateSSOLoginHandler(
+            org_sso_port=org_sso_port,
+            sso_port=sso_port,
+        )
+        command = InitiateSSOLoginCommand(
+            email=body.email,
+            callback_url=callback_url,
+        )
+        dto = await handler.handle(command)
+        return SuccessResponse(data=SSOAuthorizeResponse(redirect_url=dto.redirect_url))
+
+    async def login_sso_callback(
+        self,
+        body: LoginSSOCallbackRequest,
+        request: Request,
+        user_repo=Depends(get_user_repository),
+        user_auth_repo=Depends(get_user_auth_repository),
+        session_repo=Depends(get_session_repository),
+        role_repo=Depends(get_role_repository),
+        org_sso_port=Depends(get_organization_sso_port),
+        sso_port=Depends(get_sso_port),
+        auth_token_port=Depends(get_auth_token_port),
+        event_bus=Depends(get_identity_event_bus),
+    ) -> SuccessResponse[LoginResponse]:
+        """Callback от SSO IdP."""
+        callback_url = str(request.url_for("login_sso_callback"))
+        handler = LoginSSOCallbackHandler(
+            user_repo=user_repo,
+            user_auth_repo=user_auth_repo,
+            session_repo=session_repo,
+            role_repo=role_repo,
+            org_sso_port=org_sso_port,
+            sso_port=sso_port,
+            auth_token_port=auth_token_port,
+            event_bus=event_bus,
+        )
+        command = LoginSSOCallbackCommand(
+            email_domain=body.email_domain,
+            response_data=body.response_data,
+            callback_url=callback_url,
+            ip=request.client.host if request.client else "127.0.0.1",
+            user_agent=request.headers.get("user-agent", "unknown"),
         )
         dto = await handler.handle(command)
         user_resp = UserResponse.model_validate(dto.user.model_dump())

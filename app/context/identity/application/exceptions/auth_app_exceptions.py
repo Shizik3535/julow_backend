@@ -35,3 +35,13 @@ class TwoFARequiredAppException(ApplicationException):
 
     def __init__(self) -> None:
         super().__init__("Требуется двухфакторная аутентификация")
+
+
+class SSOEnforcedException(ApplicationException):
+    """Вход через email+password запрещён — организация требует SSO."""
+
+    http_status_code = 403
+    error_code = "SSO_ENFORCED"
+
+    def __init__(self) -> None:
+        super().__init__("Вход возможен только через SSO")

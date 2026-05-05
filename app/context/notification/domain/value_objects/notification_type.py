@@ -20,6 +20,7 @@ class NotificationType(Enum):
         TASK_UPDATED: Изменение в задаче (для watchers)
         TASK_DEADLINE_CHANGED: Изменение сроков выполнения задачи
         PROJECT_DEADLINE_APPROACHING: Дедлайн проекта приближается
+        PROJECT_OVERDUE: Проект просрочен
         PROJECT_INVITATION: Приглашение в проект
         WORKSPACE_INVITATION: Приглашение в workspace
         ORGANIZATION_INVITATION: Приглашение в организацию
@@ -50,6 +51,7 @@ class NotificationType(Enum):
     TASK_UPDATED = "task_updated"
     TASK_DEADLINE_CHANGED = "task_deadline_changed"
     PROJECT_DEADLINE_APPROACHING = "project_deadline_approaching"
+    PROJECT_OVERDUE = "project_overdue"
     PROJECT_INVITATION = "project_invitation"
     WORKSPACE_INVITATION = "workspace_invitation"
     ORGANIZATION_INVITATION = "organization_invitation"

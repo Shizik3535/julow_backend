@@ -20,6 +20,8 @@ class SearchTasksQuery(BaseQuery):
         offset: Смещение.
         limit: Лимит.
         filters: Фильтры поиска.
+        sort_by: Поле сортировки.
+        sort_order: Порядок сортировки (asc/desc).
     """
 
     caller_id: str
@@ -27,6 +29,8 @@ class SearchTasksQuery(BaseQuery):
     offset: int = 0
     limit: int = 100
     filters: dict[str, Any] | None = None
+    sort_by: str | None = None
+    sort_order: str = "asc"
 
 
 class SearchTasksHandler(BaseQueryHandler[SearchTasksQuery, TaskListDTO]):
@@ -53,6 +57,8 @@ class SearchTasksHandler(BaseQueryHandler[SearchTasksQuery, TaskListDTO]):
                 offset=query.offset,
                 limit=query.limit,
                 filters=query.filters,
+                sort_by=query.sort_by,
+                sort_order=query.sort_order,
             )
             tasks = [t for t in tasks if str(t.project_id) == query.project_id]
         else:
@@ -60,6 +66,8 @@ class SearchTasksHandler(BaseQueryHandler[SearchTasksQuery, TaskListDTO]):
                 offset=query.offset,
                 limit=query.limit,
                 filters=query.filters,
+                sort_by=query.sort_by,
+                sort_order=query.sort_order,
             )
             caller_uuid = query.caller_id
             tasks = [

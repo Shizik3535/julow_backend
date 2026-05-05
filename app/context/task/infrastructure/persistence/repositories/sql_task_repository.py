@@ -269,11 +269,22 @@ class SqlTaskRepository(SqlAlchemyRepository[Task, TaskORM], TaskRepository):
         result = await self._session.execute(stmt)
         return await self._to_domain_list_with_labels(result.scalars().all())
 
+    _SORTABLE_COLUMNS: dict[str, Any] = {
+        "start_date": TaskORM.start_date,
+        "due_date": TaskORM.due_date,
+        "created_at": TaskORM.created_at,
+        "updated_at": TaskORM.updated_at,
+        "priority": TaskORM.priority,
+        "title": TaskORM.title,
+    }
+
     async def search(
         self,
         offset: int = 0,
         limit: int = 100,
         filters: dict[str, Any] | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
     ) -> list[Task]:
         stmt = select(TaskORM)
         if filters:
@@ -292,6 +303,23 @@ class SqlTaskRepository(SqlAlchemyRepository[Task, TaskORM], TaskRepository):
             priority = filters.get("priority")
             if priority:
                 stmt = stmt.where(TaskORM.priority == priority)
+            start_date_from = filters.get("start_date_from")
+            if start_date_from:
+                stmt = stmt.where(TaskORM.start_date >= date_type.fromisoformat(start_date_from))
+            start_date_to = filters.get("start_date_to")
+            if start_date_to:
+                stmt = stmt.where(TaskORM.start_date <= date_type.fromisoformat(start_date_to))
+            due_date_from = filters.get("due_date_from")
+            if due_date_from:
+                stmt = stmt.where(TaskORM.due_date >= date_type.fromisoformat(due_date_from))
+            due_date_to = filters.get("due_date_to")
+            if due_date_to:
+                stmt = stmt.where(TaskORM.due_date <= date_type.fromisoformat(due_date_to))
+
+        if sort_by and sort_by in self._SORTABLE_COLUMNS:
+            col = self._SORTABLE_COLUMNS[sort_by]
+            stmt = stmt.order_by(col.desc() if sort_order == "desc" else col.asc())
+
         stmt = stmt.offset(offset).limit(limit)
         result = await self._session.execute(stmt)
         return await self._to_domain_list_with_labels(result.scalars().all())

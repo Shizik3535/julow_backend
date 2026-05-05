@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
 
@@ -12,15 +13,19 @@ logger = get_logger(__name__)
 # Конфигурация провайдеров: token URL, user-info URL, маппинг полей
 _PROVIDER_CONFIG: dict[str, dict[str, Any]] = {
     "oauth_google": {
+        "authorize_url": "https://accounts.google.com/o/oauth2/v2/auth",
         "token_url": "https://oauth2.googleapis.com/token",
         "userinfo_url": "https://www.googleapis.com/oauth2/v3/userinfo",
+        "scope": "openid email profile",
         "id_field": "sub",
         "email_field": "email",
         "name_field": "name",
     },
     "oauth_github": {
+        "authorize_url": "https://github.com/login/oauth/authorize",
         "token_url": "https://github.com/login/oauth/access_token",
         "userinfo_url": "https://api.github.com/user",
+        "scope": "user:email",
         "id_field": "id",
         "email_field": "email",
         "name_field": "login",
@@ -53,6 +58,23 @@ class HttpxOAuthAdapter(OAuthPort):
         if config is None:
             raise ValueError(f"Неизвестный OAuth-провайдер: {provider}")
         return config
+
+    def get_authorize_url(
+        self, provider: str, redirect_uri: str, state: str | None = None
+    ) -> str:
+        config = self._get_config(provider)
+        client_id = self._client_ids.get(provider, "")
+
+        params: dict[str, str] = {
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": config.get("scope", "openid email profile"),
+        }
+        if state:
+            params["state"] = state
+
+        return f"{config['authorize_url']}?{urlencode(params)}"
 
     async def exchange_code(
         self, provider: str, code: str, redirect_uri: str

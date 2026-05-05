@@ -177,6 +177,9 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
     from app.context.notification.application.event_handlers.on_project_deadline_approaching_notify import (
         OnProjectDeadlineApproachingNotify,
     )
+    from app.context.notification.application.event_handlers.on_project_overdue_notify import (
+        OnProjectOverdueNotify,
+    )
 
     def _build_on_project_member_joined(session: AsyncSession) -> MessageHandlerFn:
         repo = container.notification_repo(session=session)
@@ -198,6 +201,23 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
             project_provider=project_provider_inst,
         )
         handler = OnProjectDeadlineApproachingNotify(notification_repo=repo, event_bus=container.notification_event_bus(), project_member_port=project_member_port)
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_project_overdue(session: AsyncSession) -> MessageHandlerFn:
+        repo = container.notification_repo(session=session)
+        project_membership_repo = container.project_membership_repo(session=session)
+        project_membership_provider = container.project_membership_provider(repo=project_membership_repo)
+        project_repo = container.project_repo(session=session)
+        project_provider_inst = container.project_provider(repo=project_repo)
+        project_member_port = container.notification_project_member_port(
+            project_membership_provider=project_membership_provider,
+            project_provider=project_provider_inst,
+        )
+        handler = OnProjectOverdueNotify(notification_repo=repo, event_bus=container.notification_event_bus(), project_member_port=project_member_port)
 
         async def _run(message: dict[str, Any]) -> None:
             await handler.handle(message)
@@ -465,6 +485,11 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
             topic=PROJECT_EVENTS_TOPIC,
             group_id="notification-bc--project-deadline-approaching",
             build_handler=_build_on_project_deadline_approaching,
+        ),
+        Subscription(
+            topic=PROJECT_EVENTS_TOPIC,
+            group_id="notification-bc--project-overdue",
+            build_handler=_build_on_project_overdue,
         ),
         # Task BC
         Subscription(

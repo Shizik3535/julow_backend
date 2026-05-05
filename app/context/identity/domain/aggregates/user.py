@@ -71,6 +71,23 @@ class User(AggregateRoot):
         )
         return user
 
+    @classmethod
+    def register_via_oauth(cls, email: Email, auth_provider: AuthProvider) -> User:
+        """Создаёт пользователя через OAuth. Статус: ACTIVE, email подтверждён провайдером."""
+        user = cls(
+            email=email,
+            status=AccountStatus.ACTIVE,
+            is_email_confirmed=True,
+        )
+        user._register_event(
+            UserRegistered(
+                user_id=str(user.id),
+                email=email.value,
+                auth_provider=auth_provider,
+            )
+        )
+        return user
+
     # --- Email верификация ---
 
     def confirm_email(self) -> None:

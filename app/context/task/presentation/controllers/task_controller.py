@@ -52,8 +52,13 @@ from app.context.task.presentation.dependencies import (
 from app.context.task.presentation.schemas.requests.create_task_request import CreateTaskRequest
 from app.context.task.presentation.schemas.requests.create_task_from_template_request import CreateTaskFromTemplateRequest
 from app.context.task.presentation.schemas.requests.bulk_update_tasks_request import BulkUpdateTasksRequest
+from app.context.task.application.queries.get_critical_path import (
+    GetCriticalPathHandler,
+    GetCriticalPathQuery,
+)
 from app.context.task.presentation.schemas.responses.task_response import TaskResponse
 from app.context.task.presentation.schemas.responses.task_count_response import TaskCountResponse
+from app.context.task.presentation.schemas.responses.critical_path_response import CriticalPathResponse
 
 
 class TaskController(BaseController):
@@ -67,6 +72,7 @@ class TaskController(BaseController):
         GET    /{project_id}/tasks/count                  — Счётчик задач
         GET    /{project_id}/tasks/count-by-status/{status_id} — Счётчик по статусу
         POST   /{project_id}/tasks/bulk                   — Массовое обновление
+        GET    /{project_id}/tasks/critical-path           — Критический путь
     """
 
     def __init__(self) -> None:
@@ -158,6 +164,19 @@ class TaskController(BaseController):
                 422: {"description": "Ошибка валидации", "model": ErrorResponse},
             },
         )
+        self._router.add_api_route(
+            "/{project_id}/tasks/critical-path",
+            self.get_critical_path,
+            methods=["GET"],
+            response_model=SuccessResponse[CriticalPathResponse],
+            summary="Критический путь проекта",
+            description="Рассчитывает критический путь проекта на основе зависимостей (BLOCKS) и дат задач.",
+            responses={
+                200: {"description": "Критический путь"},
+                401: {"description": "Не аутентифицирован", "model": ErrorResponse},
+                403: {"description": "Недостаточно прав", "model": ErrorResponse},
+            },
+        )
 
     async def create_task(
         self,
@@ -234,6 +253,12 @@ class TaskController(BaseController):
         label: str | None = Query(default=None, description="Фильтр по метке"),
         assignee: str | None = Query(default=None, description="Фильтр по исполнителю"),
         search: str | None = Query(default=None, description="Текстовый поиск"),
+        start_date_from: str | None = Query(default=None, description="Дата начала от (ISO)"),
+        start_date_to: str | None = Query(default=None, description="Дата начала до (ISO)"),
+        due_date_from: str | None = Query(default=None, description="Дедлайн от (ISO)"),
+        due_date_to: str | None = Query(default=None, description="Дедлайн до (ISO)"),
+        sort_by: str | None = Query(default=None, description="Поле сортировки (start_date, due_date, created_at, updated_at, priority, title)"),
+        sort_order: str = Query(default="asc", description="Порядок сортировки (asc/desc)"),
         caller_id: str = Depends(get_current_user_id),
         task_repo=Depends(get_task_repository),
         permission_checker=Depends(get_task_permission_checker),
@@ -252,6 +277,14 @@ class TaskController(BaseController):
             filters["assignee"] = assignee
         if search:
             filters["search"] = search
+        if start_date_from:
+            filters["start_date_from"] = start_date_from
+        if start_date_to:
+            filters["start_date_to"] = start_date_to
+        if due_date_from:
+            filters["due_date_from"] = due_date_from
+        if due_date_to:
+            filters["due_date_to"] = due_date_to
 
         handler = SearchTasksHandler(
             task_repo=task_repo,
@@ -263,6 +296,8 @@ class TaskController(BaseController):
             offset=offset,
             limit=limit,
             filters=filters or None,
+            sort_by=sort_by,
+            sort_order=sort_order,
         )
         dto = await handler.handle(query)
         items = [TaskResponse.model_validate(item.model_dump()) for item in dto.items]
@@ -339,3 +374,23 @@ class TaskController(BaseController):
         )
         await handler.handle(command)
         return SuccessResponse(data=MessageData(message="Задачи обновлены"))
+
+    async def get_critical_path(
+        self,
+        ws_id: str,
+        project_id: str,
+        caller_id: str = Depends(get_current_user_id),
+        task_repo=Depends(get_task_repository),
+        permission_checker=Depends(get_task_permission_checker),
+    ) -> SuccessResponse[CriticalPathResponse]:
+        """Критический путь проекта."""
+        handler = GetCriticalPathHandler(
+            task_repo=task_repo,
+            permission_checker=permission_checker,
+        )
+        query = GetCriticalPathQuery(
+            caller_id=caller_id,
+            project_id=project_id,
+        )
+        dto = await handler.handle(query)
+        return SuccessResponse(data=CriticalPathResponse.model_validate(dto.model_dump()))

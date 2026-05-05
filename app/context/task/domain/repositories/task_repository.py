@@ -52,8 +52,15 @@ class TaskRepository(RepositoryPort[Task]):
         """Найти задачи по меткам."""
 
     @abstractmethod
-    async def search(self, offset: int = 0, limit: int = 100, filters: dict[str, Any] | None = None) -> list[Task]:
-        """Поиск задач с фильтрацией."""
+    async def search(
+        self,
+        offset: int = 0,
+        limit: int = 100,
+        filters: dict[str, Any] | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
+    ) -> list[Task]:
+        """Поиск задач с фильтрацией и сортировкой."""
 
     @abstractmethod
     async def count_by_project(self, project_id: Id) -> int:

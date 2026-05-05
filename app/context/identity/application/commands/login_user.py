@@ -12,6 +12,10 @@ from app.context.identity.application.dto.user_dto import UserDTO
 from app.context.identity.application.exceptions.auth_app_exceptions import (
     AccountLockedException,
     AuthenticationFailedException,
+    SSOEnforcedException,
+)
+from app.context.identity.application.ports.integration.inboard.organization_sso_port import (
+    OrganizationSSOPort,
 )
 from app.context.identity.domain.aggregates.session import Session
 from app.context.identity.domain.repositories.session_repository import SessionRepository
@@ -59,6 +63,7 @@ class LoginUserHandler(BaseCommandHandler[LoginUserCommand, AuthResultDTO]):
         auth_token_port: AuthTokenPort,
         failed_login_policy: FailedLoginPolicy,
         event_bus: DomainEventBus,
+        org_sso_port: OrganizationSSOPort | None = None,
     ) -> None:
         super().__init__()
         self._user_repo = user_repo
@@ -68,9 +73,16 @@ class LoginUserHandler(BaseCommandHandler[LoginUserCommand, AuthResultDTO]):
         self._auth_token_port = auth_token_port
         self._failed_login_policy = failed_login_policy
         self._event_bus = event_bus
+        self._org_sso_port = org_sso_port
 
     async def handle(self, command: LoginUserCommand) -> AuthResultDTO:
         email = Email(command.email)
+
+        # Проверка enforce_sso: если организация требует SSO, блокируем обычный вход
+        if self._org_sso_port is not None:
+            email_domain = command.email.split("@")[-1].lower()
+            if await self._org_sso_port.is_sso_enforced(email_domain):
+                raise SSOEnforcedException()
 
         user_auth = await self._user_auth_repo.get_by_email(email)
         if user_auth is None:

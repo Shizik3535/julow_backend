@@ -98,6 +98,16 @@ class SSOLinked(BaseDomainEvent):
 
 
 @dataclass(frozen=True)
+class SSOUserProvisioned(BaseDomainEvent):
+    """Пользователь зарегистрирован через SSO — требуется auto-provision в организацию."""
+
+    user_id: str = ""
+    org_id: str = ""
+    email: str = ""
+    default_role_id: str = ""
+
+
+@dataclass(frozen=True)
 class TrustedDeviceAdded(BaseDomainEvent):
     """Доверенное устройство добавлено."""
 

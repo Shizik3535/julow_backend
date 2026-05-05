@@ -21,6 +21,7 @@ class SecurityPolicy(ValueObject):
     """
 
     require_2fa: bool = False
+    enforce_sso: bool = False
     password_min_length: int = 8
     session_timeout_minutes: int | None = None
     ip_allowlist: list[str] = field(default_factory=list)

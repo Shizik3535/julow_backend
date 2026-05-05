@@ -51,6 +51,7 @@ class OrganizationMapper(BaseMapper[Organization, OrganizationORM]):
         # SecurityPolicy
         security_policy = SecurityPolicy(
             require_2fa=orm_model.sp_require_2fa,
+            enforce_sso=orm_model.sp_enforce_sso,
             password_min_length=orm_model.sp_password_min_length,
             session_timeout_minutes=orm_model.sp_session_timeout_minutes,
             ip_allowlist=orm_model.sp_ip_allowlist or [],
@@ -104,6 +105,7 @@ class OrganizationMapper(BaseMapper[Organization, OrganizationORM]):
             pers_branding_login_message=pers.branding.login_message if pers.branding else None,
             # SecurityPolicy
             sp_require_2fa=sp.require_2fa,
+            sp_enforce_sso=sp.enforce_sso,
             sp_password_min_length=sp.password_min_length,
             sp_session_timeout_minutes=sp.session_timeout_minutes,
             sp_ip_allowlist=sp.ip_allowlist if sp.ip_allowlist else None,

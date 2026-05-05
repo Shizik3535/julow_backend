@@ -3,6 +3,7 @@ from app.context.identity.infrastructure import (
     notification,
     oauth,
     persistence,
+    sso,
     two_fa,
 )
 
@@ -11,5 +12,6 @@ __all__ = [
     "notification",
     "oauth",
     "persistence",
+    "sso",
     "two_fa",
 ]

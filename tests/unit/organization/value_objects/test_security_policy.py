@@ -11,6 +11,7 @@ class TestSecurityPolicy:
     def test_defaults(self) -> None:
         policy = SecurityPolicy()
         assert policy.require_2fa is False
+        assert policy.enforce_sso is False
         assert policy.password_min_length == 8
         assert policy.session_timeout_minutes is None
         assert policy.ip_allowlist == []
@@ -20,6 +21,7 @@ class TestSecurityPolicy:
     def test_custom_values(self) -> None:
         policy = SecurityPolicy(
             require_2fa=True,
+            enforce_sso=True,
             password_min_length=12,
             session_timeout_minutes=30,
             ip_allowlist=["10.0.0.0/8"],
@@ -27,6 +29,7 @@ class TestSecurityPolicy:
             require_email_verification=True,
         )
         assert policy.require_2fa is True
+        assert policy.enforce_sso is True
         assert policy.password_min_length == 12
         assert policy.session_timeout_minutes == 30
 

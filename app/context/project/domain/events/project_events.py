@@ -111,3 +111,11 @@ class ProjectDeadlineApproaching(BaseDomainEvent):
 
     project_id: str = ""
     deadline: str = ""
+
+
+@dataclass(frozen=True)
+class ProjectOverdue(BaseDomainEvent):
+    """Проект просрочен."""
+
+    project_id: str = ""
+    deadline: str = ""

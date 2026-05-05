@@ -40,6 +40,7 @@ from app.core.di.providers.database_provider import create_db_engine, create_db_
 from app.core.di.providers.identity_provider import (
     create_failed_login_policy,
     create_identity_notification_adapter,
+    create_identity_org_sso_adapter,
     create_oauth_adapter,
     create_permission_checker,
     create_permission_provider,
@@ -48,6 +49,7 @@ from app.core.di.providers.identity_provider import (
     create_role_repository,
     create_session_mapper,
     create_session_repository,
+    create_sso_adapter,
     create_totp_adapter,
     create_user_auth_mapper,
     create_user_auth_repository,
@@ -89,6 +91,7 @@ from app.core.di.providers.organization_provider import (
     create_organization_permission_provider,
     create_organization_provider,
     create_organization_repository,
+    create_organization_sso_provider,
     create_sso_integration_mapper,
     create_sso_integration_repository,
     create_storage_integration_mapper,
@@ -482,6 +485,23 @@ class Container(containers.DeclarativeContainer):
     encryption_port = providers.Singleton(
         create_fernet_encryption_adapter,
         encryption_key=settings.provided.encryption.key,
+    )
+
+    # Organization BC - SSO outboard provider
+    org_sso_provider = providers.Factory(
+        create_organization_sso_provider,
+        sso_repo=sso_integration_repo,
+        org_repo=organization_repo,
+        encryption_port=encryption_port,
+    )
+
+    # Identity BC - SSO adapters
+    sso_port = providers.Singleton(create_sso_adapter)
+
+    # Identity BC - Organization SSO inboard port
+    identity_org_sso_port = providers.Factory(
+        create_identity_org_sso_adapter,
+        org_sso_provider=org_sso_provider,
     )
 
     # Profile BC - Organization integration (real adapter via Organization outboard)

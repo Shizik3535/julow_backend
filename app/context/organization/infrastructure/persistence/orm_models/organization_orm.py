@@ -46,6 +46,7 @@ class OrganizationORM(BaseORMModel):
 
     # --- SecurityPolicy (embedded VO) ---
     sp_require_2fa: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    sp_enforce_sso: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     sp_password_min_length: Mapped[int] = mapped_column(Integer, nullable=False, default=8)
     sp_session_timeout_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     sp_ip_allowlist: Mapped[list | None] = mapped_column(JSON, nullable=True)

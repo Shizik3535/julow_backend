@@ -33,5 +33,13 @@ class ProjectRepository(RepositoryPort[Project]):
         """Поиск проектов с фильтрацией."""
 
     @abstractmethod
+    async def get_overdue_projects(self) -> list[Project]:
+        """Найти просроченные проекты."""
+
+    @abstractmethod
+    async def get_overdue_by_workspace(self, workspace_id: Id) -> list[Project]:
+        """Найти просроченные проекты в рамках workspace."""
+
+    @abstractmethod
     async def get_projects_with_upcoming_deadline(self, within_hours: int) -> list[Project]:
         """Найти проекты с дедлайном в ближайшие N часов (не архивированные, активные)."""

@@ -16,6 +16,9 @@ from app.context.organization.application.ports.integration.outboard.organizatio
 from app.context.organization.application.ports.integration.outboard.organization_provider import (
     OrganizationProvider,
 )
+from app.context.organization.application.ports.integration.outboard.organization_sso_provider import (
+    OrganizationSSOProvider,
+)
 from app.context.organization.domain.repositories.department_repository import DepartmentRepository
 from app.context.organization.domain.repositories.invitation_repository import InvitationRepository
 from app.context.organization.domain.repositories.org_membership_repository import OrgMembershipRepository
@@ -28,6 +31,9 @@ from app.context.organization.application.ports.authorization.org_permission_che
 from app.context.organization.infrastructure.authorization.org_role_based_permission_checker import OrgRoleBasedPermissionChecker
 from app.context.organization.infrastructure.encryption.fernet_encryption_adapter import FernetEncryptionAdapter
 from app.context.organization.infrastructure.integration.inboard.identity_user_adapter import IdentityUserAdapter
+from app.context.organization.infrastructure.integration.outboard.organization_sso_provider_adapter import (
+    OrganizationSSOProviderAdapter,
+)
 from app.context.organization.infrastructure.integration.outboard.organization_membership_provider_adapter import (
     OrganizationMembershipProviderAdapter,
 )
@@ -222,3 +228,16 @@ def create_organization_permission_provider(
 def create_fernet_encryption_adapter(encryption_key: str) -> EncryptionPort:
     """Создать FernetEncryptionAdapter."""
     return FernetEncryptionAdapter(encryption_key=encryption_key)
+
+
+def create_organization_sso_provider(
+    sso_repo: SSOIntegrationRepository,
+    org_repo: OrganizationRepository,
+    encryption_port: EncryptionPort,
+) -> OrganizationSSOProvider:
+    """Создать OrganizationSSOProviderAdapter (outboard)."""
+    return OrganizationSSOProviderAdapter(
+        sso_repo=sso_repo,
+        org_repo=org_repo,
+        encryption_port=encryption_port,
+    )

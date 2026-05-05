@@ -1,2 +1,7 @@
-# Inboard-порты Identity BC (зависимости от других BC).
-# Пока пусто — Identity BC не требует данных от других BC синхронно.
+from app.context.identity.application.ports.integration.inboard.organization_sso_port import (
+    OrganizationSSOPort,
+)
+
+__all__ = [
+    "OrganizationSSOPort",
+]

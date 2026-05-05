@@ -16,6 +16,9 @@ from app.context.notification.application.event_handlers.on_password_changed_not
 from app.context.notification.application.event_handlers.on_project_deadline_approaching_notify import (
     OnProjectDeadlineApproachingNotify,
 )
+from app.context.notification.application.event_handlers.on_project_overdue_notify import (
+    OnProjectOverdueNotify,
+)
 from app.context.notification.application.event_handlers.on_project_member_joined_notify import (
     OnProjectMemberJoinedNotify,
 )
@@ -66,6 +69,7 @@ __all__ = [
     "OnOrgInvitationSentNotify",
     "OnPasswordChangedNotify",
     "OnProjectDeadlineApproachingNotify",
+    "OnProjectOverdueNotify",
     "OnProjectMemberJoinedNotify",
     "OnSprintCompletedNotify",
     "OnSprintStartedNotify",

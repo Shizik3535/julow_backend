@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.shared.domain.value_objects.id_vo import Id
@@ -29,6 +29,18 @@ class SqlSSOIntegrationRepository(SqlAlchemyRepository[SSOIntegration, SSOIntegr
         stmt = select(SSOIntegrationORM).where(
             SSOIntegrationORM.org_id == uuid_val,
             SSOIntegrationORM.provider == provider.value,
+        )
+        result = await self._session.execute(stmt)
+        orm = result.scalar_one_or_none()
+        return self._mapper.to_domain(orm) if orm else None
+
+    async def get_active_by_email_domain(self, email_domain: str) -> SSOIntegration | None:
+        stmt = (
+            select(SSOIntegrationORM)
+            .where(SSOIntegrationORM.is_active.is_(True))
+            .where(text("email_domains @> :domain_json"))
+            .params(domain_json=f'["{email_domain}"]')
+            .limit(1)
         )
         result = await self._session.execute(stmt)
         orm = result.scalar_one_or_none()

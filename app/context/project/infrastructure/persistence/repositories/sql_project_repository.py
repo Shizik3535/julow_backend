@@ -221,6 +221,36 @@ class SqlProjectRepository(
         await self._session.flush()
         return aggregate
 
+    async def get_overdue_projects(self) -> list[Project]:
+        """Найти просроченные проекты (deadline < today, не архивированные, не приостановленные)."""
+        today = date_type.today()
+        stmt = select(ProjectORM).where(
+            and_(
+                ProjectORM.deadline.isnot(None),
+                ProjectORM.deadline < today,
+                ProjectORM.status != "archived",
+                ProjectORM.status != "suspended",
+            )
+        )
+        result = await self._session.execute(stmt)
+        return [await self._to_domain_with_owners(orm) for orm in result.scalars().all()]
+
+    async def get_overdue_by_workspace(self, workspace_id: Id) -> list[Project]:
+        """Найти просроченные проекты в рамках workspace."""
+        today = date_type.today()
+        uuid_val = self._mapper._map_uuid(workspace_id)
+        stmt = select(ProjectORM).where(
+            and_(
+                ProjectORM.workspace_id == uuid_val,
+                ProjectORM.deadline.isnot(None),
+                ProjectORM.deadline < today,
+                ProjectORM.status != "archived",
+                ProjectORM.status != "suspended",
+            )
+        )
+        result = await self._session.execute(stmt)
+        return [await self._to_domain_with_owners(orm) for orm in result.scalars().all()]
+
     async def get_projects_with_upcoming_deadline(self, within_hours: int) -> list[Project]:
         """Найти проекты с дедлайном в ближайшие N часов (не архивированные, активные)."""
         now = datetime.now(tz=None)

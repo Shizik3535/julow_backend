@@ -129,6 +129,19 @@ async def get_identity_notification_port(container: Container = Depends(get_cont
     return container.identity_notification_port()
 
 
+async def get_sso_port(container: Container = Depends(get_container)):
+    """Получить SSOPort из DI-контейнера."""
+    return container.sso_port()
+
+
+async def get_organization_sso_port(
+    session: AsyncSession = Depends(get_db_session),
+    container: Container = Depends(get_container),
+):
+    """Получить OrganizationSSOPort (inboard) из DI-контейнера."""
+    return container.identity_org_sso_port(session=session)
+
+
 async def get_failed_login_policy(container: Container = Depends(get_container)) -> FailedLoginPolicy:
     """Получить FailedLoginPolicy из DI-контейнера."""
     return container.failed_login_policy()

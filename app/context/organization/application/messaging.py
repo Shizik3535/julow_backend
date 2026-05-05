@@ -43,6 +43,9 @@ def organization_subscriptions(container: "Container") -> list[Subscription]:
     from app.context.organization.application.event_handlers.on_account_deletion_requested_cleanup_memberships import (
         OnAccountDeletionRequestedCleanupMemberships,
     )
+    from app.context.organization.application.event_handlers.on_sso_user_provisioned_add_member import (
+        OnSSOUserProvisionedAddMember,
+    )
     from app.context.organization.application.event_handlers.on_user_deleted_cleanup_memberships import (
         OnUserDeletedCleanupMemberships,
     )
@@ -69,6 +72,19 @@ def organization_subscriptions(container: "Container") -> list[Subscription]:
 
         return _run
 
+    def _build_on_sso_user_provisioned(session: AsyncSession) -> MessageHandlerFn:
+        membership_repo = container.org_membership_repo(session=session)
+        org_role_repo = container.org_role_repo(session=session)
+        handler = OnSSOUserProvisionedAddMember(
+            membership_repo=membership_repo,
+            org_role_repo=org_role_repo,
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
     return [
         Subscription(
             topic=IDENTITY_EVENTS_TOPIC,
@@ -79,5 +95,10 @@ def organization_subscriptions(container: "Container") -> list[Subscription]:
             topic=IDENTITY_EVENTS_TOPIC,
             group_id="organization-bc--user-deleted",
             build_handler=_build_on_user_deleted,
+        ),
+        Subscription(
+            topic=IDENTITY_EVENTS_TOPIC,
+            group_id="organization-bc--sso-user-provisioned",
+            build_handler=_build_on_sso_user_provisioned,
         ),
     ]
