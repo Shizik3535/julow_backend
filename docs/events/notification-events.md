@@ -50,8 +50,11 @@
 | `OnTaskUnassignedNotify` | Task BC | `TaskUnassigned` | `task.events` | Создаёт task_unassigned уведомление для снятого исполнителя. |
 | `OnTaskStatusChangedNotify` | Task BC | `TaskStatusChanged` | `task.events` | Создаёт task_status_changed уведомление для каждого участника задачи (кроме инициатора изменения). |
 | `OnTaskInfoChangedNotify` | Task BC | `TaskInfoChanged` | `task.events` | Если changed_fields содержит «due_date», создаёт task_deadline_changed уведомление для каждого участника задачи. |
-| `OnTaskCommentAddedNotify` | Task BC | `TaskCommentAdded` | `task.events` | Создаёт task_comment уведомление для каждого участника задачи (кроме автора комментария). |
+| `OnCommentAddedNotify` | Communication BC | `CommentAdded` | `communication.events` | Маршрутизация по `target_type`: `task` → task_comment всем участникам задачи (`TaskParticipantPort`), `project` → project_comment всем участникам проекта (`ProjectMemberPort`). Автор исключается. `epic`/`sprint`/`milestone` логируются как warning и пропускаются. |
+| `OnMeetingParticipantAddedNotify` | Communication BC | `MeetingParticipantAdded` | `communication.events` | Создаёт meeting_scheduled уведомление добавленному участнику совещания. |
+| `OnChatMemberAddedNotify` | Communication BC | `ChatMemberAdded` | `communication.events` | Создаёт chat_member_added уведомление пользователю, которого добавили в чат. |
+| `OnMessageSentNotify` | Communication BC | `MessageSent` | `communication.events` | Создаёт chat_message уведомление всем участникам чата (кроме отправителя). Использует `ChatMembersPort`. Системные (`message_type=system`) не нотифицируются. |
 | `OnTaskDeadlineApproachingNotify` | Task BC | `TaskDeadlineApproaching` | `task.events` | Создаёт task_due_approaching уведомление для каждого исполнителя задачи. Дедупликация по типу и target. |
 | `OnTaskOverdueNotify` | Task BC | `TaskOverdue` | `task.events` | Создаёт task_overdue уведомление для каждого исполнителя задачи. |
 
-**Итого: 20 подписок** (1 внутренняя + 19 кросс-BC: 5 из Identity BC + 1 из Organization BC + 1 из Workspace BC + 3 из Project BC + 9 из Task BC)
+**Итого: 24 подписки** (1 внутренняя + 23 кросс-BC: 6 из Identity BC + 1 из Organization BC + 1 из Workspace BC + 5 из Project BC + 6 из Task BC + 4 из Communication BC)

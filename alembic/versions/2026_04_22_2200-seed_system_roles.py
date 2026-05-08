@@ -1,6 +1,6 @@
 """seed system roles
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: a0b1c2d3e4f5
 Revises: fd6013d644ae
 Create Date: 2026-04-22 22:00:00.000000+00:00
 
@@ -16,7 +16,7 @@ from app.context.identity.infrastructure.persistence.seed.system_roles import SY
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a1b2c3d4e5f6'
+revision: str = 'a0b1c2d3e4f5'
 down_revision: Union[str, Sequence[str], None] = 'fd6013d644ae'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

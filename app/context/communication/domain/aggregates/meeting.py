@@ -8,6 +8,7 @@ from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.value_objects.url_vo import Url
 from app.shared.domain.value_objects.rich_text_vo import RichText
 from app.shared.domain.value_objects.agenda_vo import Agenda
+from app.context.communication.domain.value_objects.conference_provider import ConferenceProvider
 from app.context.communication.domain.value_objects.meeting_status import MeetingStatus
 from app.context.communication.domain.value_objects.meeting_type import MeetingType
 from app.context.communication.domain.value_objects.rsvp_status import RSVPStatus
@@ -24,6 +25,8 @@ from app.context.communication.domain.events.meeting_events import (
     MeetingNoteAdded,
     MeetingActionItemAdded,
     MeetingActionItemCompleted,
+    MeetingParticipantAdded,
+    MeetingParticipantRemoved,
     MeetingRSVPUpdated,
 )
 from app.context.communication.domain.exceptions.meeting_exceptions import (
@@ -76,7 +79,9 @@ class Meeting(AggregateRoot):
     scheduled_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
     duration_minutes: int | None = None
     location: str | None = None
+    conference_provider: ConferenceProvider = ConferenceProvider.MANUAL
     conference_url: Url | None = None
+    conference_room_id: str | None = None
     project_id: Id | None = None
     workspace_id: Id = field(default_factory=Id.generate)
     organizer_id: Id = field(default_factory=Id.generate)
@@ -99,6 +104,11 @@ class Meeting(AggregateRoot):
         duration_minutes: int | None = None,
         project_id: Id | None = None,
         recurrence: RecurrenceConfig | None = None,
+        conference_provider: ConferenceProvider = ConferenceProvider.MANUAL,
+        conference_url: Url | None = None,
+        conference_room_id: str | None = None,
+        description: RichText | None = None,
+        location: str | None = None,
     ) -> Meeting:
         """Создаёт совещание. Организатор автоматически добавляется как participant."""
         meeting = cls(
@@ -111,6 +121,11 @@ class Meeting(AggregateRoot):
             duration_minutes=duration_minutes,
             project_id=project_id,
             recurrence=recurrence,
+            conference_provider=conference_provider,
+            conference_url=conference_url,
+            conference_room_id=conference_room_id,
+            description=description,
+            location=location,
         )
         meeting.participants = [
             MeetingParticipant(user_id=organizer_id, is_mandatory=True, rsvp_status=RSVPStatus.ACCEPTED),
@@ -175,11 +190,42 @@ class Meeting(AggregateRoot):
         participant = MeetingParticipant(user_id=user_id, is_mandatory=is_mandatory)
         self.participants.append(participant)
         self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            MeetingParticipantAdded(meeting_id=str(self.id), user_id=str(user_id))
+        )
 
     def remove_participant(self, user_id: Id) -> None:
         if user_id == self.organizer_id:
             raise ValueError("Нельзя удалить организатора")
+        before = len(self.participants)
         self.participants = [p for p in self.participants if p.user_id != user_id]
+        if len(self.participants) == before:
+            return
+        self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            MeetingParticipantRemoved(meeting_id=str(self.id), user_id=str(user_id))
+        )
+
+    def is_participant(self, user_id: Id) -> bool:
+        return any(p.user_id == user_id for p in self.participants)
+
+    def _set_conference(
+        self,
+        provider: ConferenceProvider,
+        url: Url | None,
+        room_id: str | None,
+    ) -> None:
+        """Зафиксировать данные конференции.
+
+        Метод намеренно сделан приватным: он является частью протокола
+        создания Meeting (URL/room_id известны только после обращения
+        к внешнему провайдеру и потому не могут быть переданы в
+        :meth:`create`). Для модификаций после создания используйте
+        команды, которые должны эмитить соответствующие доменные события.
+        """
+        self.conference_provider = provider
+        self.conference_url = url
+        self.conference_room_id = room_id
         self.updated_at = datetime.now(tz=timezone.utc)
 
     def update_rsvp(self, user_id: Id, rsvp_status: RSVPStatus) -> None:

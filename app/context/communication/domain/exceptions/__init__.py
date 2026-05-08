@@ -14,6 +14,7 @@ from app.context.communication.domain.exceptions.comment_exceptions import (
     CommentDeletedException,
     CommentNotFoundException,
     DuplicateReactionException,
+    NotCommentAuthorException,
 )
 from app.context.communication.domain.exceptions.meeting_exceptions import (
     CannotAddMeetingNoteException,
@@ -42,6 +43,7 @@ __all__ = [
     "CommentDeletedException",
     "CommentNotFoundException",
     "DuplicateReactionException",
+    "NotCommentAuthorException",
     "CannotAddMeetingNoteException",
     "InvalidRSVPStatusTransitionException",
     "MeetingActionItemNotFoundException",

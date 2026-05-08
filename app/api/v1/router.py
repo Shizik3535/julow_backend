@@ -162,6 +162,24 @@ api_v1_router.include_router(_task_history_controller.router)
 api_v1_router.include_router(_task_template_controller.router)
 api_v1_router.include_router(_project_task_template_controller.router)
 
+# Communication BC
+from app.context.communication.presentation.controllers import (
+    ChatController,
+    CommentController,
+    MeetingController,
+    MessageController,
+)
+
+_chat_controller = ChatController()
+_comment_controller = CommentController()
+_meeting_controller = MeetingController()
+_message_controller = MessageController()
+
+api_v1_router.include_router(_chat_controller.router)
+api_v1_router.include_router(_comment_controller.router)
+api_v1_router.include_router(_meeting_controller.router)
+api_v1_router.include_router(_message_controller.router)
+
 # Notification BC
 from app.context.notification.presentation.controllers import (
     NotificationController,

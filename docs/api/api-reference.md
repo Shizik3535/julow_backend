@@ -618,6 +618,27 @@
 
 ---
 
+## Communication BC — Комментарии
+
+Контроллер: `CommentController` | Префикс: `/comments`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| POST | `/comments/` | Создать комментарий (`target_type`, `target_id`, `content`, опц. `parent_comment_id` для ответа) |
+| GET | `/comments/` | Список комментариев по `target_type` + `target_id` (фильтры: `include_deleted`, `only_root`) |
+| GET | `/comments/{comment_id}` | Получить комментарий по UUID |
+| PATCH | `/comments/{comment_id}` | Обновить контент (только автор; нельзя для системных/удалённых) |
+| DELETE | `/comments/{comment_id}` | Soft-delete (только автор; нельзя для системных) |
+| GET | `/comments/{comment_id}/replies` | Получить ответы на комментарий |
+| POST | `/comments/{comment_id}/pin` | Закрепить комментарий |
+| POST | `/comments/{comment_id}/unpin` | Открепить комментарий |
+| POST | `/comments/{comment_id}/reactions` | Добавить реакцию (Unicode emoji) |
+| DELETE | `/comments/{comment_id}/reactions/{emoji}` | Снять реакцию |
+| POST | `/comments/{comment_id}/attachments` | Добавить вложение (`file_id` из FileStorage BC) |
+| DELETE | `/comments/{comment_id}/attachments/{attachment_id}` | Удалить вложение |
+
+---
+
 ## Notification BC — Уведомления
 
 Контроллер: `NotificationController` | Префикс: `/notifications`
@@ -713,6 +734,10 @@
 | Task | TaskHistoryController | 3 |
 | Task | TaskTemplateController | 2 |
 | Task | ProjectTaskTemplateController | 4 |
+| Communication | CommentController | 12 |
+| Communication | ChatController | 17 |
+| Communication | MessageController | 9 |
+| Communication | MeetingController | 17 |
 | Notification | NotificationController | 6 |
 | Notification | NotificationSettingsController | 12 |
-| **Итого** | | **286** |
+| **Итого** | | **341** |

@@ -33,6 +33,9 @@ from app.context.notification.infrastructure.integration.inboard.identity_user_a
 from app.context.notification.infrastructure.integration.inboard.task_participant_adapter import (
     TaskParticipantAdapter,
 )
+from app.context.notification.infrastructure.integration.inboard.chat_members_adapter import (
+    ChatMembersAdapter,
+)
 from app.context.notification.infrastructure.integration.inboard.project_member_adapter import (
     ProjectMemberAdapter,
 )
@@ -48,6 +51,9 @@ from app.context.notification.application.ports.notification.notification_sender
 from app.context.notification.application.ports.integration.inboard.identity_user_port import (
     IdentityUserPort,
 )
+from app.context.notification.application.ports.integration.inboard.chat_members_port import (
+    ChatMembersPort,
+)
 from app.context.notification.application.ports.integration.inboard.task_participant_port import (
     TaskParticipantPort,
 )
@@ -62,6 +68,9 @@ from app.context.notification.application.ports.integration.outboard.reminder_wi
 )
 from app.context.identity.application.ports.integration.outboard.identity_user_provider import (
     IdentityUserProvider,
+)
+from app.context.communication.application.ports.integration.outboard.chat_members_provider import (
+    ChatMembersProvider,
 )
 from app.context.task.application.ports.integration.outboard.task_participant_provider import (
     TaskParticipantProvider,
@@ -200,6 +209,24 @@ def create_task_participant_adapter(
 ) -> TaskParticipantPort:
     """Создать TaskParticipantAdapter."""
     return TaskParticipantAdapter(task_participant_provider=task_participant_provider)
+
+
+def create_chat_members_adapter(
+    chat_members_provider: ChatMembersProvider,
+) -> ChatMembersPort:
+    """Создать ChatMembersAdapter для Notification BC."""
+    return ChatMembersAdapter(chat_members_provider=chat_members_provider)
+
+
+def create_chat_members_provider(
+    repo,
+) -> ChatMembersProvider:
+    """Создать ChatMembersProviderAdapter (outboard Communication BC)."""
+    from app.context.communication.infrastructure.integration.outboard.chat_members_provider_adapter import (
+        ChatMembersProviderAdapter,
+    )
+
+    return ChatMembersProviderAdapter(repo=repo)
 
 
 def create_project_member_adapter(

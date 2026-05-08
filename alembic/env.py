@@ -98,6 +98,27 @@ from app.context.task.infrastructure.persistence.orm_models.task_template_orm im
     task_template_labels_table,
 )
 from app.context.task.infrastructure.persistence.orm_models.changelog_orm import ChangelogEntryORM  # noqa: F401
+from app.context.communication.infrastructure.persistence.orm_models.comment_orm import (  # noqa: F401
+    CommentAttachmentORM,
+    CommentORM,
+    CommentReactionORM,
+)
+from app.context.communication.infrastructure.persistence.orm_models.chat_orm import (  # noqa: F401
+    ChatMemberORM,
+    ChatORM,
+    ThreadORM,
+)
+from app.context.communication.infrastructure.persistence.orm_models.message_orm import (  # noqa: F401
+    MessageAttachmentORM,
+    MessageORM,
+    MessageReactionORM,
+)
+from app.context.communication.infrastructure.persistence.orm_models.meeting_orm import (  # noqa: F401
+    MeetingActionItemORM,
+    MeetingNoteORM,
+    MeetingORM,
+    MeetingParticipantORM,
+)
 
 # Alembic Config object
 config = context.config

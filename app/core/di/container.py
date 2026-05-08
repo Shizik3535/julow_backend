@@ -8,6 +8,10 @@ from app.context.identity.application.messaging import (
     build_identity_event_bus,
     identity_subscriptions,
 )
+from app.context.communication.application.messaging import (
+    build_communication_event_bus,
+    communication_subscriptions,
+)
 from app.context.notification.application.messaging import (
     build_notification_event_bus,
     notification_subscriptions,
@@ -57,6 +61,18 @@ from app.core.di.providers.identity_provider import (
     create_user_provider,
     create_user_repository,
 )
+from app.core.di.providers.communication_provider import (
+    create_chat_mapper,
+    create_chat_repository,
+    create_comment_mapper,
+    create_comment_repository,
+    create_comment_target_access_adapter,
+    create_conference_provider_registry,
+    create_meeting_mapper,
+    create_meeting_repository,
+    create_message_mapper,
+    create_message_repository,
+)
 from app.core.di.providers.notification_provider import (
     create_device_token_mapper,
     create_device_token_repository,
@@ -66,6 +82,8 @@ from app.core.di.providers.notification_provider import (
     create_notification_preferences_provider_adapter,
     create_notification_preferences_repository,
     create_notification_repository,
+    create_chat_members_adapter,
+    create_chat_members_provider,
     create_notification_sender_adapter,
     create_project_member_adapter,
     create_reminder_window_provider_adapter,
@@ -854,10 +872,72 @@ class Container(containers.DeclarativeContainer):
         project_permission_provider=project_permission_provider,
     )
 
-    # Notification BC - Integration Adapters that depend on Task/Project BC providers
+    # ==================================================================
+    # Communication BC
+    # ==================================================================
+
+    # Communication BC - Event Bus
+    communication_event_bus = providers.Singleton(
+        build_communication_event_bus,
+        broker=message_broker_port,
+    )
+
+    # Communication BC - Mappers (Singleton)
+    comment_mapper = providers.Singleton(create_comment_mapper)
+    chat_mapper = providers.Singleton(create_chat_mapper)
+    message_mapper = providers.Singleton(create_message_mapper)
+    meeting_mapper = providers.Singleton(create_meeting_mapper)
+
+    # Communication BC - Repositories (Factory with session)
+    comment_repo = providers.Factory(
+        create_comment_repository,
+        session=db_session_factory,
+        mapper=comment_mapper,
+    )
+    chat_repo = providers.Factory(
+        create_chat_repository,
+        session=db_session_factory,
+        mapper=chat_mapper,
+    )
+    message_repo = providers.Factory(
+        create_message_repository,
+        session=db_session_factory,
+        mapper=message_mapper,
+    )
+    meeting_repo = providers.Factory(
+        create_meeting_repository,
+        session=db_session_factory,
+        mapper=meeting_mapper,
+    )
+
+    # Communication BC - Conference provider registry (Singleton)
+    conference_provider_registry = providers.Singleton(
+        create_conference_provider_registry,
+    )
+
+    # Communication BC - Integration inboard adapters
+    comment_target_access_port = providers.Factory(
+        create_comment_target_access_adapter,
+        task_provider=task_provider,
+        epic_provider=epic_provider,
+        sprint_provider=sprint_provider,
+        project_permission_provider=project_permission_provider,
+    )
+
+    # Communication BC - Outboard provider (chat members), exposed to Notification BC
+    chat_members_provider = providers.Factory(
+        create_chat_members_provider,
+        repo=chat_repo,
+    )
+
+    # Notification BC - Integration Adapters that depend on Task/Project/Communication BC providers
     notification_task_participant_port = providers.Factory(
         create_task_participant_adapter,
         task_participant_provider=task_participant_provider,
+    )
+    notification_chat_members_port = providers.Factory(
+        create_chat_members_adapter,
+        chat_members_provider=chat_members_provider,
     )
     notification_project_member_port = providers.Factory(
         create_project_member_adapter,
@@ -897,6 +977,7 @@ async def wire_messaging(container: Container) -> None:
         *project_subscriptions(container),
         *task_subscriptions(container),
         *notification_subscriptions(container),
+        *communication_subscriptions(container),
     ]
 
     await asyncio.gather(

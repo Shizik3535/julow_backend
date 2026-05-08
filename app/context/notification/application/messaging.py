@@ -44,6 +44,7 @@ ORGANIZATION_EVENTS_TOPIC = "organization.events"
 WORKSPACE_EVENTS_TOPIC = "workspace.events"
 PROJECT_EVENTS_TOPIC = "project.events"
 TASK_EVENTS_TOPIC = "task.events"
+COMMUNICATION_EVENTS_TOPIC = "communication.events"
 
 
 def notification_subscriptions(container: "Container") -> list[Subscription]:
@@ -253,8 +254,17 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
     from app.context.notification.application.event_handlers.on_task_status_changed_notify import (
         OnTaskStatusChangedNotify,
     )
-    from app.context.notification.application.event_handlers.on_task_comment_added_notify import (
-        OnTaskCommentAddedNotify,
+    from app.context.notification.application.event_handlers.on_comment_added_notify import (
+        OnCommentAddedNotify,
+    )
+    from app.context.notification.application.event_handlers.on_meeting_participant_added_notify import (
+        OnMeetingParticipantAddedNotify,
+    )
+    from app.context.notification.application.event_handlers.on_chat_member_added_notify import (
+        OnChatMemberAddedNotify,
+    )
+    from app.context.notification.application.event_handlers.on_message_sent_notify import (
+        OnMessageSentNotify,
     )
     from app.context.notification.application.event_handlers.on_task_deadline_approaching_notify import (
         OnTaskDeadlineApproachingNotify,
@@ -296,12 +306,73 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
 
         return _run
 
-    def _build_on_task_comment_added(session: AsyncSession) -> MessageHandlerFn:
+    def _build_on_comment_added(session: AsyncSession) -> MessageHandlerFn:
         repo = container.notification_repo(session=session)
         task_repo = container.task_repo(session=session)
         task_participant_provider = container.task_participant_provider(repo=task_repo)
-        task_participant_port = container.notification_task_participant_port(task_participant_provider=task_participant_provider)
-        handler = OnTaskCommentAddedNotify(notification_repo=repo, event_bus=container.notification_event_bus(), task_participant_port=task_participant_port)
+        task_participant_port = container.notification_task_participant_port(
+            task_participant_provider=task_participant_provider,
+        )
+        project_membership_repo = container.project_membership_repo(session=session)
+        project_membership_provider = container.project_membership_provider(
+            repo=project_membership_repo,
+        )
+        project_repo = container.project_repo(session=session)
+        project_provider_inst = container.project_provider(repo=project_repo)
+        project_member_port = container.notification_project_member_port(
+            project_membership_provider=project_membership_provider,
+            project_provider=project_provider_inst,
+        )
+        handler = OnCommentAddedNotify(
+            notification_repo=repo,
+            event_bus=container.notification_event_bus(),
+            task_participant_port=task_participant_port,
+            project_member_port=project_member_port,
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_meeting_participant_added(
+        session: AsyncSession,
+    ) -> MessageHandlerFn:
+        repo = container.notification_repo(session=session)
+        handler = OnMeetingParticipantAddedNotify(
+            notification_repo=repo,
+            event_bus=container.notification_event_bus(),
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_chat_member_added(session: AsyncSession) -> MessageHandlerFn:
+        repo = container.notification_repo(session=session)
+        handler = OnChatMemberAddedNotify(
+            notification_repo=repo,
+            event_bus=container.notification_event_bus(),
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_message_sent(session: AsyncSession) -> MessageHandlerFn:
+        repo = container.notification_repo(session=session)
+        chat_repo = container.chat_repo(session=session)
+        chat_members_provider = container.chat_members_provider(repo=chat_repo)
+        chat_members_port = container.notification_chat_members_port(
+            chat_members_provider=chat_members_provider,
+        )
+        handler = OnMessageSentNotify(
+            notification_repo=repo,
+            event_bus=container.notification_event_bus(),
+            chat_members_port=chat_members_port,
+        )
 
         async def _run(message: dict[str, Any]) -> None:
             await handler.handle(message)
@@ -507,10 +578,26 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
             group_id="notification-bc--task-status-changed",
             build_handler=_build_on_task_status_changed,
         ),
+        # Communication BC
         Subscription(
-            topic=TASK_EVENTS_TOPIC,
-            group_id="notification-bc--task-comment-added",
-            build_handler=_build_on_task_comment_added,
+            topic=COMMUNICATION_EVENTS_TOPIC,
+            group_id="notification-bc--comment-added",
+            build_handler=_build_on_comment_added,
+        ),
+        Subscription(
+            topic=COMMUNICATION_EVENTS_TOPIC,
+            group_id="notification-bc--meeting-participant-added",
+            build_handler=_build_on_meeting_participant_added,
+        ),
+        Subscription(
+            topic=COMMUNICATION_EVENTS_TOPIC,
+            group_id="notification-bc--chat-member-added",
+            build_handler=_build_on_chat_member_added,
+        ),
+        Subscription(
+            topic=COMMUNICATION_EVENTS_TOPIC,
+            group_id="notification-bc--message-sent",
+            build_handler=_build_on_message_sent,
         ),
         Subscription(
             topic=TASK_EVENTS_TOPIC,

@@ -40,6 +40,9 @@
 | `MeetingActionItemAdded` | Action item добавлен | `meeting_id`, `action_item_id` |
 | `MeetingActionItemCompleted` | Action item завершён | `meeting_id`, `action_item_id` |
 | `MeetingRSVPUpdated` | RSVP ответ обновлён | `meeting_id`, `user_id`, `rsvp_status` |
+| `MeetingParticipantAdded` | Участник добавлен в совещание | `meeting_id`, `user_id` |
+| `MeetingParticipantRemoved` | Участник удалён из совещания | `meeting_id`, `user_id` |
+| `MeetingJoinRequested` | Запрос на подключение к конференции | `meeting_id`, `user_id`, `provider` |
 | `RecurringMeetingCreated` | Повторяющееся совещание создано | `source_meeting_id`, `new_meeting_id` |
 
 ### Message Events
@@ -52,10 +55,40 @@
 | `MessageReactionAdded` | Реакция на сообщение | `message_id`, `user_id`, `emoji` |
 | `MessageReactionRemoved` | Реакция на сообщение снята | `message_id`, `user_id`, `emoji` |
 
-**Итого: 30 событий**
+**Итого: 33 события**
 
 ---
 
 ## События, на которые подписывается Communication BC
 
 Нет. Communication BC не подписывается на события других BC.
+
+---
+
+## Провайдеры конференций (ConferenceProviderPort)
+
+Meeting-агрегат не знает конкретных провайдеров видеоконференций — он
+хранит только значение ``ConferenceProvider`` и opaque ``conference_room_id``.
+Вся логика создания комнат / генерации токенов инкапсулирована за
+портом ``ConferenceProviderPort`` (см. ``app/context/communication/application/ports/integration/inboard/conference_provider_port.py``).
+
+| Провайдер | Статус | Описание |
+|---|---|---|
+| `manual` | реализовано | Пользователь сам вставляет ссылку (Zoom/Telemost/Meet/Teams/кастом). Адаптер ничего не делает с внешней системой. |
+| `internal` | задел (раскомментировать адаптер) | Встроенный WebRTC через LiveKit — требует LiveKit-сервер и TURN. |
+| `zoom` | задел | OAuth + Zoom API. |
+| `telemost` | задел | Yandex Telemost API. |
+| `google_meet` | задел | Google Calendar API + meet link. |
+| `teams` | задел | Microsoft Graph API. |
+
+Новые провайдеры добавляются в `ConferenceProviderRegistry` в
+`app/core/di/providers/communication_provider.py::create_conference_provider_registry`.
+Домен и presentation слой при этом не меняются.
+
+---
+
+## Outboard-провайдер для Notification BC
+
+| Порт | Метод | Назначение |
+|---|---|---|
+| `ChatMembersProvider` | `get_chat_member_ids(chat_id)` | Notification BC использует через inboard-адаптер ``ChatMembersPort`` для рассылки уведомлений при `MessageSent` / `ChatMemberAdded`. |

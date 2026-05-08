@@ -1,7 +1,7 @@
 """profile_add_unique_constraints
 
 Revision ID: 65b0fc8c5f54
-Revises: a1b2c3d4e5f6
+Revises: a0b1c2d3e4f5
 Create Date: 2026-04-22 21:30:21.415922+00:00
 
 """
@@ -11,7 +11,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '65b0fc8c5f54'
-down_revision: str | Sequence[str] | None = 'a1b2c3d4e5f6'
+down_revision: str | Sequence[str] | None = 'a0b1c2d3e4f5'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

@@ -31,8 +31,8 @@ from app.context.notification.application.event_handlers.on_sprint_started_notif
 from app.context.notification.application.event_handlers.on_task_assigned_notify import (
     OnTaskAssignedNotify,
 )
-from app.context.notification.application.event_handlers.on_task_comment_added_notify import (
-    OnTaskCommentAddedNotify,
+from app.context.notification.application.event_handlers.on_comment_added_notify import (
+    OnCommentAddedNotify,
 )
 from app.context.notification.application.event_handlers.on_task_deadline_approaching_notify import (
     OnTaskDeadlineApproachingNotify,
@@ -74,7 +74,7 @@ __all__ = [
     "OnSprintCompletedNotify",
     "OnSprintStartedNotify",
     "OnTaskAssignedNotify",
-    "OnTaskCommentAddedNotify",
+    "OnCommentAddedNotify",
     "OnTaskDeadlineApproachingNotify",
     "OnTaskInfoChangedNotify",
     "OnTaskOverdueNotify",

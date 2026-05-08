@@ -46,3 +46,13 @@ class DuplicateReactionException(BusinessRuleViolationException):
             rule="UniqueReaction",
             message="Реакция уже поставлена (same user_id + emoji)",
         )
+
+
+class NotCommentAuthorException(BusinessRuleViolationException):
+    """Только автор может изменить/удалить свой комментарий."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="CommentAuthorOnly",
+            message="Только автор может изменить или удалить свой комментарий",
+        )

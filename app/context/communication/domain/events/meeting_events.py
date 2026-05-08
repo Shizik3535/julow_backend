@@ -85,3 +85,32 @@ class RecurringMeetingCreated(BaseDomainEvent):
 
     source_meeting_id: str = ""
     new_meeting_id: str = ""
+
+
+@dataclass(frozen=True)
+class MeetingParticipantAdded(BaseDomainEvent):
+    """Участник добавлен в совещание."""
+
+    meeting_id: str = ""
+    user_id: str = ""
+
+
+@dataclass(frozen=True)
+class MeetingParticipantRemoved(BaseDomainEvent):
+    """Участник удалён из совещания."""
+
+    meeting_id: str = ""
+    user_id: str = ""
+
+
+@dataclass(frozen=True)
+class MeetingJoinRequested(BaseDomainEvent):
+    """Пользователь запросил подключение к совещанию.
+
+    Не публикуется, если поле ``conference_provider == MANUAL`` —
+    для ручной ссылки внутренних событий не нужно.
+    """
+
+    meeting_id: str = ""
+    user_id: str = ""
+    provider: str = ""
