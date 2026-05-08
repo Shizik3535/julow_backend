@@ -8,8 +8,10 @@ from app.shared.domain.value_objects.id_vo import Id
 from app.context.organization.domain.exceptions.team_exceptions import (
     TeamAlreadyActiveException,
     TeamAlreadyDeactivatedException,
+    TeamDeactivatedException,
     TeamMemberAlreadyExistsException,
 )
+from app.shared.domain.changed_fields import changed_fields
 from app.context.organization.domain.events.team_events import (
     TeamCreated,
     TeamUpdated,
@@ -17,15 +19,6 @@ from app.context.organization.domain.events.team_events import (
     TeamMemberAdded,
     TeamMemberRemoved,
 )
-
-
-def _changed_fields(old: object, new: object) -> list[str]:
-    """Вычисляет список имён изменённых полей."""
-    changed: list[str] = []
-    for f_name in type(old).__dataclass_fields__:
-        if getattr(old, f_name) != getattr(new, f_name):
-            changed.append(f_name)
-    return changed
 
 
 @dataclass
@@ -75,7 +68,7 @@ class Team(AggregateRoot):
     def _assert_active(self) -> None:
         """Проверяет, что команда активна."""
         if not self.is_active:
-            raise ValueError("Неактивная команда не может принимать участников")
+            raise TeamDeactivatedException(team_id=str(self.id))
 
     # --- Обновление ---
 

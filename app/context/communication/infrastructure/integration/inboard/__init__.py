@@ -4,6 +4,9 @@ from app.context.communication.infrastructure.integration.inboard.comment_target
 from app.context.communication.infrastructure.integration.inboard.conference_provider_registry import (
     ConferenceProviderRegistry,
 )
+from app.context.communication.infrastructure.integration.inboard.file_attachment_adapter import (
+    FileAttachmentAdapter,
+)
 from app.context.communication.infrastructure.integration.inboard.manual_link_conference_adapter import (
     ManualLinkConferenceAdapter,
 )
@@ -11,5 +14,6 @@ from app.context.communication.infrastructure.integration.inboard.manual_link_co
 __all__ = [
     "CommentTargetAccessAdapter",
     "ConferenceProviderRegistry",
+    "FileAttachmentAdapter",
     "ManualLinkConferenceAdapter",
 ]

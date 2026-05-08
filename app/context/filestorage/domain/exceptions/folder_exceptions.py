@@ -38,3 +38,23 @@ class MaxFolderDepthExceededException(BusinessRuleViolationException):
             rule="MaxFolderDepth",
             message=f"Превышена максимальная глубина вложенности папок{f' (макс: {max_depth})' if max_depth else ''}",
         )
+
+
+class SystemFolderModifyException(BusinessRuleViolationException):
+    """Системную папку нельзя изменять."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="SystemFolderImmutable",
+            message="Системную папку нельзя изменять",
+        )
+
+
+class FolderPermissionTargetRequiredException(BusinessRuleViolationException):
+    """Хотя бы один из user_id/team_id должен быть заполнен."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="PermissionTargetRequired",
+            message="Хотя бы один из user_id/team_id должен быть заполнен",
+        )

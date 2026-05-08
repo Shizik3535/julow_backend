@@ -1,6 +1,7 @@
 from app.core.config.app_settings import AppSettings
 from app.core.config.auth_settings import AuthSettings
 from app.core.config.celery_settings import CelerySettings
+from app.core.config.clamav_settings import ClamAvSettings
 from app.core.config.cors_settings import CorsSettings
 from app.core.config.encryption_settings import EncryptionSettings
 from app.core.config.database_settings import DatabaseSettings
@@ -26,6 +27,7 @@ class Settings:
         self.celery = CelerySettings()
         self.ntfy = NtfySettings()
         self.oauth = OAuthSettings()
+        self.clamav = ClamAvSettings()
 
 
 settings = Settings()

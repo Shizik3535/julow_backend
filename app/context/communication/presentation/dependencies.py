@@ -129,11 +129,14 @@ async def get_comment_target_access_port(
     epic_provider = container.epic_provider(repo=epic_repo)
     sprint_provider = container.sprint_provider(repo=sprint_repo)
 
+    project_provider = container.project_provider(repo=project_repo)
+
     return container.comment_target_access_port(
         task_provider=task_provider,
         epic_provider=epic_provider,
         sprint_provider=sprint_provider,
         project_permission_provider=project_permission_provider,
+        project_provider=project_provider,
     )
 
 
@@ -160,6 +163,30 @@ async def get_auth_token_port(container: Container = Depends(get_container)):
 async def get_file_storage_port(container: Container = Depends(get_container)):
     """Получить FileStoragePort из DI-контейнера."""
     return container.file_storage_port()
+
+
+async def get_communication_file_attachment_port(
+    session: AsyncSession = Depends(get_db_session),
+    container: Container = Depends(get_container),
+):
+    """Получить FileAttachmentPort (inboard) для Communication BC.
+
+    Делегирует загрузку вложений в FileStorage BC: создание агрегата
+    ``File``, учёт квоты, события.
+    """
+    file_repo = container.file_repo(session=session)
+    storage_repo = container.storage_repo(session=session)
+    file_storage = container.file_storage_port()
+    event_bus = container.filestorage_event_bus()
+    provider = container.file_attachment_provider(
+        file_repo=file_repo,
+        storage_repo=storage_repo,
+        file_storage=file_storage,
+        event_bus=event_bus,
+    )
+    return container.communication_file_attachment_port(
+        file_attachment_provider=provider
+    )
 
 
 async def get_current_user_id(

@@ -56,8 +56,8 @@ from app.context.communication.presentation.dependencies import (
     get_comment_repository,
     get_comment_target_access_port,
     get_communication_event_bus,
+    get_communication_file_attachment_port,
     get_current_user_id,
-    get_file_storage_port,
 )
 from app.context.communication.presentation.schemas.requests.add_comment_reaction_request import (
     AddCommentReactionRequest,
@@ -436,7 +436,7 @@ class CommentController(BaseController):
         ),
         user_id: str = Depends(get_current_user_id),
         repo=Depends(get_comment_repository),
-        file_storage=Depends(get_file_storage_port),
+        file_attachment_port=Depends(get_communication_file_attachment_port),
         target_access=Depends(get_comment_target_access_port),
         event_bus=Depends(get_communication_event_bus),
     ) -> SuccessResponse[AttachmentResponse]:
@@ -444,7 +444,7 @@ class CommentController(BaseController):
         file_data = await file.read()
         handler = AddCommentAttachmentHandler(
             comment_repo=repo,
-            file_storage=file_storage,
+            file_attachment_port=file_attachment_port,
             target_access=target_access,
             event_bus=event_bus,
         )
@@ -466,9 +466,14 @@ class CommentController(BaseController):
         attachment_id: str,
         user_id: str = Depends(get_current_user_id),
         repo=Depends(get_comment_repository),
+        file_attachment_port=Depends(get_communication_file_attachment_port),
         event_bus=Depends(get_communication_event_bus),
     ) -> MessageResponse:
-        handler = RemoveCommentAttachmentHandler(comment_repo=repo, event_bus=event_bus)
+        handler = RemoveCommentAttachmentHandler(
+            comment_repo=repo,
+            file_attachment_port=file_attachment_port,
+            event_bus=event_bus,
+        )
         await handler.handle(
             RemoveCommentAttachmentCommand(
                 comment_id=comment_id,

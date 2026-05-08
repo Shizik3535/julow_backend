@@ -55,6 +55,7 @@ from app.context.task.presentation.dependencies import (
     get_file_storage_port,
     get_task_changelog_repository,
     get_task_event_bus,
+    get_task_file_attachment_port,
     get_task_permission_checker,
     get_task_project_port,
     get_task_repository,
@@ -335,15 +336,17 @@ class TaskMetadataController(BaseController):
         caller_id: str = Depends(get_current_user_id),
         task_repo=Depends(get_task_repository),
         permission_checker=Depends(get_task_permission_checker),
-        file_storage=Depends(get_file_storage_port),
+        file_attachment_port=Depends(get_task_file_attachment_port),
+        project_port=Depends(get_task_project_port),
         event_bus=Depends(get_task_event_bus),
     ) -> SuccessResponse[dict]:
         """Добавить вложение."""
         file_data = await file.read()
         handler = AddTaskAttachmentHandler(
             task_repo=task_repo,
+            file_attachment_port=file_attachment_port,
+            project_port=project_port,
             permission_checker=permission_checker,
-            file_storage=file_storage,
             event_bus=event_bus,
         )
         command = AddTaskAttachmentCommand(
@@ -364,11 +367,13 @@ class TaskMetadataController(BaseController):
         caller_id: str = Depends(get_current_user_id),
         task_repo=Depends(get_task_repository),
         permission_checker=Depends(get_task_permission_checker),
+        file_attachment_port=Depends(get_task_file_attachment_port),
         event_bus=Depends(get_task_event_bus),
     ) -> MessageResponse:
         """Удалить вложение."""
         handler = RemoveTaskAttachmentHandler(
             task_repo=task_repo,
+            file_attachment_port=file_attachment_port,
             permission_checker=permission_checker,
             event_bus=event_bus,
         )

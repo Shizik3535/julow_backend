@@ -29,19 +29,11 @@ from app.context.profile.domain.events.profile_events import (
     ProfileDeleted,
     SidebarConfigUpdated,
 )
+from app.shared.domain.changed_fields import changed_fields
 from app.context.profile.domain.exceptions.profile_exceptions import (
     DuplicatePinnedItemException,
     DuplicateSocialLinkException,
 )
-
-
-def _changed_fields(old_vo: object, new_vo: object) -> list[str]:
-    """Вычисляет список имён изменённых полей между двумя VO-группами."""
-    changed: list[str] = []
-    for f_name in type(old_vo).__dataclass_fields__:
-        if getattr(old_vo, f_name) != getattr(new_vo, f_name):
-            changed.append(f_name)
-    return changed
 
 
 @dataclass
@@ -153,7 +145,7 @@ class UserProfile(AggregateRoot):
 
     def update_appearance(self, settings: AppearanceSettings) -> None:
         """Заменяет группу настроек внешнего вида."""
-        changed = _changed_fields(self.appearance, settings)
+        changed = changed_fields(self.appearance, settings)
         self.appearance = settings
         self.updated_at = datetime.now(tz=timezone.utc)
         if changed:
@@ -168,7 +160,7 @@ class UserProfile(AggregateRoot):
 
     def update_localization(self, settings: LocalizationSettings) -> None:
         """Заменяет группу настроек локализации."""
-        changed = _changed_fields(self.localization, settings)
+        changed = changed_fields(self.localization, settings)
         self.localization = settings
         self.updated_at = datetime.now(tz=timezone.utc)
         if changed:
@@ -183,7 +175,7 @@ class UserProfile(AggregateRoot):
 
     def update_navigation(self, settings: NavigationSettings) -> None:
         """Заменяет группу настроек навигации."""
-        changed = _changed_fields(self.navigation, settings)
+        changed = changed_fields(self.navigation, settings)
         self.navigation = settings
         self.updated_at = datetime.now(tz=timezone.utc)
         if changed:
@@ -198,7 +190,7 @@ class UserProfile(AggregateRoot):
 
     def update_privacy(self, settings: PrivacySettings) -> None:
         """Заменяет группу настроек приватности."""
-        changed = _changed_fields(self.privacy, settings)
+        changed = changed_fields(self.privacy, settings)
         self.privacy = settings
         self.updated_at = datetime.now(tz=timezone.utc)
         if changed:

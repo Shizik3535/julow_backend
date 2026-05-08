@@ -1,18 +1,21 @@
 from __future__ import annotations
 
-import uuid
-
 from app.shared.application.base_command import BaseCommand
 from app.shared.application.base_command_handler import BaseCommandHandler
 from app.shared.application.messaging.domain_event_bus import DomainEventBus
-from app.shared.application.ports.file_storage.file_storage_port import FileStoragePort
 from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.value_objects.url_vo import Url
 
 from app.context.communication.application.dto.attachment_dto import AttachmentDTO
 from app.context.communication.application.dto.mappers import attachment_to_dto
+from app.context.communication.application.exceptions.authorization_exceptions import (
+    CommentTargetForbiddenException,
+)
 from app.context.communication.application.ports.integration.inboard.comment_target_access_port import (
     CommentTargetAccessPort,
+)
+from app.context.communication.application.ports.integration.inboard.file_attachment_port import (
+    FileAttachmentPort,
 )
 from app.context.communication.domain.entities.attachment import Attachment
 from app.context.communication.domain.exceptions.comment_exceptions import (
@@ -65,13 +68,13 @@ class AddCommentAttachmentHandler(
     def __init__(
         self,
         comment_repo: CommentRepository,
-        file_storage: FileStoragePort,
+        file_attachment_port: FileAttachmentPort,
         target_access: CommentTargetAccessPort,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
         self._repo = comment_repo
-        self._file_storage = file_storage
+        self._file_attachment_port = file_attachment_port
         self._target_access = target_access
         self._event_bus = event_bus
 
@@ -89,28 +92,34 @@ class AddCommentAttachmentHandler(
             target_id=str(comment.target_id),
         )
 
-        file_id = Id.generate()
-        key = (
-            f"comments/{command.comment_id}/attachments/"
-            f"{uuid.uuid4()}/{command.filename}"
+        # Резолвим workspace_id через target → project → workspace.
+        workspace_id = await self._target_access.resolve_workspace_id(
+            target_type=comment.target_type,
+            target_id=str(comment.target_id),
         )
-        await self._file_storage.upload(
-            key=key,
-            data=command.file_data,
+        if workspace_id is None:
+            raise CommentTargetForbiddenException(
+                target_type=comment.target_type.value,
+                target_id=str(comment.target_id),
+                user_id=command.caller_id,
+                reason="не удалось определить workspace для квоты хранилища",
+            )
+
+        result = await self._file_attachment_port.upload_attachment(
+            workspace_id=workspace_id,
+            uploader_id=command.caller_id,
+            filename=command.filename,
+            file_data=command.file_data,
             content_type=command.content_type,
         )
 
-        # Бессрочный (публичный) URL — для приватных файлов следует использовать
-        # подписанный URL с TTL, генерируемый по запросу.
-        url_str = await self._file_storage.get_url(key=key, expires_in=None)
-
         attachment = Attachment(
-            id=file_id,
-            file_id=file_id,
-            url=Url(value=url_str) if url_str else None,
+            id=Id.from_string(result.file_id),
+            file_id=Id.from_string(result.file_id),
+            url=Url(value=result.url) if result.url else None,
             attachment_type=AttachmentType(command.attachment_type),
             name=command.filename,
-            size_bytes=len(command.file_data),
+            size_bytes=result.size_bytes,
             preview_url=None,
         )
         comment.add_attachment(attachment)
@@ -143,10 +152,12 @@ class RemoveCommentAttachmentHandler(
     def __init__(
         self,
         comment_repo: CommentRepository,
+        file_attachment_port: FileAttachmentPort,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
         self._repo = comment_repo
+        self._file_attachment_port = file_attachment_port
         self._event_bus = event_bus
 
     async def handle(self, command: RemoveCommentAttachmentCommand) -> None:
@@ -157,6 +168,17 @@ class RemoveCommentAttachmentHandler(
         if str(comment.author_id) != command.caller_id:
             raise NotCommentAuthorException()
 
+        # Сохраняем file_id вложения до удаления из агрегата.
+        attachment = next(
+            (a for a in comment.attachments if str(a.id) == command.attachment_id),
+            None,
+        )
+        file_id = str(attachment.file_id) if attachment else None
+
         comment.remove_attachment(Id.from_string(command.attachment_id))
         await self._repo.update(comment)
         await self._event_bus.publish_all(comment.clear_domain_events())
+
+        # Освобождаем квоту и удаляем blob в FileStorage BC.
+        if file_id:
+            await self._file_attachment_port.delete_attachment(file_id)

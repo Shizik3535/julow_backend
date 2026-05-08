@@ -22,7 +22,9 @@ from app.context.communication.domain.events.chat_events import (
 )
 from app.context.communication.domain.exceptions.chat_exceptions import (
     CannotAddMemberToDMException,
+    CannotRemoveChatOwnerException,
     CannotRemoveFromDMException,
+    ChatArchivedException,
     NotChatMemberException,
     ThreadNotFoundException,
     ThreadAlreadyResolvedException,
@@ -111,7 +113,7 @@ class Chat(AggregateRoot):
 
     def _assert_not_archived(self) -> None:
         if self.is_archived:
-            raise ValueError("Чат архивирован")
+            raise ChatArchivedException()
 
     def _find_member(self, user_id: Id) -> ChatMember | None:
         return next((m for m in self.members if m.user_id == user_id), None)
@@ -175,7 +177,7 @@ class Chat(AggregateRoot):
         if member is None:
             return
         if member.role == ChatMemberRole.OWNER:
-            raise ValueError("Нельзя удалить владельца чата")
+            raise CannotRemoveChatOwnerException()
         self.members.remove(member)
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(

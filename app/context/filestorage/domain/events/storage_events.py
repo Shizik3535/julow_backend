@@ -11,11 +11,3 @@ class StorageQuotaApproaching(BaseDomainEvent):
 
     storage_id: str = ""
     used_percent: int = 0
-
-
-@dataclass(frozen=True)
-class StorageQuotaExceeded(BaseDomainEvent):
-    """Квота хранилища превышена."""
-
-    storage_id: str = ""
-    used_percent: int = 0

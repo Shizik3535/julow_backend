@@ -290,7 +290,8 @@ class SqlTaskRepository(SqlAlchemyRepository[Task, TaskORM], TaskRepository):
         if filters:
             title = filters.get("title")
             if title:
-                stmt = stmt.where(TaskORM.title.ilike(f"%{title}%"))
+                safe = title.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                stmt = stmt.where(TaskORM.title.ilike(f"%{safe}%", escape="\\"))
             status = filters.get("status")
             if status:
                 stmt = stmt.where(TaskORM.status == status)

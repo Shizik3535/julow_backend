@@ -738,6 +738,10 @@
 | Communication | ChatController | 17 |
 | Communication | MessageController | 9 |
 | Communication | MeetingController | 17 |
+| FileStorage | FileController | 18 |
+| FileStorage | FolderController | 11 |
+| FileStorage | ShareLinkController | 3 |
+| FileStorage | StorageController | 7 |
 | Notification | NotificationController | 6 |
 | Notification | NotificationSettingsController | 12 |
-| **Итого** | | **341** |
+| **Итого** | | **380** |

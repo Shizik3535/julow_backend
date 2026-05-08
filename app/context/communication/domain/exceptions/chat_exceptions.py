@@ -73,3 +73,20 @@ class ThreadAlreadyResolvedException(BusinessRuleViolationException):
             rule="ThreadNotAlreadyResolved",
             message="Тред уже закрыт",
         )
+
+
+class ChatArchivedException(DomainException):
+    """Чат архивирован."""
+
+    def __init__(self) -> None:
+        super().__init__("Чат архивирован")
+
+
+class CannotRemoveChatOwnerException(BusinessRuleViolationException):
+    """Нельзя удалить владельца чата."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="ChatOwnerCannotBeRemoved",
+            message="Нельзя удалить владельца чата",
+        )

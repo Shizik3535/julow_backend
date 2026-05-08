@@ -93,3 +93,4 @@ volumes:
   redis_data:
   kafka_data:
   minio_data:
+  clamav_db:

@@ -170,3 +170,10 @@ class WorkspaceDeletionAlreadyRequestedException(BusinessRuleViolationException)
             rule="WorkspaceDeletionAlreadyRequested",
             message="Запрос на удаление workspace уже отправлен",
         )
+
+
+class WorkspacePendingDeletionException(DomainException):
+    """Workspace ожидает удаления."""
+
+    def __init__(self) -> None:
+        super().__init__("Workspace ожидает удаления")

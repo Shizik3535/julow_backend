@@ -89,7 +89,8 @@ class SqlProjectRepository(
         if filters:
             search_text = filters.get("query") or filters.get("search_text")
             if search_text:
-                stmt = stmt.where(ProjectORM.name.ilike(f"%{search_text}%"))
+                safe = search_text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                stmt = stmt.where(ProjectORM.name.ilike(f"%{safe}%", escape="\\"))
             workspace_id = filters.get("workspace_id")
             if workspace_id is not None:
                 uuid_val = self._mapper._map_uuid(Id.from_string(str(workspace_id)))

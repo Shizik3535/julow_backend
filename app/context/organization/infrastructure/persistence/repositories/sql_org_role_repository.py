@@ -58,7 +58,8 @@ class SqlOrgRoleRepository(SqlAlchemyRepository[OrgRole, OrgRoleORM], OrgRoleRep
         if filters:
             name = filters.get("name")
             if name:
-                stmt = stmt.where(OrgRoleORM.name.ilike(f"%{name}%"))
+                safe = name.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                stmt = stmt.where(OrgRoleORM.name.ilike(f"%{safe}%", escape="\\"))
             scope = filters.get("scope")
             if scope:
                 stmt = stmt.where(OrgRoleORM.scope == scope)

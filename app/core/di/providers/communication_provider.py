@@ -6,6 +6,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.context.communication.application.ports.integration.inboard.comment_target_access_port import (
     CommentTargetAccessPort,
 )
+from app.context.communication.application.ports.integration.inboard.file_attachment_port import (
+    FileAttachmentPort,
+)
+from app.context.communication.infrastructure.integration.inboard.file_attachment_adapter import (
+    FileAttachmentAdapter as CommunicationFileAttachmentAdapter,
+)
+from app.context.filestorage.application.ports.integration.outboard.file_attachment_provider import (
+    FileAttachmentProvider,
+)
+from app.context.project.application.ports.integration.outboard.project_provider import (
+    ProjectProvider,
+)
 from app.context.communication.domain.repositories.chat_repository import (
     ChatRepository,
 )
@@ -150,6 +162,7 @@ def create_comment_target_access_adapter(
     epic_provider: EpicProvider,
     sprint_provider: SprintProvider,
     project_permission_provider: ProjectPermissionProvider,
+    project_provider: ProjectProvider | None = None,
 ) -> CommentTargetAccessPort:
     """Создать CommentTargetAccessAdapter."""
     return CommentTargetAccessAdapter(
@@ -157,4 +170,12 @@ def create_comment_target_access_adapter(
         epic_provider=epic_provider,
         sprint_provider=sprint_provider,
         project_permission_provider=project_permission_provider,
+        project_provider=project_provider,
     )
+
+
+def create_communication_file_attachment_adapter(
+    file_attachment_provider: FileAttachmentProvider,
+) -> FileAttachmentPort:
+    """Создать FileAttachmentAdapter (inboard) для Communication BC."""
+    return CommunicationFileAttachmentAdapter(provider=file_attachment_provider)

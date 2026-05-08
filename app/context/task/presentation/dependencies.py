@@ -207,6 +207,28 @@ async def get_file_storage_port(container: Container = Depends(get_container)):
     return container.file_storage_port()
 
 
+async def get_task_file_attachment_port(
+    session: AsyncSession = Depends(get_db_session),
+    container: Container = Depends(get_container),
+):
+    """Получить FileAttachmentPort (inboard) для Task BC.
+
+    Делегирует в FileStorage BC: создаёт агрегат ``File``, учитывает
+    квоту workspace, эмитит ``FileUploaded`` / ``FileDeleted``.
+    """
+    file_repo = container.file_repo(session=session)
+    storage_repo = container.storage_repo(session=session)
+    file_storage = container.file_storage_port()
+    event_bus = container.filestorage_event_bus()
+    provider = container.file_attachment_provider(
+        file_repo=file_repo,
+        storage_repo=storage_repo,
+        file_storage=file_storage,
+        event_bus=event_bus,
+    )
+    return container.task_file_attachment_port(file_attachment_provider=provider)
+
+
 # ---------------------------------------------------------------------------
 # Auth — текущий пользователь
 # ---------------------------------------------------------------------------

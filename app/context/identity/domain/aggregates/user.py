@@ -7,6 +7,7 @@ from app.shared.domain.base_aggregate import AggregateRoot
 from app.shared.domain.value_objects.email_vo import Email
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.identity.domain.events.user_events import (
+    AccountDeletionCancelled,
     AccountDeletionRequested,
     AccountDisabled,
     AccountReactivated,
@@ -168,6 +169,9 @@ class User(AggregateRoot):
             raise AccountNotPendingDeletionException()
         self.status = AccountStatus.ACTIVE if self.is_email_confirmed else AccountStatus.PENDING_VERIFICATION
         self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            AccountDeletionCancelled(user_id=str(self.id))
+        )
 
     # --- Приватные методы ---
 

@@ -27,7 +27,6 @@ from app.context.filestorage.domain.events.folder_events import (
 )
 from app.context.filestorage.domain.events.storage_events import (
     StorageQuotaApproaching,
-    StorageQuotaExceeded,
 )
 
 __all__ = [
@@ -55,5 +54,4 @@ __all__ = [
     "FolderMoved",
     "FolderUpdated",
     "StorageQuotaApproaching",
-    "StorageQuotaExceeded",
 ]

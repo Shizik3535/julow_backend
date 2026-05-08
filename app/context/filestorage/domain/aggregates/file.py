@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -320,6 +321,20 @@ class File(AggregateRoot):
             FileUnlocked(file_id=str(self.id), unlocked_by=str(unlocked_by))
         )
 
+    def force_unlock(self, unlocked_by: Id) -> None:
+        """Разблокировать файл принудительно (admin).
+
+        В отличие от ``unlock``, не проверяет, что ``unlocked_by == locked_by``.
+        Используется когда ``files.admin`` подтверждён на application-уровне.
+        """
+        if self.lock is None:
+            return
+        self.lock = None
+        self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            FileUnlocked(file_id=str(self.id), unlocked_by=str(unlocked_by), forced=True)
+        )
+
     # --- Теги ---
 
     def add_tag(self, tag: FileTag) -> None:
@@ -374,16 +389,37 @@ class File(AggregateRoot):
             PublicShareLinkRevoked(file_id=str(self.id), link_id=str(link_id))
         )
 
-    def access_share_link(self, token: str, password: str | None = None) -> None:
+    def access_share_link(
+        self,
+        token: str,
+        password: str | None = None,
+        *,
+        verify_password: "Callable[[str, str], bool] | None" = None,
+    ) -> None:
+        """Перейти по публичной ссылке.
+
+        Аргументы:
+            token: Токен ссылки.
+            password: Пароль в открытом виде (если установлен).
+            verify_password: Callable(password, hash) -> bool.
+                Если не передан — выполняется простое строковое сравнение
+                (для обратной совместимости / тестов).
+        """
         link = next((l for l in self.share_links if l.token == token), None)
         if link is None:
-            return
+            raise PublicShareLinkNotFoundException(id=token)
         if link.expires_at is not None and datetime.now(tz=timezone.utc) > link.expires_at:
             raise PublicShareLinkExpiredException()
         if link.max_uses is not None and link.current_uses >= link.max_uses:
             raise PublicShareLinkMaxUsesExceededException()
-        if link.password_hash is not None and password is None:
-            raise InvalidSharePasswordException()
+        if link.password_hash is not None:
+            if password is None:
+                raise InvalidSharePasswordException()
+            if verify_password is not None:
+                if not verify_password(password, link.password_hash):
+                    raise InvalidSharePasswordException()
+            elif password != link.password_hash:
+                raise InvalidSharePasswordException()
         link.current_uses += 1
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(

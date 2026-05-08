@@ -37,3 +37,31 @@ class FolderMoved(BaseDomainEvent):
     folder_id: str = ""
     old_parent_id: str = ""
     new_parent_id: str = ""
+
+
+@dataclass(frozen=True)
+class FolderPinned(BaseDomainEvent):
+    """Папка закреплена."""
+
+    folder_id: str = ""
+
+
+@dataclass(frozen=True)
+class FolderUnpinned(BaseDomainEvent):
+    """Папка откреплена."""
+
+    folder_id: str = ""
+
+
+@dataclass(frozen=True)
+class FolderShared(BaseDomainEvent):
+    """Папка расшарена."""
+
+    folder_id: str = ""
+
+
+@dataclass(frozen=True)
+class FolderUnshared(BaseDomainEvent):
+    """Шаринг папки отменён."""
+
+    folder_id: str = ""

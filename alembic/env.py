@@ -119,6 +119,21 @@ from app.context.communication.infrastructure.persistence.orm_models.meeting_orm
     MeetingORM,
     MeetingParticipantORM,
 )
+from app.context.filestorage.infrastructure.persistence.orm_models.file_orm import (  # noqa: F401
+    FileLockORM,
+    FileORM,
+    FilePermissionEntryORM,
+    FileShareLinkORM,
+    FileTagORM,
+    FileVersionORM,
+)
+from app.context.filestorage.infrastructure.persistence.orm_models.folder_orm import (  # noqa: F401
+    FolderORM,
+    FolderPermissionEntryORM,
+)
+from app.context.filestorage.infrastructure.persistence.orm_models.storage_orm import (  # noqa: F401
+    StorageORM,
+)
 
 # Alembic Config object
 config = context.config

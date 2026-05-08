@@ -110,6 +110,7 @@ class FileUnlocked(BaseDomainEvent):
 
     file_id: str = ""
     unlocked_by: str = ""
+    forced: bool = False
 
 
 @dataclass(frozen=True)

@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import uuid
-
 from app.shared.application.base_command import BaseCommand
 from app.shared.application.base_command_handler import BaseCommandHandler
 from app.shared.application.messaging.domain_event_bus import DomainEventBus
-from app.shared.application.ports.file_storage.file_storage_port import FileStoragePort
 from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.value_objects.url_vo import Url
 
@@ -16,9 +13,18 @@ from app.context.communication.application.dto.mappers import attachment_to_dto
 from app.context.communication.application.exceptions.authorization_exceptions import (
     NotMessageAuthorException,
 )
+from app.context.communication.application.ports.integration.inboard.file_attachment_port import (
+    FileAttachmentPort,
+)
 from app.context.communication.domain.entities.attachment import Attachment
+from app.context.communication.domain.exceptions.chat_exceptions import (
+    ChatNotFoundException,
+)
 from app.context.communication.domain.exceptions.message_exceptions import (
     MessageNotFoundException,
+)
+from app.context.communication.domain.repositories.chat_repository import (
+    ChatRepository,
 )
 from app.context.communication.domain.repositories.message_repository import (
     MessageRepository,
@@ -46,15 +52,27 @@ class AddMessageAttachmentCommand(BaseCommand):
 class AddMessageAttachmentHandler(
     BaseCommandHandler[AddMessageAttachmentCommand, AttachmentDTO]
 ):
+    """
+    Обработчик добавления вложения к сообщению.
+
+    Делегирует загрузку файла в FileStorage BC через ``FileAttachmentPort``
+    (создание агрегата ``File``, учёт квоты, события).
+
+    Для DM-чатов (``chat.workspace_id is None``) attachment не поддерживается —
+    выбрасывается ``MessageNotFoundException`` (нет квоты хранилища).
+    """
+
     def __init__(
         self,
         message_repo: MessageRepository,
-        file_storage: FileStoragePort,
+        chat_repo: ChatRepository,
+        file_attachment_port: FileAttachmentPort,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
         self._repo = message_repo
-        self._file_storage = file_storage
+        self._chat_repo = chat_repo
+        self._file_attachment_port = file_attachment_port
         self._event_bus = event_bus
 
     async def handle(self, command: AddMessageAttachmentCommand) -> AttachmentDTO:
@@ -65,25 +83,29 @@ class AddMessageAttachmentHandler(
         if str(message.sender_id) != command.caller_id:
             raise NotMessageAuthorException()
 
-        file_id = Id.generate()
-        key = (
-            f"chats/{message.chat_id}/messages/{command.message_id}/"
-            f"attachments/{uuid.uuid4()}/{command.filename}"
-        )
-        await self._file_storage.upload(
-            key=key,
-            data=command.file_data,
+        chat = await self._chat_repo.get_by_id(message.chat_id)
+        if chat is None:
+            raise ChatNotFoundException(str(message.chat_id))
+        if chat.workspace_id is None:
+            # DM/private chat — нет workspace для квоты. Загрузка вложений
+            # в DM не поддерживается через FileStorage BC.
+            raise MessageNotFoundException(command.message_id)
+
+        result = await self._file_attachment_port.upload_attachment(
+            workspace_id=str(chat.workspace_id),
+            uploader_id=command.caller_id,
+            filename=command.filename,
+            file_data=command.file_data,
             content_type=command.content_type,
         )
-        url_str = await self._file_storage.get_url(key=key, expires_in=None)
 
         attachment = Attachment(
-            id=file_id,
-            file_id=file_id,
-            url=Url(value=url_str) if url_str else None,
+            id=Id.from_string(result.file_id),
+            file_id=Id.from_string(result.file_id),
+            url=Url(value=result.url) if result.url else None,
             attachment_type=AttachmentType(command.attachment_type),
             name=command.filename,
-            size_bytes=len(command.file_data),
+            size_bytes=result.size_bytes,
             preview_url=None,
         )
         message.add_attachment(attachment)
@@ -103,13 +125,17 @@ class RemoveMessageAttachmentCommand(BaseCommand):
 class RemoveMessageAttachmentHandler(
     BaseCommandHandler[RemoveMessageAttachmentCommand, None]
 ):
+    """Обработчик удаления вложения сообщения."""
+
     def __init__(
         self,
         message_repo: MessageRepository,
+        file_attachment_port: FileAttachmentPort,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
         self._repo = message_repo
+        self._file_attachment_port = file_attachment_port
         self._event_bus = event_bus
 
     async def handle(self, command: RemoveMessageAttachmentCommand) -> None:
@@ -120,6 +146,15 @@ class RemoveMessageAttachmentHandler(
         if str(message.sender_id) != command.caller_id:
             raise NotMessageAuthorException()
 
+        attachment = next(
+            (a for a in message.attachments if str(a.id) == command.attachment_id),
+            None,
+        )
+        file_id = str(attachment.file_id) if attachment else None
+
         message.remove_attachment(Id.from_string(command.attachment_id))
         await self._repo.update(message)
         await self._event_bus.publish_all(message.clear_domain_events())
+
+        if file_id:
+            await self._file_attachment_port.delete_attachment(file_id)

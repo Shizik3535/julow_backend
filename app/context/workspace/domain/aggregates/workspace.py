@@ -12,6 +12,7 @@ from app.context.workspace.domain.value_objects.workspace_personalization import
 from app.context.workspace.domain.value_objects.workspace_branding import WorkspaceBranding
 from app.context.workspace.domain.value_objects.security_policy import SecurityPolicy
 from app.context.workspace.domain.value_objects.membership_policy import MembershipPolicy
+from app.shared.domain.changed_fields import changed_fields
 from app.context.workspace.domain.value_objects.workspace_limits import WorkspaceLimits
 from app.context.workspace.domain.events.workspace_events import (
     WorkspaceCreated,
@@ -39,16 +40,8 @@ from app.context.workspace.domain.exceptions.workspace_exceptions import (
     WorkspaceAlreadySuspendedException,
     WorkspaceNotSuspendedException,
     WorkspaceDeletionAlreadyRequestedException,
+    WorkspacePendingDeletionException,
 )
-
-
-def _changed_fields(old_vo: object, new_vo: object) -> list[str]:
-    """Вычисляет список имён изменённых полей между двумя VO-группами."""
-    changed: list[str] = []
-    for f_name in type(old_vo).__dataclass_fields__:
-        if getattr(old_vo, f_name) != getattr(new_vo, f_name):
-            changed.append(f_name)
-    return changed
 
 
 @dataclass
@@ -135,12 +128,12 @@ class Workspace(AggregateRoot):
         if self.status == WorkspaceStatus.ARCHIVED:
             raise WorkspaceArchivedException()
         if self.status == WorkspaceStatus.PENDING_DELETION:
-            raise WorkspaceSuspendedException()
+            raise WorkspacePendingDeletionException()
 
     def _assert_not_pending_deletion(self) -> None:
         """Проверяет, что workspace не в процессе удаления."""
         if self.status == WorkspaceStatus.PENDING_DELETION:
-            raise WorkspaceSuspendedException()
+            raise WorkspacePendingDeletionException()
 
     # --- Информация ---
 
@@ -153,7 +146,7 @@ class Workspace(AggregateRoot):
             self.name = name
             changed.append("name")
         if personalization is not None:
-            pers_changed = _changed_fields(self.personalization, personalization)
+            pers_changed = changed_fields(self.personalization, personalization)
             self.personalization = personalization
             changed.extend(f"personalization.{f}" for f in pers_changed)
         if changed:
@@ -289,7 +282,7 @@ class Workspace(AggregateRoot):
     def update_security_policy(self, policy: SecurityPolicy) -> None:
         """Обновляет политику безопасности."""
         self._assert_can_modify()
-        changed = _changed_fields(self.security_policy, policy)
+        changed = changed_fields(self.security_policy, policy)
         self.security_policy = policy
         self.updated_at = datetime.now(tz=timezone.utc)
         if changed:
@@ -300,7 +293,7 @@ class Workspace(AggregateRoot):
     def update_membership_policy(self, policy: MembershipPolicy) -> None:
         """Обновляет политику членства."""
         self._assert_can_modify()
-        changed = _changed_fields(self.membership_policy, policy)
+        changed = changed_fields(self.membership_policy, policy)
         self.membership_policy = policy
         self.updated_at = datetime.now(tz=timezone.utc)
         if changed:
@@ -311,7 +304,7 @@ class Workspace(AggregateRoot):
     def update_limits(self, limits: WorkspaceLimits) -> None:
         """Обновляет лимиты workspace."""
         self._assert_can_modify()
-        changed = _changed_fields(self.limits, limits)
+        changed = changed_fields(self.limits, limits)
         self.limits = limits
         self.updated_at = datetime.now(tz=timezone.utc)
         if changed:

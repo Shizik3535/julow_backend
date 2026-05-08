@@ -28,7 +28,12 @@ class ProjectAdapter(ProjectPort):
         dto = await self._provider.get_project(project_id)
         if dto is None:
             return None
-        return {"id": dto.id, "name": dto.name, "status": getattr(dto, "status", None)}
+        return {
+            "id": dto.id,
+            "name": dto.name,
+            "status": getattr(dto, "status", None),
+            "workspace_id": getattr(dto, "workspace_id", None),
+        }
 
     async def is_project_active(self, project_id: str) -> bool:
         dto = await self._provider.get_project(project_id)

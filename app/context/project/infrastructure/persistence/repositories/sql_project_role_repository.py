@@ -38,7 +38,8 @@ class SqlProjectRoleRepository(
         return [self._mapper.to_domain(orm) for orm in result.scalars().all()]
 
     async def search(self, query: str, project_id: Id | None = None) -> list[ProjectRole]:
-        stmt = select(ProjectRoleORM).where(ProjectRoleORM.name.ilike(f"%{query}%"))
+        safe = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        stmt = select(ProjectRoleORM).where(ProjectRoleORM.name.ilike(f"%{safe}%", escape="\\"))
         if project_id is not None:
             uuid_val = self._mapper._map_uuid(project_id)
             stmt = stmt.where(ProjectRoleORM.project_id == uuid_val)

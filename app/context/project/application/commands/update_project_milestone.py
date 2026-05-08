@@ -60,16 +60,19 @@ class UpdateProjectMilestoneHandler(BaseCommandHandler[UpdateProjectMilestoneCom
             permission=self.REQUIRED_PERMISSION,
         )
 
-        kwargs: dict = {}
-        if command.name is not None:
-            kwargs["name"] = command.name
-        if command.due_date is not None:
-            kwargs["due_date"] = date.fromisoformat(command.due_date)
+        name = command.name
+        due_date_val = date.fromisoformat(command.due_date) if command.due_date else None
+        description_val = None
         if command.description_content is not None:
             from app.shared.domain.value_objects.rich_text_format import RichTextFormat
             fmt = RichTextFormat(command.description_format) if command.description_format else RichTextFormat.MARKDOWN
-            kwargs["description"] = RichText(content=command.description_content, format=fmt)
+            description_val = RichText(content=command.description_content, format=fmt)
 
-        project.update_milestone(Id.from_string(command.milestone_id), **kwargs)
+        project.update_milestone(
+            Id.from_string(command.milestone_id),
+            name=name,
+            description=description_val,
+            due_date=due_date_val,
+        )
         await self._project_repo.update(project)
         await self._event_bus.publish_all(project.clear_domain_events())

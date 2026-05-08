@@ -5,15 +5,11 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from app.core.logging import get_logger
 from app.shared.domain.base_exceptions import DomainException
 from app.shared.domain.exceptions.business_rule_violation_exception import BusinessRuleViolationException
 from app.shared.domain.exceptions.entity_not_found_exception import EntityNotFoundException
 from app.shared.domain.exceptions.validation_exception import ValidationException
 from app.shared.presentation.base_presenter import BasePresenter
-
-logger = get_logger(__name__)
-
 
 class BaseController(ABC):
     """
@@ -84,11 +80,11 @@ class BaseController(ABC):
                 ),
             )
 
-        logger.error("Unhandled domain exception", error=str(exc))
+        # Catch-all for other DomainException subclasses (e.g. status-specific)
         return HTTPException(
-            status_code=500,
+            status_code=409,
             detail=BasePresenter.error(
-                code="INTERNAL_ERROR",
-                message="Внутренняя ошибка сервера",
+                code="DOMAIN_ERROR",
+                message=str(exc.message),
             ),
         )

@@ -41,3 +41,19 @@ class CommentTargetAccessPort(ABC):
             target_type: Тип комментируемой сущности.
             target_id: Идентификатор сущности (opaque, из соответствующего BC).
         """
+
+    @abstractmethod
+    async def resolve_workspace_id(
+        self,
+        target_type: CommentTargetType,
+        target_id: str,
+    ) -> str | None:
+        """
+        Найти ``workspace_id``, к которому относится комментируемая сущность.
+
+        Используется для делегирования загрузки вложений в FileStorage BC,
+        где квота и хранилище привязаны к workspace.
+
+        Возвращает ``None``, если резолвинг невозможен (тип не поддержан
+        или сущность не найдена).
+        """

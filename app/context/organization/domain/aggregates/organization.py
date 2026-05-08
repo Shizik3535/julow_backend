@@ -8,6 +8,7 @@ from app.shared.domain.value_objects.id_vo import Id
 from app.context.organization.domain.value_objects.org_status import OrgStatus
 from app.context.organization.domain.value_objects.org_personalization import OrgPersonalization
 from app.context.organization.domain.value_objects.security_policy import SecurityPolicy
+from app.shared.domain.changed_fields import changed_fields
 from app.context.organization.domain.value_objects.membership_policy import MembershipPolicy
 from app.context.organization.domain.events.organization_events import (
     OrganizationCreated,
@@ -26,17 +27,9 @@ from app.context.organization.domain.exceptions.organization_exceptions import (
     OrganizationAlreadyActiveException,
     OrganizationAlreadySuspendedException,
     OrganizationDeletionAlreadyRequestedException,
+    OrganizationPendingDeletionException,
     OrganizationSuspendedException,
 )
-
-
-def _changed_fields(old_vo: object, new_vo: object) -> list[str]:
-    """Вычисляет список имён изменённых полей между двумя VO-группами."""
-    changed: list[str] = []
-    for f_name in type(old_vo).__dataclass_fields__:
-        if getattr(old_vo, f_name) != getattr(new_vo, f_name):
-            changed.append(f_name)
-    return changed
 
 
 @dataclass
@@ -93,7 +86,7 @@ class Organization(AggregateRoot):
     def _assert_not_pending_deletion(self) -> None:
         """Проверяет, что организация не в процессе удаления."""
         if self.status == OrgStatus.PENDING_DELETION:
-            raise OrganizationSuspendedException()
+            raise OrganizationPendingDeletionException()
 
     def _assert_can_modify(self) -> None:
         """Проверяет, что организация допускает изменения."""
@@ -111,7 +104,7 @@ class Organization(AggregateRoot):
             changed.append("name")
         pers_changed: list[str] = []
         if personalization is not None:
-            pers_changed = _changed_fields(self.personalization, personalization)
+            pers_changed = changed_fields(self.personalization, personalization)
             self.personalization = personalization
             changed.extend(f"personalization.{f}" for f in pers_changed)
         if changed:
@@ -199,7 +192,7 @@ class Organization(AggregateRoot):
     def update_security_policy(self, policy: SecurityPolicy) -> None:
         """Обновляет политику безопасности."""
         self._assert_can_modify()
-        changed = _changed_fields(self.security_policy, policy)
+        changed = changed_fields(self.security_policy, policy)
         self.security_policy = policy
         self.updated_at = datetime.now(tz=timezone.utc)
         if changed:
@@ -210,7 +203,7 @@ class Organization(AggregateRoot):
     def update_membership_policy(self, policy: MembershipPolicy) -> None:
         """Обновляет политику членства."""
         self._assert_can_modify()
-        changed = _changed_fields(self.membership_policy, policy)
+        changed = changed_fields(self.membership_policy, policy)
         self.membership_policy = policy
         self.updated_at = datetime.now(tz=timezone.utc)
         if changed:

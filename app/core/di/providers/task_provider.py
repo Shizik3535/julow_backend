@@ -48,6 +48,15 @@ from app.context.task.domain.repositories.task_repository import TaskRepository
 from app.context.task.domain.repositories.task_template_repository import TaskTemplateRepository
 from app.context.task.infrastructure.integration.inboard.board_adapter import BoardAdapter
 from app.context.task.infrastructure.integration.inboard.epic_adapter import EpicAdapter
+from app.context.filestorage.application.ports.integration.outboard.file_attachment_provider import (
+    FileAttachmentProvider,
+)
+from app.context.task.application.ports.integration.inboard.file_attachment_port import (
+    FileAttachmentPort,
+)
+from app.context.task.infrastructure.integration.inboard.file_attachment_adapter import (
+    FileAttachmentAdapter as TaskFileAttachmentAdapter,
+)
 from app.context.task.infrastructure.integration.inboard.identity_user_adapter import (
     IdentityUserAdapter,
 )
@@ -135,6 +144,16 @@ def create_task_participant_provider_adapter(repo: TaskRepository) -> TaskPartic
 
 
 # --- Inboard adapters ---
+
+def create_task_file_attachment_adapter(
+    file_attachment_provider: FileAttachmentProvider,
+) -> FileAttachmentPort:
+    """Создать FileAttachmentAdapter (inboard) для Task BC.
+
+    Делегирует в outboard FileStorage BC (FileAttachmentProvider).
+    """
+    return TaskFileAttachmentAdapter(provider=file_attachment_provider)
+
 
 def create_task_identity_user_adapter(
     identity_user_provider: IdentityUserProvider,

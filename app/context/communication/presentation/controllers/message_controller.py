@@ -45,8 +45,8 @@ from app.context.communication.application.queries.get_thread_messages import (
 from app.context.communication.presentation.dependencies import (
     get_chat_repository,
     get_communication_event_bus,
+    get_communication_file_attachment_port,
     get_current_user_id,
-    get_file_storage_port,
     get_message_repository,
 )
 from app.context.communication.presentation.schemas.requests.message_requests import (
@@ -332,13 +332,15 @@ class MessageController(BaseController):
         attachment_type: str = Form(default="file"),
         user_id: str = Depends(get_current_user_id),
         message_repo=Depends(get_message_repository),
-        file_storage=Depends(get_file_storage_port),
+        chat_repo=Depends(get_chat_repository),
+        file_attachment_port=Depends(get_communication_file_attachment_port),
         event_bus=Depends(get_communication_event_bus),
     ) -> SuccessResponse[AttachmentResponse]:
         file_data = await file.read()
         handler = AddMessageAttachmentHandler(
             message_repo=message_repo,
-            file_storage=file_storage,
+            chat_repo=chat_repo,
+            file_attachment_port=file_attachment_port,
             event_bus=event_bus,
         )
         dto = await handler.handle(
@@ -359,10 +361,12 @@ class MessageController(BaseController):
         attachment_id: str,
         user_id: str = Depends(get_current_user_id),
         message_repo=Depends(get_message_repository),
+        file_attachment_port=Depends(get_communication_file_attachment_port),
         event_bus=Depends(get_communication_event_bus),
     ) -> HttpMessageResponse:
         handler = RemoveMessageAttachmentHandler(
             message_repo=message_repo,
+            file_attachment_port=file_attachment_port,
             event_bus=event_bus,
         )
         await handler.handle(

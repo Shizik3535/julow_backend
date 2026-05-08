@@ -11,6 +11,13 @@ class ProjectNotFoundException(EntityNotFoundException):
         super().__init__(entity_type="Project", id=id)
 
 
+class MilestoneNotFoundException(EntityNotFoundException):
+    """Milestone не найден."""
+
+    def __init__(self, id: object) -> None:
+        super().__init__(entity_type="Milestone", id=id)
+
+
 class ProjectSuspendedException(DomainException):
     """Проект приостановлен."""
 
@@ -42,4 +49,24 @@ class MethodologyCapabilityNotAvailableException(BusinessRuleViolationException)
         super().__init__(
             rule="MethodologyCapability",
             message=f"Функция не доступна для текущей методологии{f': {capability}' if capability else ''}",
+        )
+
+
+class ProjectPendingDeletionException(DomainException):
+    """Проект ожидает удаления."""
+
+    def __init__(self) -> None:
+        super().__init__("Проект ожидает удаления")
+
+
+class CannotTransferOwnershipException(BusinessRuleViolationException):
+    """Нельзя передать владение проектом."""
+
+    def __init__(self, reason: str = "") -> None:
+        msg = "Нельзя передать владение проектом"
+        if reason:
+            msg += f": {reason}"
+        super().__init__(
+            rule="OwnershipTransfer",
+            message=msg,
         )

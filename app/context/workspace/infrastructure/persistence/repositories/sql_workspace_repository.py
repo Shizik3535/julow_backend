@@ -99,7 +99,8 @@ class SqlWorkspaceRepository(SqlAlchemyRepository[Workspace, WorkspaceORM], Work
         if filters:
             name = filters.get("name")
             if name:
-                stmt = stmt.where(WorkspaceORM.name.ilike(f"%{name}%"))
+                safe = name.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                stmt = stmt.where(WorkspaceORM.name.ilike(f"%{safe}%", escape="\\"))
             status = filters.get("status")
             if status:
                 stmt = stmt.where(WorkspaceORM.status == status)

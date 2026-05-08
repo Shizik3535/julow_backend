@@ -36,6 +36,10 @@ from app.context.task.application.messaging import (
     build_task_event_bus,
     task_subscriptions,
 )
+from app.context.filestorage.application.messaging import (
+    build_filestorage_event_bus,
+    filestorage_subscriptions,
+)
 from app.core.config.settings import Settings
 from app.core.di.providers.auth_provider import create_auth_token_adapter, create_password_adapter
 from app.core.di.providers.background_tasks_provider import create_celery_app
@@ -67,6 +71,7 @@ from app.core.di.providers.communication_provider import (
     create_comment_mapper,
     create_comment_repository,
     create_comment_target_access_adapter,
+    create_communication_file_attachment_adapter,
     create_conference_provider_registry,
     create_meeting_mapper,
     create_meeting_repository,
@@ -177,11 +182,24 @@ from app.core.di.providers.project_provider import (
     create_sprint_provider_adapter,
     create_sprint_repository,
 )
+from app.core.di.providers.filestorage_provider import (
+    create_file_attachment_provider,
+    create_file_mapper,
+    create_file_repository,
+    create_folder_mapper,
+    create_folder_repository,
+    create_fs_identity_user_adapter,
+    create_fs_workspace_adapter,
+    create_fs_workspace_permission_checker,
+    create_storage_mapper,
+    create_storage_repository,
+)
 from app.core.di.providers.task_provider import (
     create_changelog_mapper,
     create_changelog_repository,
     create_task_board_adapter,
     create_task_epic_adapter,
+    create_task_file_attachment_adapter,
     create_task_identity_user_adapter,
     create_task_mapper,
     create_task_participant_provider_adapter,
@@ -202,6 +220,25 @@ from app.shared.infrastructure.background_tasks.celery_background_tasks_adapter 
 )
 from app.shared.infrastructure.file_storage.s3_file_storage_adapter import S3FileStorageAdapter
 from app.shared.infrastructure.messaging.kafka_message_broker_adapter import KafkaMessageBrokerAdapter
+from app.shared.infrastructure.security.clamav_scanner_adapter import ClamAvScannerAdapter
+from app.shared.infrastructure.security.noop_scanner_adapter import NoOpScannerAdapter
+
+
+def _create_virus_scanner(clamav_settings):  # noqa: ANN001
+    """
+    Factory: ``VirusScannerPort``.
+
+    Если ClamAV отключён — возвращает ``NoOpScannerAdapter`` (для dev/test).
+    Иначе — ``ClamAvScannerAdapter`` с настройками из env.
+    """
+    if not clamav_settings.enabled:
+        return NoOpScannerAdapter()
+    return ClamAvScannerAdapter(
+        host=clamav_settings.host,
+        port=clamav_settings.port,
+        timeout_seconds=clamav_settings.timeout_seconds,
+        chunk_size_bytes=clamav_settings.chunk_size_bytes,
+    )
 
 
 class Container(containers.DeclarativeContainer):
@@ -265,6 +302,12 @@ class Container(containers.DeclarativeContainer):
         client_kwargs=s3_client_kwargs,
         bucket_name=settings.provided.s3.bucket_name,
         public_url_base=settings.provided.s3.endpoint_url,
+    )
+
+    # Antivirus (ClamAV в production, NoOp в dev/test)
+    virus_scanner_port = providers.Singleton(
+        _create_virus_scanner,
+        clamav_settings=settings.provided.clamav,
     )
 
     # Messaging
@@ -930,6 +973,70 @@ class Container(containers.DeclarativeContainer):
         repo=chat_repo,
     )
 
+    # ==================================================================
+    # FileStorage BC
+    # ==================================================================
+
+    # FileStorage BC - Event Bus
+    filestorage_event_bus = providers.Singleton(
+        build_filestorage_event_bus,
+        broker=message_broker_port,
+    )
+
+    # FileStorage BC - Mappers (Singleton)
+    file_mapper = providers.Singleton(create_file_mapper)
+    folder_mapper = providers.Singleton(create_folder_mapper)
+    storage_mapper = providers.Singleton(create_storage_mapper)
+
+    # FileStorage BC - Repositories (Factory with session)
+    file_repo = providers.Factory(
+        create_file_repository,
+        session=db_session_factory,
+        mapper=file_mapper,
+    )
+    folder_repo = providers.Factory(
+        create_folder_repository,
+        session=db_session_factory,
+        mapper=folder_mapper,
+    )
+    storage_repo = providers.Factory(
+        create_storage_repository,
+        session=db_session_factory,
+        mapper=storage_mapper,
+    )
+
+    # FileStorage BC - Integration inboard adapters
+    fs_workspace_permission_checker_port = providers.Factory(
+        create_fs_workspace_permission_checker,
+    )
+    fs_identity_user_port = providers.Factory(
+        create_fs_identity_user_adapter,
+    )
+    fs_workspace_port = providers.Factory(
+        create_fs_workspace_adapter,
+    )
+
+    # FileStorage BC - Outboard provider (для Task/Communication BC)
+    file_attachment_provider = providers.Factory(
+        create_file_attachment_provider,
+        file_repo=file_repo,
+        storage_repo=storage_repo,
+        file_storage=file_storage_port,
+        event_bus=filestorage_event_bus,
+    )
+
+    # Task BC - inboard FileAttachmentAdapter (delegates to FileStorage BC)
+    task_file_attachment_port = providers.Factory(
+        create_task_file_attachment_adapter,
+        file_attachment_provider=file_attachment_provider,
+    )
+
+    # Communication BC - inboard FileAttachmentAdapter
+    communication_file_attachment_port = providers.Factory(
+        create_communication_file_attachment_adapter,
+        file_attachment_provider=file_attachment_provider,
+    )
+
     # Notification BC - Integration Adapters that depend on Task/Project/Communication BC providers
     notification_task_participant_port = providers.Factory(
         create_task_participant_adapter,
@@ -978,6 +1085,7 @@ async def wire_messaging(container: Container) -> None:
         *task_subscriptions(container),
         *notification_subscriptions(container),
         *communication_subscriptions(container),
+        *filestorage_subscriptions(container),
     ]
 
     await asyncio.gather(

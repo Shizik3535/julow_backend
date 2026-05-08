@@ -7,6 +7,9 @@ from app.shared.domain.value_objects.id_vo import Id
 from app.context.task.application.ports.authorization.task_permission_checker_port import (
     TaskPermissionCheckerPort,
 )
+from app.context.task.application.ports.integration.inboard.file_attachment_port import (
+    FileAttachmentPort,
+)
 from app.context.task.domain.exceptions.task_exceptions import TaskNotFoundException
 from app.context.task.domain.repositories.task_repository import TaskRepository
 
@@ -30,9 +33,16 @@ class RemoveTaskAttachmentHandler(BaseCommandHandler[RemoveTaskAttachmentCommand
 
     REQUIRED_PERMISSION = "tasks.update_own"
 
-    def __init__(self, task_repo: TaskRepository, permission_checker: TaskPermissionCheckerPort, event_bus: DomainEventBus) -> None:
+    def __init__(
+        self,
+        task_repo: TaskRepository,
+        file_attachment_port: FileAttachmentPort,
+        permission_checker: TaskPermissionCheckerPort,
+        event_bus: DomainEventBus,
+    ) -> None:
         super().__init__()
         self._task_repo = task_repo
+        self._file_attachment_port = file_attachment_port
         self._permission_checker = permission_checker
         self._event_bus = event_bus
 
@@ -50,3 +60,6 @@ class RemoveTaskAttachmentHandler(BaseCommandHandler[RemoveTaskAttachmentCommand
         task.remove_attachment(Id.from_string(command.file_id))
         await self._task_repo.update(task)
         await self._event_bus.publish_all(task.clear_domain_events())
+
+        # Освобождаем квоту и удаляем blob в FileStorage BC.
+        await self._file_attachment_port.delete_attachment(command.file_id)

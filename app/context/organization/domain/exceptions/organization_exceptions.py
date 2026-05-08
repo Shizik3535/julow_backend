@@ -109,3 +109,10 @@ class StorageQuotaExceededException(BusinessRuleViolationException):
             rule="StorageQuota",
             message="Квота хранилища превышена",
         )
+
+
+class OrganizationPendingDeletionException(DomainException):
+    """Организация ожидает удаления."""
+
+    def __init__(self) -> None:
+        super().__init__("Организация ожидает удаления")

@@ -38,6 +38,9 @@ services:
       CORS_ALLOWED_HEADERS: '["*"]'
       AUTH_JWT_SECRET_KEY: change-me-in-production
       ENCRYPTION_KEY: AAmioAjwB55kaBoOrZYZHrbnv21GCNdcPAxCgwJDs8s=
+      CLAMAV_ENABLED: "true"
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,6 +51,8 @@ services:
       minio:
         condition: service_healthy
       mailhog:
+        condition: service_healthy
+      clamav:
         condition: service_healthy
 
   # ── PostgreSQL ───────────────────────────────────
@@ -125,7 +130,23 @@ services:
       timeout: 3s
       retries: 5
 
-  # ── MailHog (dev SMTP) ───────────────────────────
+  # ── ClamAV (антивирус для FileStorage BC) ────────
+  clamav:
+    image: clamav/clamav:stable
+    container_name: julow-clamav
+    restart: unless-stopped
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav_db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdcheck.sh || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # ── MailHog (dev SMTP) ───────────────────────
   mailhog:
     image: mailhog/mailhog:latest
     container_name: julow-mailhog
@@ -144,3 +165,4 @@ volumes:
   redis_data:
   kafka_data:
   minio_data:
+  clamav_db:

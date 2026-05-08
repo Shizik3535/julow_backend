@@ -11,7 +11,6 @@ from app.context.filestorage.domain.value_objects.storage_config import StorageC
 from app.context.filestorage.domain.value_objects.file_type import FileType
 from app.context.filestorage.domain.events.storage_events import (
     StorageQuotaApproaching,
-    StorageQuotaExceeded,
 )
 from app.context.filestorage.domain.exceptions.storage_exceptions import (
     StorageQuotaExceededException,
@@ -73,12 +72,6 @@ class Storage(AggregateRoot):
         """Добавляет использование, проверяет квоту."""
         new_used = self.used_bytes + bytes_count
         if new_used > self.max_bytes:
-            self._register_event(
-                StorageQuotaExceeded(
-                    storage_id=str(self.id),
-                    used_percent=100,
-                )
-            )
             raise StorageQuotaExceededException(
                 max_bytes=self.max_bytes,
                 used_bytes=new_used,

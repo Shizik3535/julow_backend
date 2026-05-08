@@ -46,7 +46,8 @@ class SqlUserRepository(SqlAlchemyRepository[User, UserORM], UserRepository):
         if filters:
             email = filters.get("email")
             if email:
-                stmt = stmt.where(UserORM.email.ilike(f"%{email}%"))
+                safe = email.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                stmt = stmt.where(UserORM.email.ilike(f"%{safe}%", escape="\\"))
             status = filters.get("status")
             if status:
                 stmt = stmt.where(UserORM.status == status)

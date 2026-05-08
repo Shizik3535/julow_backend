@@ -30,6 +30,16 @@ class TeamAlreadyDeactivatedException(BusinessRuleViolationException):
         )
 
 
+class TeamDeactivatedException(BusinessRuleViolationException):
+    """Команда деактивирована, операция невозможна."""
+
+    def __init__(self, team_id: str = "") -> None:
+        super().__init__(
+            rule="TeamDeactivated",
+            message=f"Команда {team_id} деактивирована" if team_id else "Команда деактивирована",
+        )
+
+
 class TeamAlreadyActiveException(BusinessRuleViolationException):
     """Команда уже активна."""
 

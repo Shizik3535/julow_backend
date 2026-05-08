@@ -180,6 +180,24 @@ api_v1_router.include_router(_comment_controller.router)
 api_v1_router.include_router(_meeting_controller.router)
 api_v1_router.include_router(_message_controller.router)
 
+# FileStorage BC
+from app.context.filestorage.presentation.controllers import (
+    FileController,
+    FolderController,
+    ShareLinkController,
+    StorageController,
+)
+
+_file_controller = FileController()
+_folder_controller = FolderController()
+_share_link_controller = ShareLinkController()
+_storage_controller = StorageController()
+
+api_v1_router.include_router(_file_controller.router)
+api_v1_router.include_router(_folder_controller.router)
+api_v1_router.include_router(_share_link_controller.router)
+api_v1_router.include_router(_storage_controller.router)
+
 # Notification BC
 from app.context.notification.presentation.controllers import (
     NotificationController,

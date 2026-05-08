@@ -53,6 +53,13 @@ class AccountDeletionRequested(BaseDomainEvent):
 
 
 @dataclass(frozen=True)
+class AccountDeletionCancelled(BaseDomainEvent):
+    """Отмена запроса удаления аккаунта."""
+
+    user_id: str = ""
+
+
+@dataclass(frozen=True)
 class AccountDisabled(BaseDomainEvent):
     """Аккаунт деактивирован."""
 

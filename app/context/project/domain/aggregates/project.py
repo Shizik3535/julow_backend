@@ -12,8 +12,10 @@ from app.context.project.domain.value_objects.project_visibility import ProjectV
 from app.context.project.domain.value_objects.methodology import Methodology
 from app.context.project.domain.value_objects.methodology_capabilities import MethodologyCapabilities
 from app.context.project.domain.value_objects.category import Category
+from app.shared.domain.changed_fields import changed_fields
 from app.context.project.domain.value_objects.custom_field_definition import CustomFieldDefinition
 from app.context.project.domain.entities.milestone import Milestone
+from app.context.project.domain.value_objects.milestone_status import MilestoneStatus
 from app.context.project.domain.events.project_events import (
     ProjectCreated,
     ProjectInfoChanged,
@@ -30,8 +32,11 @@ from app.context.project.domain.events.project_events import (
 )
 from app.context.project.domain.exceptions.project_exceptions import (
     CannotChangeMethodologyWithActiveSprintsException,
+    CannotTransferOwnershipException,
+    MilestoneNotFoundException,
     ProjectSuspendedException,
     ProjectArchivedException,
+    ProjectPendingDeletionException,
 )
 from app.context.project.domain.exceptions.project_membership_exceptions import (
     CannotRemoveLastOwnerException,
@@ -40,15 +45,6 @@ from app.context.project.domain.exceptions.custom_field_exceptions import (
     DuplicateCustomFieldException,
     CustomFieldDefinitionNotFoundException,
 )
-
-
-def _changed_fields(old_vo: object, new_vo: object) -> list[str]:
-    """Вычисляет список имён изменённых полей между двумя VO-группами."""
-    changed: list[str] = []
-    for f_name in type(old_vo).__dataclass_fields__:
-        if getattr(old_vo, f_name) != getattr(new_vo, f_name):
-            changed.append(f_name)
-    return changed
 
 
 @dataclass
@@ -135,11 +131,11 @@ class Project(AggregateRoot):
         if self.status == ProjectStatus.ARCHIVED:
             raise ProjectArchivedException()
         if self.status == ProjectStatus.PENDING_DELETION:
-            raise ProjectSuspendedException()
+            raise ProjectPendingDeletionException()
 
     def _assert_not_pending_deletion(self) -> None:
         if self.status == ProjectStatus.PENDING_DELETION:
-            raise ProjectSuspendedException()
+            raise ProjectPendingDeletionException()
 
     # --- Информация ---
 
@@ -202,9 +198,9 @@ class Project(AggregateRoot):
     def transfer_ownership(self, from_id: Id, to_id: Id) -> None:
         self._assert_can_modify()
         if from_id not in self.owner_ids:
-            raise ValueError("Передающий не является владельцем")
+            raise CannotTransferOwnershipException(reason="Передающий не является владельцем")
         if to_id in self.owner_ids:
-            raise ValueError("Получающий уже является владельцем")
+            raise CannotTransferOwnershipException(reason="Получающий уже является владельцем")
         self.owner_ids.remove(from_id)
         self.owner_ids.append(to_id)
         self.updated_at = datetime.now(tz=timezone.utc)
@@ -311,16 +307,27 @@ class Project(AggregateRoot):
             MilestoneCreated(project_id=str(self.id), milestone_id=str(milestone.id))
         )
 
-    def update_milestone(self, milestone_id: Id, **kwargs: object) -> None:
+    def update_milestone(
+        self,
+        milestone_id: Id,
+        name: str | None = None,
+        description: RichText | None = None,
+        due_date: date | None = None,
+    ) -> None:
         self._assert_can_modify()
         milestone = next((m for m in self.milestones if m.id == milestone_id), None)
         if milestone is None:
-            raise ValueError(f"Milestone не найден: {milestone_id}")
+            raise MilestoneNotFoundException(milestone_id)
         changed: list[str] = []
-        for key, value in kwargs.items():
-            if hasattr(milestone, key) and getattr(milestone, key) != value:
-                setattr(milestone, key, value)
-                changed.append(key)
+        if name is not None and milestone.name != name:
+            milestone.name = name
+            changed.append("name")
+        if description is not None and milestone.description != description:
+            milestone.description = description
+            changed.append("description")
+        if due_date is not None and milestone.due_date != due_date:
+            milestone.due_date = due_date
+            changed.append("due_date")
         if changed:
             self.updated_at = datetime.now(tz=timezone.utc)
             self._register_event(
@@ -331,11 +338,11 @@ class Project(AggregateRoot):
                 )
             )
 
-    def change_milestone_status(self, milestone_id: Id, new_status: object) -> None:
+    def change_milestone_status(self, milestone_id: Id, new_status: MilestoneStatus) -> None:
         self._assert_can_modify()
         milestone = next((m for m in self.milestones if m.id == milestone_id), None)
         if milestone is None:
-            raise ValueError(f"Milestone не найден: {milestone_id}")
+            raise MilestoneNotFoundException(milestone_id)
         milestone.status = new_status
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(

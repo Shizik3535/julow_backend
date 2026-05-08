@@ -1,0 +1,42 @@
+from __future__ import annotations
+
+from app.context.filestorage.application.exceptions.authorization_exceptions import (
+    InsufficientFileStoragePermissionsException,
+)
+from app.context.filestorage.application.ports.integration.inboard.workspace_permission_checker_port import (
+    WorkspacePermissionCheckerPort,
+)
+from app.context.workspace.application.ports.integration.outboard.workspace_membership_provider import (
+    WorkspaceMembershipProvider,
+)
+
+
+class WorkspacePermissionCheckerAdapter(WorkspacePermissionCheckerPort):
+    """
+    Реализация WorkspacePermissionCheckerPort для FileStorage BC.
+
+    Делегирует в WorkspaceMembershipProvider (outboard Workspace BC),
+    который инкапсулирует каскад workspace-роль → орг-роль.
+    """
+
+    def __init__(self, workspace_membership_provider: WorkspaceMembershipProvider) -> None:
+        self._provider = workspace_membership_provider
+
+    async def has_permission(
+        self, user_id: str, workspace_id: str, permission: str
+    ) -> bool:
+        return await self._provider.has_permission(
+            workspace_id=workspace_id,
+            user_id=user_id,
+            permission=permission,
+        )
+
+    async def require_permission(
+        self, user_id: str, workspace_id: str, permission: str
+    ) -> None:
+        if not await self.has_permission(
+            user_id=user_id, workspace_id=workspace_id, permission=permission
+        ):
+            raise InsufficientFileStoragePermissionsException(
+                permission=permission, workspace_id=workspace_id
+            )

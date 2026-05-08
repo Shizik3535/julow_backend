@@ -11,9 +11,17 @@ from app.context.filestorage.domain.value_objects.file_access_level import FileA
 from app.context.filestorage.domain.entities.file_permission_entry import FilePermissionEntry
 from app.context.filestorage.domain.events.folder_events import (
     FolderCreated,
-    FolderUpdated,
     FolderDeleted,
     FolderMoved,
+    FolderPinned,
+    FolderShared,
+    FolderUnpinned,
+    FolderUnshared,
+    FolderUpdated,
+)
+from app.context.filestorage.domain.exceptions.folder_exceptions import (
+    FolderPermissionTargetRequiredException,
+    SystemFolderModifyException,
 )
 
 
@@ -50,6 +58,7 @@ class Folder(AggregateRoot):
     project_id: Id | None = None
     is_pinned: bool = False
     is_shared: bool = False
+    is_deleted: bool = False
     permissions: list[FilePermissionEntry] = field(default_factory=list)
     created_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
@@ -103,7 +112,7 @@ class Folder(AggregateRoot):
 
     def _assert_can_modify(self) -> None:
         if self.folder_type == FolderType.SYSTEM:
-            raise ValueError("Системную папку нельзя изменять")
+            raise SystemFolderModifyException()
 
     # --- Информация ---
 
@@ -137,26 +146,43 @@ class Folder(AggregateRoot):
         )
 
     def pin(self) -> None:
+        self._assert_can_modify()
+        if self.is_pinned:
+            return
         self.is_pinned = True
         self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(FolderPinned(folder_id=str(self.id)))
 
     def unpin(self) -> None:
+        self._assert_can_modify()
+        if not self.is_pinned:
+            return
         self.is_pinned = False
         self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(FolderUnpinned(folder_id=str(self.id)))
 
     def share(self) -> None:
+        self._assert_can_modify()
+        if self.is_shared:
+            return
         self.is_shared = True
         self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(FolderShared(folder_id=str(self.id)))
 
     def unshare(self) -> None:
+        self._assert_can_modify()
+        if not self.is_shared:
+            return
         self.is_shared = False
         self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(FolderUnshared(folder_id=str(self.id)))
 
     # --- Разрешения ---
 
     def grant_permission(self, access_level: FileAccessLevel, granted_by: Id, user_id: Id | None = None, team_id: Id | None = None) -> None:
+        self._assert_can_modify()
         if user_id is None and team_id is None:
-            raise ValueError("Хотя бы один из user_id/team_id должен быть заполнен")
+            raise FolderPermissionTargetRequiredException()
         entry = FilePermissionEntry(
             user_id=user_id,
             team_id=team_id,
@@ -167,6 +193,7 @@ class Folder(AggregateRoot):
         self.updated_at = datetime.now(tz=timezone.utc)
 
     def revoke_permission(self, user_id: Id | None = None, team_id: Id | None = None) -> None:
+        self._assert_can_modify()
         self.permissions = [
             p for p in self.permissions
             if not (
@@ -180,4 +207,5 @@ class Folder(AggregateRoot):
 
     def delete(self) -> None:
         self._assert_can_modify()
+        self.is_deleted = True
         self._register_event(FolderDeleted(folder_id=str(self.id)))

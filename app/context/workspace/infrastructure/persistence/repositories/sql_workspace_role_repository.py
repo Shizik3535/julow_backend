@@ -53,7 +53,8 @@ class SqlWorkspaceRoleRepository(SqlAlchemyRepository[WorkspaceRole, WorkspaceRo
         if filters:
             name = filters.get("name")
             if name:
-                stmt = stmt.where(WorkspaceRoleORM.name.ilike(f"%{name}%"))
+                safe = name.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                stmt = stmt.where(WorkspaceRoleORM.name.ilike(f"%{safe}%", escape="\\"))
             is_system = filters.get("is_system")
             if is_system is not None:
                 stmt = stmt.where(WorkspaceRoleORM.is_system == is_system)

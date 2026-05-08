@@ -25,6 +25,9 @@ from app.context.project.application.ports.integration.outboard.epic_provider im
 from app.context.project.application.ports.integration.outboard.project_permission_provider import (
     ProjectPermissionProvider,
 )
+from app.context.project.application.ports.integration.outboard.project_provider import (
+    ProjectProvider,
+)
 from app.context.project.application.ports.integration.outboard.sprint_provider import (
     SprintProvider,
 )
@@ -58,11 +61,13 @@ class CommentTargetAccessAdapter(CommentTargetAccessPort):
         epic_provider: EpicProvider,
         sprint_provider: SprintProvider,
         project_permission_provider: ProjectPermissionProvider,
+        project_provider: ProjectProvider | None = None,
     ) -> None:
         self._task_provider = task_provider
         self._epic_provider = epic_provider
         self._sprint_provider = sprint_provider
         self._project_permissions = project_permission_provider
+        self._project_provider = project_provider
 
     async def require_access(
         self,
@@ -114,3 +119,18 @@ class CommentTargetAccessAdapter(CommentTargetAccessPort):
             return sprint.project_id if sprint else None
         # MILESTONE / MEETING / DOCUMENT — пока не интегрированы.
         return None
+
+    async def resolve_workspace_id(
+        self,
+        target_type: CommentTargetType,
+        target_id: str,
+    ) -> str | None:
+        """Резолвинг ``workspace_id`` через цепочку target → project → workspace."""
+        project_id = await self._resolve_project_id(target_type, target_id)
+        if project_id is None or self._project_provider is None:
+            return None
+        project = await self._project_provider.get_project(project_id)
+        if project is None:
+            return None
+        workspace_id = getattr(project, "workspace_id", None)
+        return str(workspace_id) if workspace_id else None

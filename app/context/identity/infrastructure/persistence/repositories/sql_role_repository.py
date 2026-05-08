@@ -39,7 +39,8 @@ class SqlRoleRepository(SqlAlchemyRepository[Role, RoleORM], RoleRepository):
         if filters:
             name = filters.get("name")
             if name:
-                stmt = stmt.where(RoleORM.name.ilike(f"%{name}%"))
+                safe = name.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                stmt = stmt.where(RoleORM.name.ilike(f"%{safe}%", escape="\\"))
             is_system = filters.get("is_system")
             if is_system is not None:
                 stmt = stmt.where(RoleORM.is_system.is_(is_system))

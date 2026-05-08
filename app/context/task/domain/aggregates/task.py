@@ -103,7 +103,7 @@ class Task(AggregateRoot):
         updated_at: Время последнего обновления.
     """
 
-    project_id: Id = field(default_factory=Id.generate)
+    project_id: Id | None = None
     parent_task_id: Id | None = None
     epic_id: Id | None = None
     title: str = ""
@@ -131,6 +131,14 @@ class Task(AggregateRoot):
     recurrence: RecurrenceConfig | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
+
+    def __post_init__(self) -> None:
+        """Валидация обязательных полей при прямом создании."""
+        super().__post_init__()
+        if not self.title:
+            raise ValueError("title обязательное поле")
+        if not self.project_id:
+            raise ValueError("project_id обязательное поле")
 
     # --- Фабричные методы ---
 
