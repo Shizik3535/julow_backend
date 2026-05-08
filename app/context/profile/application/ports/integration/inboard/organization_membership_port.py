@@ -27,3 +27,18 @@ class OrganizationMembershipPort(ABC):
         Возвращает:
             True, если пользователь состоит в организации.
         """
+
+    @abstractmethod
+    async def share_organization(self, user_id_a: str, user_id_b: str) -> bool:
+        """
+        Проверить, состоят ли два пользователя в одной организации.
+
+        Используется для ACL-проверки при ProfileVisibility.ORGANIZATION_ONLY.
+
+        Аргументы:
+            user_id_a: Идентификатор первого пользователя.
+            user_id_b: Идентификатор второго пользователя.
+
+        Возвращает:
+            True, если пользователи имеют как минимум одно общее активное членство.
+        """

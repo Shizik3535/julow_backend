@@ -40,6 +40,13 @@ class _StubOrgMembershipProvider(OrganizationMembershipProvider):
     async def org_exists(self, org_id: str) -> bool:
         return org_id in self._members
 
+    async def get_user_organization_ids(self, user_id: str) -> list[str]:
+        return [
+            org_id
+            for org_id, members in self._members.items()
+            if any(m.user_id == user_id and m.is_active for m in members)
+        ]
+
 
 def _make_org_member_dto(user_id: str, role_id: str = "member-role") -> OrgMemberDTO:
     from datetime import datetime, timezone

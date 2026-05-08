@@ -24,6 +24,8 @@ from app.context.profile.presentation.schemas.responses import (
     ProfileListResponse,
     ProfileResponse,
     ProfileSettingsResponse,
+    PublicProfileResponse,
+    PublicSocialLinkResponse,
     SidebarSectionResponse,
 )
 
@@ -41,6 +43,8 @@ __all__ = [
     "ProfileListResponse",
     "ProfileResponse",
     "ProfileSettingsResponse",
+    "PublicProfileResponse",
+    "PublicSocialLinkResponse",
     "RemoveSocialLinkRequest",
     "SidebarSectionInput",
     "SidebarSectionResponse",

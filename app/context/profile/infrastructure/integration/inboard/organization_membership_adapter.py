@@ -20,3 +20,12 @@ class OrganizationMembershipAdapter(OrganizationMembershipPort):
 
     async def is_member(self, user_id: str, organization_id: str) -> bool:
         return await self._provider.is_member(user_id=user_id, org_id=organization_id)
+
+    async def share_organization(self, user_id_a: str, user_id_b: str) -> bool:
+        if user_id_a == user_id_b:
+            return True
+        orgs_a = set(await self._provider.get_user_organization_ids(user_id=user_id_a))
+        if not orgs_a:
+            return False
+        orgs_b = set(await self._provider.get_user_organization_ids(user_id=user_id_b))
+        return bool(orgs_a & orgs_b)

@@ -52,6 +52,18 @@ class OrganizationMembershipProvider(ABC):
         """
 
     @abstractmethod
+    async def get_user_organization_ids(self, user_id: str) -> list[str]:
+        """
+        Получить идентификаторы всех организаций, в которых состоит пользователь.
+
+        Аргументы:
+            user_id: Идентификатор пользователя.
+
+        Возвращает:
+            Список ID организаций (только активные членства).
+        """
+
+    @abstractmethod
     async def org_exists(self, org_id: str) -> bool:
         """
         Проверить, существует ли организация.

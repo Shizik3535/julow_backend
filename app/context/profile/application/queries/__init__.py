@@ -6,6 +6,10 @@ from app.context.profile.application.queries.get_profile_settings import (
     GetProfileSettingsHandler,
     GetProfileSettingsQuery,
 )
+from app.context.profile.application.queries.get_public_profile import (
+    GetPublicProfileHandler,
+    GetPublicProfileQuery,
+)
 from app.context.profile.application.queries.search_profiles import (
     SearchProfilesHandler,
     SearchProfilesQuery,
@@ -16,6 +20,8 @@ __all__ = [
     "GetProfileQuery",
     "GetProfileSettingsHandler",
     "GetProfileSettingsQuery",
+    "GetPublicProfileHandler",
+    "GetPublicProfileQuery",
     "SearchProfilesHandler",
     "SearchProfilesQuery",
 ]

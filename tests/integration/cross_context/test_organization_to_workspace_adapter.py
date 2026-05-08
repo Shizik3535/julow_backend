@@ -94,6 +94,16 @@ class _RealOrgMembershipProvider(OrganizationMembershipProvider):
         membership = await self._membership_repo.get_by_org_id(IdVO.from_string(org_id))
         return membership is not None
 
+    async def get_user_organization_ids(self, user_id: str) -> list[str]:
+        from app.shared.domain.value_objects.id_vo import Id as IdVO
+        memberships = await self._membership_repo.get_by_user_id(IdVO.from_string(user_id))
+        target = IdVO.from_string(user_id)
+        result: list[str] = []
+        for ms in memberships:
+            if any(m.user_id == target and m.is_active for m in ms.members):
+                result.append(str(ms.org_id))
+        return result
+
 
 @pytest.mark.integration
 class TestOrganizationAdapterCrossContext:

@@ -10,6 +10,10 @@ from app.context.profile.presentation.schemas.responses.profile_settings_respons
     ProfileSettingsResponse,
     SidebarSectionResponse,
 )
+from app.context.profile.presentation.schemas.responses.public_profile_response import (
+    PublicProfileResponse,
+    PublicSocialLinkResponse,
+)
 
 __all__ = [
     "AppearanceSettingsResponse",
@@ -21,5 +25,7 @@ __all__ = [
     "ProfileListResponse",
     "ProfileResponse",
     "ProfileSettingsResponse",
+    "PublicProfileResponse",
+    "PublicSocialLinkResponse",
     "SidebarSectionResponse",
 ]

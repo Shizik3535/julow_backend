@@ -109,6 +109,11 @@ async def get_start_page_registry_port(container: Container = Depends(get_contai
     return container.start_page_registry_port()
 
 
+async def get_organization_membership_port(container: Container = Depends(get_container)):
+    """Получить OrganizationMembershipPort (inboard) из DI-контейнера."""
+    return container.organization_membership_port()
+
+
 # ---------------------------------------------------------------------------
 # Auth — текущий пользователь
 # ---------------------------------------------------------------------------

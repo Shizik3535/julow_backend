@@ -47,6 +47,19 @@ class OrganizationMembershipProviderAdapter(OrganizationMembershipProvider):
             for m in members
         ]
 
+    async def get_user_organization_ids(self, user_id: str) -> list[str]:
+        memberships = await self._repo.get_by_user_id(Id.from_string(user_id))
+        result: list[str] = []
+        target_user = Id.from_string(user_id)
+        for membership in memberships:
+            member = next(
+                (m for m in membership.members if m.user_id == target_user and m.is_active),
+                None,
+            )
+            if member is not None:
+                result.append(str(membership.org_id))
+        return result
+
     async def org_exists(self, org_id: str) -> bool:
         if self._org_repo is None:
             # Fallback: check via membership aggregate existence

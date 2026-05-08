@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import Depends, UploadFile
+from uuid import UUID
+
+from fastapi import Depends, Path, UploadFile
 
 from app.shared.presentation.base_controller import BaseController
 from app.shared.presentation.responses import (
@@ -62,6 +64,10 @@ from app.context.profile.application.queries.get_profile import (
     GetProfileHandler,
     GetProfileQuery,
 )
+from app.context.profile.application.queries.get_public_profile import (
+    GetPublicProfileHandler,
+    GetPublicProfileQuery,
+)
 from app.context.profile.application.queries.search_profiles import (
     SearchProfilesHandler,
     SearchProfilesQuery,
@@ -69,6 +75,7 @@ from app.context.profile.application.queries.search_profiles import (
 from app.context.profile.presentation.dependencies import (
     get_current_user_id,
     get_file_storage_port,
+    get_organization_membership_port,
     get_profile_event_bus,
     get_profile_repository,
     get_start_page_registry_port,
@@ -102,6 +109,7 @@ from app.context.profile.presentation.schemas.requests.update_sidebar_request im
     UpdateSidebarRequest,
 )
 from app.context.profile.presentation.schemas.responses.profile_response import ProfileResponse
+from app.context.profile.presentation.schemas.responses.public_profile_response import PublicProfileResponse
 from app.context.profile.presentation.schemas.responses.profile_settings_response import (
     AppearanceSettingsResponse,
     HotkeyResponse,
@@ -121,6 +129,7 @@ class ProfileController(BaseController):
     Endpoint'ы:
         GET    /profile/me                           — Получить свой профиль
         GET    /profile/me/settings                   — Получить настройки профиля
+        GET    /profile/{user_id}                     — Получить публичный профиль пользователя
         GET    /profile/search                        — Поиск профилей (admin)
         PATCH  /profile/me/personal-info              — Обновить персональные данные
         POST   /profile/me/avatar                     — Изменить аватар
@@ -403,6 +412,27 @@ class ProfileController(BaseController):
             },
         )
 
+        # --- Public profile (last to avoid shadowing specific routes) ---
+        self._router.add_api_route(
+            "/{user_id}",
+            self.get_public_profile,
+            methods=["GET"],
+            response_model=SuccessResponse[PublicProfileResponse],
+            summary="Получить публичный профиль пользователя",
+            description=(
+                "Возвращает публичные данные профиля другого пользователя. "
+                "Видимость определяется настройкой privacy.profile_visibility владельца: "
+                "PUBLIC — всем; ORGANIZATION_ONLY — членам общей организации; "
+                "PRIVATE — только владельцу. При отсутствии прав возвращается 404 "
+                "(существование скрытого профиля не раскрывается)."
+            ),
+            responses={
+                200: {"description": "Публичные данные профиля"},
+                401: {"description": "Не аутентифицирован", "model": ErrorResponse},
+                404: {"description": "Профиль не найден или недоступен", "model": ErrorResponse},
+            },
+        )
+
     # ------------------------------------------------------------------
     # Profile
     # ------------------------------------------------------------------
@@ -457,6 +487,22 @@ class ProfileController(BaseController):
             ],
         )
         return SuccessResponse(data=settings)
+
+    async def get_public_profile(
+        self,
+        user_id: UUID = Path(..., description="UUID пользователя"),
+        requester_id: str = Depends(get_current_user_id),
+        profile_repo=Depends(get_profile_repository),
+        org_membership_port=Depends(get_organization_membership_port),
+    ) -> SuccessResponse[PublicProfileResponse]:
+        """Получить публичный профиль другого пользователя."""
+        handler = GetPublicProfileHandler(
+            profile_repo=profile_repo,
+            org_membership_port=org_membership_port,
+        )
+        query = GetPublicProfileQuery(user_id=str(user_id), requester_id=requester_id)
+        dto = await handler.handle(query)
+        return SuccessResponse(data=PublicProfileResponse.model_validate(dto.model_dump()))
 
     async def search_profiles(
         self,
