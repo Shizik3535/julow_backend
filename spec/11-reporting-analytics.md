@@ -9,13 +9,14 @@
 ## Принципы расширяемости
 
 1. **WidgetType — расширяемый enum** — новые виджеты = значение enum + renderer на app-слое. Analytics BC не хранит бизнес-данные, а конфигурирует их отображение.
-2. **DataSource — enum** — `TASKS`, `TIME_ENTRIES`, `SPRINTS`, `PROJECTS`, `MEMBERS`. Виджет ссылается на DataSource.
-3. **ReportType — расширяемый enum** — новые отчёты = значение enum + generator.
-4. **ExportFormat — расширяемый enum** — `PDF`, `EXCEL`, `CSV`, `PNG`. Новые форматы = значение enum.
-5. **FilterConfig — VO** — типизированные фильтры вместо `config: dict`.
-6. **WidgetConfig — VO** — типизированная конфигурация виджета.
-7. **DashboardTemplate — entity** — предустановленные шаблоны дашбордов.
-8. **DashboardShare — entity** — шеринг дашборда с уровнями доступа.
+2. **DataSource — кросс-BC enum** — каждое значение принадлежит конкретному BC. Новый источник = значение enum + ACL-резолвер на infrastructure слое.
+3. **AnalyticsQuery — VO** — единый кросс-BC запрос аналитики (метрики, измерения, фильтры, период). Виджеты и отчёты ссылаются на `AnalyticsQuery`.
+4. **ReportType — расширяемый enum** — новые отчёты = значение enum + generator.
+5. **ExportFormat — расширяемый enum** — `PDF`, `EXCEL`, `CSV`, `PNG`. Новые форматы = значение enum.
+6. **FilterConfig — VO** — типизированные фильтры вместо `config: dict`.
+7. **WidgetConfig — VO** — widget_type + `AnalyticsQuery` + display_params.
+8. **DashboardTemplate — entity** — предустановленные шаблоны дашбордов.
+9. **DashboardShare — entity** — шеринг дашборда с уровнями доступа.
 
 ---
 
@@ -74,21 +75,33 @@
 | VO | Тип | Описание |
 |---|---|---|
 | `WidgetType` | Enum | `TASK_STATUS_DISTRIBUTION`, `TASK_CREATION_TREND`, `ASSIGNEE_WORKLOAD`, `OVERDUE_TASKS`, `UNASSIGNED_TASKS`, `AVG_COMPLETION_TIME`, `BURNDOWN`, `VELOCITY`, `TIME_BY_PROJECT`, `COMPLETION_RATE`, `SPRINT_PROGRESS`, `PRIORITY_DISTRIBUTION`, `RECENTLY_UPDATED`, `UPCOMING_DEADLINES`, `CUSTOM_METRIC` |
-| `DataSource` | Enum | `TASKS`, `TIME_ENTRIES`, `SPRINTS`, `PROJECTS`, `MEMBERS` |
-| `ReportType` | Enum | `PROJECT_SUMMARY`, `TEAM_PERFORMANCE`, `PERIOD_SUMMARY`, `TIME_TRACKING`, `PRODUCTIVITY`, `SPRINT_REPORT` |
+| `DataSource` | Enum (кросс-BC) | Task BC: `TASKS`, `TASK_STATUS_HISTORY`, `TASK_ASSIGNMENTS`, `TASK_TAGS`, `SPRINTS`, `SPRINT_BURNDOWN`, `SPRINT_VELOCITY`, `EPICS`; Project BC: `PROJECTS`, `PROJECT_MEMBERS`, `PROJECT_MILESTONES`, `PROJECT_PROGRESS`; TimeTracking BC: `TIME_ENTRIES`, `ACTIVITY_CATEGORIES`, `TIME_ENTRY_TAGS`, `WORKLOAD`; Communication BC: `COMMENTS`, `MENTIONS`, `REACTIONS`; FileStorage BC: `FILES`, `FILE_VERSIONS`, `FILE_STORAGE_USAGE`; Notification BC: `NOTIFICATIONS`, `NOTIFICATION_DELIVERIES`; Identity BC: `USERS`, `USER_SESSIONS`, `LOGIN_ATTEMPTS`; Profile BC: `PROFILES`; Organization BC: `ORGANIZATIONS`, `ORGANIZATION_MEMBERS`; Workspace BC: `WORKSPACES`, `WORKSPACE_MEMBERS`, `WORKSPACE_INVITATIONS`; Security BC: `AUDIT_LOGS`, `SECURITY_EVENTS`; Billing BC: `SUBSCRIPTIONS`, `INVOICES`, `PAYMENTS`; `CUSTOM` |
+| `BoundedContextRef` | Enum | `IDENTITY`, `PROFILE`, `ORGANIZATION`, `WORKSPACE`, `PROJECT`, `TASK`, `COMMUNICATION`, `FILESTORAGE`, `TIMETRACKING`, `NOTIFICATION`, `SECURITY`, `BILLING`, `ANALYTICS` |
+| `MetricAggregation` | Enum | `COUNT`, `COUNT_DISTINCT`, `SUM`, `AVG`, `MIN`, `MAX`, `MEDIAN`, `P90`, `P95`, `P99`, `RATE` |
+| `TimeGranularity` | Enum | `HOUR`, `DAY`, `WEEK`, `MONTH`, `QUARTER`, `YEAR` |
+| `SortOrder` | Enum | `ASC`, `DESC` |
+| `ReportType` | Enum | `BY_PROJECT`, `BY_TEAM`, `BY_PERIOD`, `BY_EFFORT`, `BY_PERFORMANCE`, `BURNDOWN`, `VELOCITY`, `CUMULATIVE_FLOW`, `TIME_TRACKING`, `BILLING_SUMMARY`, `WORKLOAD`, `USER_ACTIVITY`, `LOGIN_ACTIVITY`, `COMMUNICATION_VOLUME`, `STORAGE_USAGE`, `NOTIFICATION_DELIVERY`, `AUDIT_SUMMARY`, `SECURITY_INCIDENTS`, `SUBSCRIPTION_SUMMARY`, `CUSTOM` |
 | `ExportFormat` | Enum | `PDF`, `EXCEL`, `CSV`, `PNG` |
 | `ReportFrequency` | Enum | `DAILY`, `WEEKLY`, `MONTHLY` |
 | `ShareAccessLevel` | Enum | `VIEW`, `EDIT` |
 | `FilterOperator` | Enum | `EQ`, `NEQ`, `GT`, `LT`, `GTE`, `LTE`, `IN`, `NOT_IN`, `BETWEEN`, `CONTAINS` |
 | `WidgetSize` | frozen dataclass | cols: int (1–12), rows: int (1–6) |
 | `WidgetPosition` | frozen dataclass | x: int (0–11), y: int |
-| `FilterConfig` | frozen dataclass | field: str, operator: FilterOperator, value: str \| list[str] |
-| `WidgetConfig` | frozen dataclass | data_source: DataSource, filters: list[FilterConfig], group_by: str \| None, period_days: int \| None |
+| `FilterConfig` | frozen dataclass | field: str, operator: FilterOperator, value: str, value_to: str \| None |
+| `MetricDefinition` | frozen dataclass | field: str (default `*`), aggregation: MetricAggregation (default COUNT), alias: str \| None |
+| `Dimension` | frozen dataclass | field: str, time_granularity: TimeGranularity \| None, alias: str \| None |
+| `SortConfig` | frozen dataclass | field: str, order: SortOrder (default DESC) |
+| `AnalyticsQuery` | frozen dataclass | data_source: DataSource, metrics: list[MetricDefinition], dimensions: list[Dimension], filters: list[FilterConfig], date_range: DateRange \| None, sort: list[SortConfig], limit: int \| None, raw: bool |
+| `WidgetConfig` | frozen dataclass | widget_type: WidgetType, query: AnalyticsQuery, display_params: dict[str, Any] |
 | `ReportSchedule` | frozen dataclass | frequency: ReportFrequency, time: time, day_of_week: int \| None, day_of_month: int \| None, timezone: str |
 
-> **`WidgetConfig`** — типизированная замена `config: dict`. Каждый виджет описывает DataSource и фильтры.
+> **`AnalyticsQuery`** — единый кросс-BC запрос. Инварианты: либо метрики, либо `raw=True`; `limit > 0`. Маршрутизация по BC выполняется на infrastructure слое по `DataSource.bounded_context`.
 >
-> **`FilterConfig`** — типизированный фильтр с оператором. Новые операторы = значение enum.
+> **`WidgetConfig`** — widget_type + `AnalyticsQuery` (данные) + display_params (параметры отображения, не влияют на данные).
+>
+> **`FilterConfig`** — типизированный фильтр с оператором. `BETWEEN` использует `value` и `value_to`. Новые операторы = значение enum.
+>
+> **`MetricDefinition`/`Dimension`/`SortConfig`** — «что считать», «как группировать» и «как сортировать» в `AnalyticsQuery`.
 
 ### Entities
 

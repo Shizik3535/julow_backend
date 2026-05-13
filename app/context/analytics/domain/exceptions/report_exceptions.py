@@ -41,3 +41,18 @@ class ReportExportFormatException(BusinessRuleViolationException):
 class InvalidReportFrequencyException(BusinessRuleViolationException):
     def __init__(self, freq: str = "") -> None:
         super().__init__(rule="ValidReportFrequency", message=f"Некорректная частота расписания{f': {freq}' if freq else ''}")
+
+
+class InvalidAnalyticsQueryException(BusinessRuleViolationException):
+    def __init__(self, detail: str = "") -> None:
+        super().__init__(rule="ValidAnalyticsQuery", message=f"Некорректный аналитический запрос{f': {detail}' if detail else ''}")
+
+
+class InvalidDateRangeException(BusinessRuleViolationException):
+    def __init__(self, detail: str = "") -> None:
+        super().__init__(rule="ValidDateRange", message=f"Некорректный диапазон дат{f': {detail}' if detail else ''}")
+
+
+class NoRecipientsException(BusinessRuleViolationException):
+    def __init__(self) -> None:
+        super().__init__(rule="NoRecipients", message="У запланированного отчёта должен быть хотя бы один получатель")

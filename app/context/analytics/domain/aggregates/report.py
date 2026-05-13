@@ -6,10 +6,9 @@ from datetime import datetime, timezone
 from app.shared.domain.base_aggregate import AggregateRoot
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.analytics.domain.value_objects.report_type import ReportType
-from app.context.analytics.domain.value_objects.data_source import DataSource
+from app.context.analytics.domain.value_objects.analytics_query import AnalyticsQuery
 from app.context.analytics.domain.value_objects.export_format import ExportFormat
 from app.context.analytics.domain.value_objects.share_access_level import ShareAccessLevel
-from app.context.analytics.domain.value_objects.filter_config import FilterConfig
 from app.context.analytics.domain.entities.report_schedule import ReportSchedule
 from app.context.analytics.domain.entities.report_share import ReportShare
 from app.context.analytics.domain.events.report_events import (
@@ -27,6 +26,7 @@ from app.context.analytics.domain.exceptions.dashboard_exceptions import (
     DuplicateShareException,
     CannotShareWithSelfException,
 )
+from app.context.analytics.domain.exceptions.report_exceptions import NoRecipientsException
 
 
 @dataclass
@@ -38,9 +38,7 @@ class Report(AggregateRoot):
     name: str = ""
     description: str | None = None
     report_type: ReportType = ReportType.CUSTOM
-    data_source: DataSource = DataSource.TASK_SUMMARY
-    filters: list[FilterConfig] = field(default_factory=list)
-    parameters: dict[str, str] = field(default_factory=dict)
+    query: AnalyticsQuery = field(default_factory=lambda: AnalyticsQuery(raw=True))
     schedule: ReportSchedule | None = None
     shares: list[ReportShare] = field(default_factory=list)
     last_generated_at: datetime | None = None
@@ -49,8 +47,23 @@ class Report(AggregateRoot):
     updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
 
     @classmethod
-    def create(cls, name: str, report_type: ReportType, data_source: DataSource, owner_id: Id, workspace_id: Id | None = None) -> Report:
-        report = cls(name=name, report_type=report_type, data_source=data_source, owner_id=owner_id, workspace_id=workspace_id)
+    def create(
+        cls,
+        name: str,
+        report_type: ReportType,
+        query: AnalyticsQuery,
+        owner_id: Id,
+        workspace_id: Id | None = None,
+        description: str | None = None,
+    ) -> Report:
+        report = cls(
+            name=name,
+            description=description,
+            report_type=report_type,
+            query=query,
+            owner_id=owner_id,
+            workspace_id=workspace_id,
+        )
         report._register_event(ReportCreated(report_id=str(report.id), report_type=report_type))
         return report
 
@@ -66,19 +79,16 @@ class Report(AggregateRoot):
             self.updated_at = datetime.now(tz=timezone.utc)
             self._register_event(ReportUpdated(report_id=str(self.id), changed_fields=changed))
 
-    def update_filters(self, filters: list[FilterConfig]) -> None:
-        self.filters = filters
+    def update_query(self, query: AnalyticsQuery) -> None:
+        if query == self.query:
+            return
+        self.query = query
         self.updated_at = datetime.now(tz=timezone.utc)
-
-    def set_parameter(self, key: str, value: str) -> None:
-        self.parameters[key] = value
-        self.updated_at = datetime.now(tz=timezone.utc)
-
-    def remove_parameter(self, key: str) -> None:
-        self.parameters.pop(key, None)
-        self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(ReportUpdated(report_id=str(self.id), changed_fields=["query"]))
 
     def set_schedule(self, schedule: ReportSchedule) -> None:
+        if not schedule.recipients:
+            raise NoRecipientsException()
         self.schedule = schedule
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(ReportScheduled(report_id=str(self.id), frequency=schedule.frequency))

@@ -15,4 +15,13 @@ class ReportType(Enum):
     TIME_TRACKING = "time_tracking"
     BILLING_SUMMARY = "billing_summary"
     WORKLOAD = "workload"
+    # Кросс-BC отчёты
+    USER_ACTIVITY = "user_activity"
+    LOGIN_ACTIVITY = "login_activity"
+    COMMUNICATION_VOLUME = "communication_volume"
+    STORAGE_USAGE = "storage_usage"
+    NOTIFICATION_DELIVERY = "notification_delivery"
+    AUDIT_SUMMARY = "audit_summary"
+    SECURITY_INCIDENTS = "security_incidents"
+    SUBSCRIPTION_SUMMARY = "subscription_summary"
     CUSTOM = "custom"

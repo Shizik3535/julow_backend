@@ -7,10 +7,22 @@ from app.shared.domain.base_repository import RepositoryPort
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.analytics.domain.aggregates.report import Report
 from app.context.analytics.domain.value_objects.report_type import ReportType
+from app.context.analytics.domain.value_objects.bounded_context_ref import BoundedContextRef
 from app.context.analytics.domain.value_objects.data_source import DataSource
 
 
 class ReportRepository(RepositoryPort[Report]):
+    """Репозиторий отчётов.
+
+    Замечание для реализаций (infrastructure):
+        `data_source` и `bounded_context` хранятся внутри `Report.query`
+        (вложенный VO `AnalyticsQuery`). Чтобы фильтрация по ним была
+        эффективной, инфраструктурный слой должен денормализовать эти
+        значения в отдельные индексируемые колонки (например,
+        `query_data_source`, `query_bounded_context`) при сохранении
+        агрегата, либо использовать выражения по JSON-полю с индексом.
+    """
+
     @abstractmethod
     async def get_by_owner(self, owner_id: Id) -> list[Report]: ...
 
@@ -28,6 +40,9 @@ class ReportRepository(RepositoryPort[Report]):
 
     @abstractmethod
     async def get_by_data_source(self, data_source: DataSource, workspace_id: Id) -> list[Report]: ...
+
+    @abstractmethod
+    async def get_by_bounded_context(self, bounded_context: BoundedContextRef, workspace_id: Id) -> list[Report]: ...
 
     @abstractmethod
     async def search(self, offset: int = 0, limit: int = 100, filters: dict[str, Any] | None = None) -> list[Report]: ...
