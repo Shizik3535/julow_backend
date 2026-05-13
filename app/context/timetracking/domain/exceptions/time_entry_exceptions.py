@@ -35,6 +35,16 @@ class TimerNotPausedException(DomainException):
         super().__init__("Таймер не на паузе (нельзя возобновить)")
 
 
+class CannotDeleteNonDraftTimeEntryException(BusinessRuleViolationException):
+    """Нельзя удалить запись, не находящуюся в статусе DRAFT."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="CanDeleteOnlyDraft",
+            message="Нельзя удалить запись, не находящуюся в статусе DRAFT",
+        )
+
+
 class CannotEditLockedTimeEntryException(BusinessRuleViolationException):
     """Нельзя редактировать заблокированную запись."""
 
@@ -80,7 +90,7 @@ class TimeEntryAlreadySubmittedException(BusinessRuleViolationException):
 
     def __init__(self) -> None:
         super().__init__(
-            rule="TimeEntryNotAlreadySubmitted",
+            rule="TimeEntryAlreadySubmitted",
             message="Запись уже отправлена на утверждение",
         )
 
@@ -90,8 +100,28 @@ class TimeEntryAlreadyApprovedException(BusinessRuleViolationException):
 
     def __init__(self) -> None:
         super().__init__(
-            rule="TimeEntryNotAlreadyApproved",
+            rule="TimeEntryAlreadyApproved",
             message="Запись уже утверждена",
+        )
+
+
+class TimeEntryNotSubmittedException(BusinessRuleViolationException):
+    """Запись не находится в статусе SUBMITTED — действие невозможно."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="TimeEntryMustBeSubmitted",
+            message="Запись не находится в статусе SUBMITTED",
+        )
+
+
+class CannotSetHourlyRateForNonBillableException(BusinessRuleViolationException):
+    """Нельзя установить hourly_rate для non-billable записи."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="HourlyRateRequiresBillable",
+            message="Нельзя установить почасовую ставку для non-billable записи",
         )
 
 

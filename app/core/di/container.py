@@ -36,6 +36,10 @@ from app.context.task.application.messaging import (
     build_task_event_bus,
     task_subscriptions,
 )
+from app.context.timetracking.application.messaging import (
+    build_timetracking_event_bus,
+    timetracking_subscriptions,
+)
 from app.context.filestorage.application.messaging import (
     build_filestorage_event_bus,
     filestorage_subscriptions,
@@ -212,6 +216,20 @@ from app.core.di.providers.task_provider import (
     create_task_sprint_adapter,
     create_task_template_mapper,
     create_task_template_repository,
+)
+from app.core.di.providers.timetracking_provider import (
+    create_activity_category_mapper,
+    create_activity_category_repository,
+    create_time_entry_mapper,
+    create_time_entry_repository,
+    create_time_entry_tag_mapper,
+    create_time_entry_tag_repository,
+    create_timetracking_epic_adapter,
+    create_timetracking_identity_user_adapter,
+    create_timetracking_permission_checker,
+    create_timetracking_project_adapter,
+    create_timetracking_task_adapter,
+    create_timetracking_workspace_adapter,
 )
 from app.shared.application.messaging.subscription import Subscription
 from app.shared.application.messaging.uow_subscriber import subscribe_with_uow
@@ -916,6 +934,67 @@ class Container(containers.DeclarativeContainer):
     )
 
     # ==================================================================
+    # TimeTracking BC
+    # ==================================================================
+
+    # TimeTracking BC - Event Bus
+    timetracking_event_bus = providers.Singleton(
+        build_timetracking_event_bus,
+        broker=message_broker_port,
+    )
+
+    # TimeTracking BC - Mappers (Singleton)
+    time_entry_mapper = providers.Singleton(create_time_entry_mapper)
+    activity_category_mapper = providers.Singleton(create_activity_category_mapper)
+    time_entry_tag_mapper = providers.Singleton(create_time_entry_tag_mapper)
+
+    # TimeTracking BC - Repositories (Factory with session)
+    time_entry_repo = providers.Factory(
+        create_time_entry_repository,
+        session=db_session_factory,
+        mapper=time_entry_mapper,
+    )
+    activity_category_repo = providers.Factory(
+        create_activity_category_repository,
+        session=db_session_factory,
+        mapper=activity_category_mapper,
+    )
+    time_entry_tag_repo = providers.Factory(
+        create_time_entry_tag_repository,
+        session=db_session_factory,
+        mapper=time_entry_tag_mapper,
+    )
+
+    # TimeTracking BC - Authorization
+    timetracking_permission_checker_port = providers.Factory(
+        create_timetracking_permission_checker,
+        workspace_membership_provider=workspace_membership_provider,
+    )
+
+    # TimeTracking BC - Integration inboard adapters
+    timetracking_workspace_port = providers.Factory(
+        create_timetracking_workspace_adapter,
+        workspace_provider=workspace_provider,
+        workspace_membership_provider=workspace_membership_provider,
+    )
+    timetracking_task_port = providers.Factory(
+        create_timetracking_task_adapter,
+        task_provider=task_provider,
+    )
+    timetracking_project_port = providers.Factory(
+        create_timetracking_project_adapter,
+        project_provider=project_provider,
+    )
+    timetracking_epic_port = providers.Factory(
+        create_timetracking_epic_adapter,
+        epic_provider=epic_provider,
+    )
+    timetracking_identity_user_port = providers.Factory(
+        create_timetracking_identity_user_adapter,
+        identity_user_provider=identity_user_provider,
+    )
+
+    # ==================================================================
     # Communication BC
     # ==================================================================
 
@@ -1083,6 +1162,7 @@ async def wire_messaging(container: Container) -> None:
         *workspace_subscriptions(container),
         *project_subscriptions(container),
         *task_subscriptions(container),
+        *timetracking_subscriptions(container),
         *notification_subscriptions(container),
         *communication_subscriptions(container),
         *filestorage_subscriptions(container),

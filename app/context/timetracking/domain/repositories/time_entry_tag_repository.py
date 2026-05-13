@@ -11,8 +11,8 @@ class TimeEntryTagRepository(RepositoryPort[TimeEntryTag]):
     """Порт репозитория для агрегата TimeEntryTag."""
 
     @abstractmethod
-    async def get_by_name(self, name: str) -> TimeEntryTag | None:
-        """Найти тег по имени."""
+    async def get_by_name(self, name: str, workspace_id: Id) -> TimeEntryTag | None:
+        """Найти тег по имени в пределах workspace."""
 
     @abstractmethod
     async def get_by_workspace(self, workspace_id: Id) -> list[TimeEntryTag]:

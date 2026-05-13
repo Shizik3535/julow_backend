@@ -134,6 +134,17 @@ from app.context.filestorage.infrastructure.persistence.orm_models.folder_orm im
 from app.context.filestorage.infrastructure.persistence.orm_models.storage_orm import (  # noqa: F401
     StorageORM,
 )
+from app.context.timetracking.infrastructure.persistence.orm_models.activity_category_orm import (  # noqa: F401
+    ActivityCategoryORM,
+)
+from app.context.timetracking.infrastructure.persistence.orm_models.time_entry_orm import (  # noqa: F401
+    TimeEntryORM,
+    TimeEntryTimeLogORM,
+    time_entry_tags_table,
+)
+from app.context.timetracking.infrastructure.persistence.orm_models.time_entry_tag_orm import (  # noqa: F401
+    TimeEntryTagORM,
+)
 
 # Alembic Config object
 config = context.config

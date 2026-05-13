@@ -119,7 +119,7 @@ class TimeEntryTagAdded(BaseDomainEvent):
     """Тег добавлен."""
 
     entry_id: str = ""
-    tag_name: str = ""
+    tag_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -127,7 +127,15 @@ class TimeEntryTagRemoved(BaseDomainEvent):
     """Тег удалён."""
 
     entry_id: str = ""
-    tag_name: str = ""
+    tag_id: str = ""
+
+
+@dataclass(frozen=True)
+class TimeEntryTagDeleted(BaseDomainEvent):
+    """Тег записи времени удалён (soft delete)."""
+
+    tag_id: str = ""
+    workspace_id: str = ""
 
 
 @dataclass(frozen=True)

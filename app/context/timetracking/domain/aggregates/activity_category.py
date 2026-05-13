@@ -33,6 +33,7 @@ class ActivityCategory(AggregateRoot):
         updated_at: Время последнего обновления.
     """
 
+    workspace_id: Id | None = None  # None — глобальная (системная) категория
     name: str = ""
     color: Color | None = None
     is_system: bool = False
@@ -43,17 +44,29 @@ class ActivityCategory(AggregateRoot):
 
     @classmethod
     def create_system(cls, name: str, description: str | None = None) -> ActivityCategory:
-        """Создаёт системную категорию."""
-        category = cls(name=name, is_system=True, description=description)
+        """Создаёт системную категорию (глобальная, без workspace_id)."""
+        category = cls(workspace_id=None, name=name, is_system=True, description=description)
         category._register_event(
             ActivityCategoryCreated(category_id=str(category.id), name=name)
         )
         return category
 
     @classmethod
-    def create_custom(cls, name: str, color: Color | None = None, description: str | None = None) -> ActivityCategory:
-        """Создаёт пользовательскую категорию."""
-        category = cls(name=name, color=color, is_system=False, description=description)
+    def create_custom(
+        cls,
+        workspace_id: Id,
+        name: str,
+        color: Color | None = None,
+        description: str | None = None,
+    ) -> ActivityCategory:
+        """Создаёт пользовательскую категорию (привязана к workspace)."""
+        category = cls(
+            workspace_id=workspace_id,
+            name=name,
+            color=color,
+            is_system=False,
+            description=description,
+        )
         category._register_event(
             ActivityCategoryCreated(category_id=str(category.id), name=name)
         )

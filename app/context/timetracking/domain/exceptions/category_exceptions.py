@@ -20,13 +20,33 @@ class CannotDeleteSystemCategoryException(BusinessRuleViolationException):
         )
 
 
+class CannotUpdateSystemCategoryException(BusinessRuleViolationException):
+    """Нельзя редактировать системную категорию."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            rule="SystemCategoryCannotBeUpdated",
+            message="Нельзя редактировать системную категорию",
+        )
+
+
 class ActivityCategoryInUseException(BusinessRuleViolationException):
     """Категория используется в записях."""
 
     def __init__(self) -> None:
         super().__init__(
-            rule="CategoryNotInUse",
+            rule="CategoryInUse",
             message="Категория используется в записях",
+        )
+
+
+class DuplicateActivityCategoryException(BusinessRuleViolationException):
+    """Категория с таким именем уже существует в workspace."""
+
+    def __init__(self, name: str = "") -> None:
+        super().__init__(
+            rule="UniqueActivityCategory",
+            message=f"Категория с таким именем уже существует{f': {name}' if name else ''}",
         )
 
 

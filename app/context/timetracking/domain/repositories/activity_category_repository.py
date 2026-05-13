@@ -12,8 +12,8 @@ class ActivityCategoryRepository(RepositoryPort[ActivityCategory]):
     """Порт репозитория для агрегата ActivityCategory."""
 
     @abstractmethod
-    async def get_by_name(self, name: str) -> ActivityCategory | None:
-        """Найти категорию по имени."""
+    async def get_by_name(self, name: str, workspace_id: Id | None = None) -> ActivityCategory | None:
+        """Найти категорию по имени. Если workspace_id=None — ищет системные категории."""
 
     @abstractmethod
     async def get_system_categories(self) -> list[ActivityCategory]:

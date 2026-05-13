@@ -675,6 +675,67 @@
 
 ---
 
+## TimeTracking BC — Записи времени и таймер
+
+Контроллер: `TimeEntryController` | Префикс: `/time-entries`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| POST | `/time-entries/timer/start` | Запустить таймер. Создаёт новую запись (DRAFT) и сразу стартует |
+| POST | `/time-entries/{entry_id}/timer/pause` | Поставить таймер на паузу |
+| POST | `/time-entries/{entry_id}/timer/resume` | Возобновить таймер после паузы |
+| POST | `/time-entries/{entry_id}/timer/stop` | Остановить таймер. Применяет правила округления |
+| GET | `/time-entries/timer/current` | Текущий запущенный/приостановленный таймер пользователя |
+| POST | `/time-entries` | Создать запись времени вручную |
+| GET | `/time-entries/me` | Свои записи (опционально за дату `?entry_date=YYYY-MM-DD`) |
+| GET | `/time-entries/{entry_id}` | Получить запись по ID |
+| PATCH | `/time-entries/{entry_id}` | Обновить запись (только в `DRAFT`) |
+| DELETE | `/time-entries/{entry_id}` | Удалить запись (только в `DRAFT`) |
+| POST | `/time-entries/{entry_id}/tags` | Добавить тег к записи |
+| DELETE | `/time-entries/{entry_id}/tags/{tag_id}` | Убрать тег из записи |
+
+---
+
+## TimeTracking BC — Workflow утверждения
+
+Контроллер: `TimeEntryApprovalController` | Префикс: `/`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| POST | `/time-entries/{entry_id}/submit` | Отправить запись на утверждение (`DRAFT` → `SUBMITTED`) |
+| POST | `/time-entries/{entry_id}/resubmit` | Повторно отправить отклонённую запись (`REJECTED` → `SUBMITTED`) |
+| POST | `/time-entries/{entry_id}/approve` | Утвердить запись (менеджер). Нельзя утверждать свою же |
+| POST | `/time-entries/{entry_id}/reject` | Отклонить запись с указанием причины |
+| GET | `/workspaces/{workspace_id}/time-entries/pending` | Список записей в статусе `SUBMITTED` |
+
+---
+
+## TimeTracking BC — Категории деятельности
+
+Контроллер: `ActivityCategoryController` | Префикс: `/`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{workspace_id}/time/categories` | Список категорий (системные + workspace-кастомные) |
+| POST | `/workspaces/{workspace_id}/time/categories` | Создать пользовательскую категорию |
+| PATCH | `/time/categories/{category_id}` | Обновить категорию |
+| DELETE | `/time/categories/{category_id}` | Удалить категорию (нельзя — системную или используемую в записях) |
+
+---
+
+## TimeTracking BC — Теги записей
+
+Контроллер: `TimeEntryTagController` | Префикс: `/`
+
+| Метод | URI | Описание |
+|-------|-----|----------|
+| GET | `/workspaces/{workspace_id}/time/tags` | Список тегов workspace |
+| POST | `/workspaces/{workspace_id}/time/tags` | Создать тег (уникальное имя в пределах workspace) |
+| PATCH | `/time/tags/{tag_id}` | Обновить тег |
+| DELETE | `/time/tags/{tag_id}` | Удалить тег (soft delete) |
+
+---
+
 ## WebSocket — Real-time уведомления
 
 | URI | Описание |
@@ -742,6 +803,10 @@
 | FileStorage | FolderController | 11 |
 | FileStorage | ShareLinkController | 3 |
 | FileStorage | StorageController | 7 |
+| TimeTracking | TimeEntryController | 12 |
+| TimeTracking | TimeEntryApprovalController | 5 |
+| TimeTracking | ActivityCategoryController | 4 |
+| TimeTracking | TimeEntryTagController | 4 |
 | Notification | NotificationController | 6 |
 | Notification | NotificationSettingsController | 12 |
-| **Итого** | | **380** |
+| **Итого** | | **405** |

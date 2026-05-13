@@ -12,6 +12,7 @@ from app.context.timetracking.domain.value_objects.time_entry_status import Time
 from app.context.timetracking.domain.value_objects.duration import Duration
 from app.context.timetracking.domain.value_objects.time_rounding_config import TimeRoundingConfig
 from app.context.timetracking.domain.value_objects.time_rounding_rule import TimeRoundingRule
+from app.context.timetracking.domain.value_objects.rounding_apply_to import RoundingApplyTo
 from app.context.timetracking.domain.entities.time_log import TimeLog
 from app.context.timetracking.domain.entities.rejection_reason import RejectionReason
 from app.context.timetracking.domain.events.time_entry_events import (
@@ -32,13 +33,17 @@ from app.context.timetracking.domain.events.time_entry_events import (
     TimeEntryTagRemoved,
 )
 from app.context.timetracking.domain.exceptions.time_entry_exceptions import (
+    TimerAlreadyRunningException,
     TimerNotRunningException,
     TimerNotPausedException,
+    CannotDeleteNonDraftTimeEntryException,
     CannotEditLockedTimeEntryException,
     CannotEditApprovedTimeEntryException,
     CannotApproveOwnTimeEntryException,
+    CannotSetHourlyRateForNonBillableException,
     TimeEntryAlreadySubmittedException,
     TimeEntryAlreadyApprovedException,
+    TimeEntryNotSubmittedException,
     InvalidTimeEntryDurationException,
 )
 
@@ -94,11 +99,11 @@ class TimeEntry(AggregateRoot):
         updated_at: Время последнего обновления.
     """
 
-    user_id: Id = field(default_factory=Id.generate)
+    user_id: Id = field(kw_only=True)
     task_id: Id | None = None
     project_id: Id | None = None
     epic_id: Id | None = None
-    workspace_id: Id = field(default_factory=Id.generate)
+    workspace_id: Id = field(kw_only=True)
     description: str | None = None
     timer_state: TimerState = TimerState.STOPPED
     status: TimeEntryStatus = TimeEntryStatus.DRAFT
@@ -161,6 +166,40 @@ class TimeEntry(AggregateRoot):
         )
         return entry
 
+    @classmethod
+    def create_for_timer(
+        cls,
+        user_id: Id,
+        workspace_id: Id,
+        entry_date: date,
+        description: str | None = None,
+        task_id: Id | None = None,
+        project_id: Id | None = None,
+        epic_id: Id | None = None,
+    ) -> TimeEntry:
+        """Создаёт запись для запуска таймера (duration=0, статус DRAFT)."""
+        entry = cls(
+            user_id=user_id,
+            workspace_id=workspace_id,
+            description=description,
+            duration=Duration(seconds=0),
+            entry_date=entry_date,
+            task_id=task_id,
+            project_id=project_id,
+            epic_id=epic_id,
+            timer_state=TimerState.STOPPED,
+            status=TimeEntryStatus.DRAFT,
+        )
+        entry._register_event(
+            TimeEntryCreated(
+                entry_id=str(entry.id),
+                user_id=str(user_id),
+                entry_date=str(entry_date),
+                duration_seconds=0,
+            )
+        )
+        return entry
+
     # --- Инварианты ---
 
     def _assert_can_edit(self) -> None:
@@ -177,7 +216,7 @@ class TimeEntry(AggregateRoot):
         """Запускает таймер: STOPPED → RUNNING."""
         self._assert_can_edit()
         if self.timer_state == TimerState.RUNNING:
-            raise TimerNotRunningException()  # already running
+            raise TimerAlreadyRunningException()
         now = datetime.now(tz=timezone.utc)
         self.timer_state = TimerState.RUNNING
         self.started_at = now
@@ -282,6 +321,8 @@ class TimeEntry(AggregateRoot):
         if hourly_rate is not None and self.is_billable:
             self.hourly_rate = hourly_rate
             changed.append("hourly_rate")
+        elif hourly_rate is not None and not self.is_billable:
+            raise CannotSetHourlyRateForNonBillableException()
         if category_id is not None and self.category_id != category_id:
             self.category_id = category_id
             changed.append("category_id")
@@ -313,17 +354,24 @@ class TimeEntry(AggregateRoot):
         if tag_id not in self.tag_ids:
             self.tag_ids.append(tag_id)
             self.updated_at = datetime.now(tz=timezone.utc)
+            self._register_event(
+                TimeEntryTagAdded(entry_id=str(self.id), tag_id=str(tag_id))
+            )
 
     def remove_tag(self, tag_id: Id) -> None:
         self._assert_can_edit()
-        self.tag_ids = [t for t in self.tag_ids if t != tag_id]
-        self.updated_at = datetime.now(tz=timezone.utc)
+        if tag_id in self.tag_ids:
+            self.tag_ids = [t for t in self.tag_ids if t != tag_id]
+            self.updated_at = datetime.now(tz=timezone.utc)
+            self._register_event(
+                TimeEntryTagRemoved(entry_id=str(self.id), tag_id=str(tag_id))
+            )
 
     # --- Workflow утверждения ---
 
     def submit(self) -> None:
         """DRAFT → SUBMITTED."""
-        if self.status != TimeEntryStatus.DRAFT and self.status != TimeEntryStatus.REJECTED:
+        if self.status != TimeEntryStatus.DRAFT:
             raise TimeEntryAlreadySubmittedException()
         self.status = TimeEntryStatus.SUBMITTED
         self.updated_at = datetime.now(tz=timezone.utc)
@@ -346,7 +394,7 @@ class TimeEntry(AggregateRoot):
     def reject(self, rejected_by: Id, reason: str) -> None:
         """SUBMITTED → REJECTED."""
         if self.status != TimeEntryStatus.SUBMITTED:
-            raise TimeEntryAlreadyApprovedException()
+            raise TimeEntryNotSubmittedException()
         self.status = TimeEntryStatus.REJECTED
         self.rejection_reason = RejectionReason(reason=reason, rejected_by=rejected_by)
         self.updated_at = datetime.now(tz=timezone.utc)
@@ -374,5 +422,5 @@ class TimeEntry(AggregateRoot):
     def delete(self) -> None:
         """Удаление (только если DRAFT)."""
         if self.status != TimeEntryStatus.DRAFT:
-            raise CannotEditLockedTimeEntryException()
+            raise CannotDeleteNonDraftTimeEntryException()
         self._register_event(TimeEntryDeleted(entry_id=str(self.id)))

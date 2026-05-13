@@ -162,6 +162,24 @@ api_v1_router.include_router(_task_history_controller.router)
 api_v1_router.include_router(_task_template_controller.router)
 api_v1_router.include_router(_project_task_template_controller.router)
 
+# TimeTracking BC
+from app.context.timetracking.presentation.controllers import (
+    ActivityCategoryController,
+    TimeEntryApprovalController,
+    TimeEntryController,
+    TimeEntryTagController,
+)
+
+_time_entry_controller = TimeEntryController()
+_time_entry_approval_controller = TimeEntryApprovalController()
+_activity_category_controller = ActivityCategoryController()
+_time_entry_tag_controller = TimeEntryTagController()
+
+api_v1_router.include_router(_time_entry_controller.router)
+api_v1_router.include_router(_time_entry_approval_controller.router)
+api_v1_router.include_router(_activity_category_controller.router)
+api_v1_router.include_router(_time_entry_tag_controller.router)
+
 # Communication BC
 from app.context.communication.presentation.controllers import (
     ChatController,
