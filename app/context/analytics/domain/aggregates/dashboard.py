@@ -24,6 +24,7 @@ from app.context.analytics.domain.events.dashboard_events import (
     WidgetRemoved,
     WidgetReordered,
 )
+from app.shared.domain.exceptions import ValidationException
 from app.context.analytics.domain.exceptions.dashboard_exceptions import (
     WidgetNotFoundException,
     DuplicateShareException,
@@ -48,17 +49,40 @@ class Dashboard(AggregateRoot):
     updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
 
     @classmethod
-    def create(cls, name: str, owner_id: Id, workspace_id: Id | None = None) -> Dashboard:
-        db = cls(name=name, owner_id=owner_id, workspace_id=workspace_id)
+    def create(
+        cls,
+        name: str,
+        owner_id: Id,
+        workspace_id: Id | None = None,
+        description: str | None = None,
+    ) -> Dashboard:
+        db = cls(name=name, description=description, owner_id=owner_id, workspace_id=workspace_id)
         db._register_event(DashboardCreated(dashboard_id=str(db.id), owner_id=str(owner_id), workspace_id=str(workspace_id) if workspace_id else ""))
         return db
 
     @classmethod
-    def create_from_template(cls, template_id: Id, template_name: str, widget_configs: list[WidgetConfig], owner_id: Id, workspace_id: Id | None = None) -> Dashboard:
-        db = cls(name=template_name, owner_id=owner_id, workspace_id=workspace_id)
+    def create_from_template(
+        cls,
+        template_id: Id,
+        template_name: str,
+        widget_configs: list[WidgetConfig],
+        owner_id: Id,
+        workspace_id: Id | None = None,
+        description: str | None = None,
+    ) -> Dashboard:
+        db = cls(
+            name=template_name,
+            description=description,
+            owner_id=owner_id,
+            workspace_id=workspace_id,
+        )
         for i, config in enumerate(widget_configs):
             widget = Widget(title=config.widget_type.value, widget_type=config.widget_type, config=config, order=i)
             db.widgets.append(widget)
+        # Сначала эмитим общее событие факта создания, затем уточняющее —
+        # чтобы read-model/проекции, подписанные только на DashboardCreated,
+        # корректно увидели дашборды, созданные из шаблона.
+        db._register_event(DashboardCreated(dashboard_id=str(db.id), owner_id=str(owner_id), workspace_id=str(workspace_id) if workspace_id else ""))
         db._register_event(DashboardCreatedFromTemplate(dashboard_id=str(db.id), template_id=str(template_id)))
         return db
 
@@ -75,6 +99,9 @@ class Dashboard(AggregateRoot):
             self._register_event(DashboardUpdated(dashboard_id=str(self.id), changed_fields=changed))
 
     def add_widget(self, widget: Widget) -> None:
+        # Назначаем order как max+1, чтобы избежать коллизий после удалений
+        # (в remove_widget мы не компактим order).
+        widget.order = max((w.order for w in self.widgets), default=-1) + 1
         self.widgets.append(widget)
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(WidgetAdded(dashboard_id=str(self.id), widget_id=str(widget.id), widget_type=widget.widget_type))
@@ -87,26 +114,59 @@ class Dashboard(AggregateRoot):
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(WidgetRemoved(dashboard_id=str(self.id), widget_id=str(widget_id)))
 
-    def update_widget(self, widget_id: Id, config: WidgetConfig | None = None, size: WidgetSize | None = None, position: WidgetPosition | None = None) -> None:
+    def update_widget(
+        self,
+        widget_id: Id,
+        title: str | None = None,
+        config: WidgetConfig | None = None,
+        size: WidgetSize | None = None,
+        position: WidgetPosition | None = None,
+    ) -> None:
         widget = next((w for w in self.widgets if w.id == widget_id), None)
         if widget is None:
             raise WidgetNotFoundException(id=widget_id)
-        if config is not None:
+        changed = False
+        if title is not None and widget.title != title:
+            widget.title = title
+            changed = True
+        if config is not None and widget.config != config:
             widget.config = config
-        if size is not None:
+            changed = True
+        if size is not None and widget.size != size:
             widget.size = size
-        if position is not None:
+            changed = True
+        if position is not None and widget.position != position:
             widget.position = position
+            changed = True
+        if not changed:
+            return
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(WidgetUpdated(dashboard_id=str(self.id), widget_id=str(widget_id)))
 
     def reorder_widgets(self, widget_ids: list[Id]) -> None:
         id_to_widget = {w.id: w for w in self.widgets}
-        reordered = []
-        for i, wid in enumerate(widget_ids):
-            if wid in id_to_widget:
-                id_to_widget[wid].order = i
-                reordered.append(id_to_widget[wid])
+        # Виджеты, не упомянутые в widget_ids, должны сохраниться — иначе
+        # частичный список молча удалит их с дашборда.
+        seen: set[Id] = set()
+        reordered: list[Widget] = []
+        for wid in widget_ids:
+            if wid in seen:
+                continue
+            widget = id_to_widget.get(wid)
+            if widget is None:
+                raise WidgetNotFoundException(id=wid)
+            reordered.append(widget)
+            seen.add(wid)
+        # Не упомянутые виджеты добавляем в конец, сохраняя исходный порядок.
+        for w in self.widgets:
+            if w.id not in seen:
+                reordered.append(w)
+        # Если итоговый порядок совпадает с текущим — событие не эмитим,
+        # чтобы не плодить ложных уведомлений у подписчиков.
+        if [w.id for w in reordered] == [w.id for w in self.widgets]:
+            return
+        for i, w in enumerate(reordered):
+            w.order = i
         self.widgets = reordered
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(WidgetReordered(dashboard_id=str(self.id)))
@@ -122,25 +182,60 @@ class Dashboard(AggregateRoot):
         self._register_event(DashboardShared(dashboard_id=str(self.id), user_id=str(user_id), access_level=access_level))
 
     def unshare(self, user_id: Id) -> None:
+        before = len(self.shares)
         self.shares = [s for s in self.shares if s.user_id != user_id]
+        if len(self.shares) == before:
+            return
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(DashboardUnshared(dashboard_id=str(self.id), user_id=str(user_id)))
 
     def set_auto_refresh(self, enabled: bool, interval_seconds: int | None = None) -> None:
+        # При включении требуем интервал: иначе агрегат остался бы в
+        # некорректном состоянии (enabled=True, interval=None).
+        if enabled and interval_seconds is None and self.refresh_interval_seconds is None:
+            raise ValidationException(
+                field="interval_seconds",
+                message="interval_seconds обязателен при включении auto-refresh",
+            )
+        if enabled and interval_seconds is not None and interval_seconds < 30:
+            raise ValidationException(
+                field="interval_seconds",
+                message=f"interval_seconds должен быть >= 30: {interval_seconds}",
+            )
+        prev_enabled = self.is_auto_refresh
+        prev_interval = self.refresh_interval_seconds
         self.is_auto_refresh = enabled
         if enabled and interval_seconds is not None:
-            self.refresh_interval_seconds = max(30, interval_seconds)
+            self.refresh_interval_seconds = interval_seconds
         elif not enabled:
             self.refresh_interval_seconds = None
+        changed: list[str] = []
+        if prev_enabled != self.is_auto_refresh:
+            changed.append("is_auto_refresh")
+        if prev_interval != self.refresh_interval_seconds:
+            changed.append("refresh_interval_seconds")
+        if not changed:
+            return
         self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            DashboardUpdated(dashboard_id=str(self.id), changed_fields=changed)
+        )
 
     def set_default(self) -> None:
+        if self.is_default:
+            return
         self.is_default = True
         self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(DashboardUpdated(dashboard_id=str(self.id), changed_fields=["is_default"]))
 
     def unset_default(self) -> None:
+        if not self.is_default:
+            return
         self.is_default = False
         self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(DashboardUpdated(dashboard_id=str(self.id), changed_fields=["is_default"]))
 
     def delete(self) -> None:
+        # updated_at не мутируем: агрегат удаляется, фантомный update в
+        # проекциях/outbox по updated_at нам не нужен.
         self._register_event(DashboardDeleted(dashboard_id=str(self.id)))
