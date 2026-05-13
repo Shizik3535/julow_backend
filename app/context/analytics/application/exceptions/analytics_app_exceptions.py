@@ -108,6 +108,22 @@ class ReportScheduleRequiredException(ApplicationException):
         self.report_id = report_id
 
 
+class ReportWorkspaceRequiredException(ApplicationException):
+    """Операция требует, чтобы у отчёта был задан workspace.
+
+    Workspace-less отчёт не может проходить через scheduled-канал:
+    job-таблица требует non-null ``workspace_id``, квоты и разрешения
+    проверяются против реального workspace отчёта.
+    """
+
+    http_status_code = 400
+    error_code = "REPORT_WORKSPACE_REQUIRED"
+
+    def __init__(self, report_id: str) -> None:
+        super().__init__(f"У отчёта {report_id} не задан workspace")
+        self.report_id = report_id
+
+
 class InvalidShareAccessLevelException(ApplicationException):
     """Некорректный уровень доступа при шаринге."""
 

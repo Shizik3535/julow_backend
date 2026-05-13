@@ -7,6 +7,7 @@ from app.shared.domain.value_objects.id_vo import Id
 from app.context.analytics.application.dto.report_dto import ReportJobDTO
 from app.context.analytics.application.exceptions.analytics_app_exceptions import (
     ReportScheduleRequiredException,
+    ReportWorkspaceRequiredException,
 )
 from app.context.analytics.application.exceptions.authorization_exceptions import (
     AnalyticsAccessDeniedException,
@@ -60,7 +61,7 @@ class SendReportNowHandler(BaseCommandHandler[SendReportNowCommand, ReportJobDTO
             raise ReportScheduleRequiredException(command.report_id)
         if report.workspace_id is None:
             # Workspace-less отчёты не могут рассылаться через scheduled-канал.
-            raise ReportScheduleRequiredException(command.report_id)
+            raise ReportWorkspaceRequiredException(command.report_id)
         return await self._generator.send_scheduled_now(
             workspace_id=str(report.workspace_id),
             report_id=command.report_id,

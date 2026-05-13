@@ -290,6 +290,7 @@ def dashboard_template_to_dto(template: DashboardTemplate) -> DashboardTemplateD
         )
     return DashboardTemplateDTO(
         id=str(template.id),
+        workspace_id=str(template.workspace_id) if template.workspace_id else None,
         name=template.name,
         description=template.description,
         widgets=widgets,

@@ -13,6 +13,7 @@ class DashboardTemplateDTO(BaseDTO):
     """DTO шаблона дашборда."""
 
     id: str
+    workspace_id: str | None = None
     name: str
     description: str | None = None
     widgets: list[WidgetDTO] = []

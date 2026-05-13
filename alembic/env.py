@@ -145,6 +145,19 @@ from app.context.timetracking.infrastructure.persistence.orm_models.time_entry_o
 from app.context.timetracking.infrastructure.persistence.orm_models.time_entry_tag_orm import (  # noqa: F401
     TimeEntryTagORM,
 )
+from app.context.analytics.infrastructure.persistence.orm_models.dashboard_orm import (  # noqa: F401
+    DashboardORM,
+    DashboardShareORM,
+    DashboardWidgetORM,
+)
+from app.context.analytics.infrastructure.persistence.orm_models.dashboard_template_orm import (  # noqa: F401
+    DashboardTemplateORM,
+)
+from app.context.analytics.infrastructure.persistence.orm_models.report_orm import (  # noqa: F401
+    ReportJobORM,
+    ReportORM,
+    ReportShareORM,
+)
 
 # Alembic Config object
 config = context.config

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.shared.application.base_command import BaseCommand
 from app.shared.application.base_command_handler import BaseCommandHandler
+from app.shared.domain.value_objects.id_vo import Id
 
 from app.context.analytics.application.dto.dashboard_template_dto import (
     CustomTemplateWidgetDTO,
@@ -65,6 +66,7 @@ class CreateCustomTemplateHandler(
             name=command.name,
             widget_configs=widget_configs,
             description=command.description,
+            workspace_id=Id.from_string(command.workspace_id),
         )
         await self._repo.add(template)
         return dashboard_template_to_dto(template)

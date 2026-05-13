@@ -16,7 +16,16 @@ class DashboardTemplateRepository(RepositoryPort[DashboardTemplate]):
     async def get_by_workspace(self, workspace_id: Id) -> list[DashboardTemplate]: ...
 
     @abstractmethod
-    async def get_by_name(self, name: str) -> DashboardTemplate | None: ...
+    async def get_by_name(
+        self, name: str, workspace_id: Id | None = None
+    ) -> DashboardTemplate | None:
+        """Найти шаблон по имени в заданной области видимости.
+
+        ``workspace_id=None`` — искать среди системных шаблонов (они глобальны
+        и имеют ``workspace_id is None``). Иначе — среди кастомных шаблонов
+        указанного workspace. Имя не уникально между workspace'ами, поэтому
+        этот параметр обязателен для корректного поиска.
+        """
 
     @abstractmethod
     async def search(self, offset: int = 0, limit: int = 100, filters: dict[str, Any] | None = None) -> list[DashboardTemplate]: ...

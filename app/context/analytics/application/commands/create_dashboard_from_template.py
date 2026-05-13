@@ -65,6 +65,15 @@ class CreateDashboardFromTemplateHandler(
         template = await self._template_repo.get_by_id(Id.from_string(command.template_id))
         if template is None:
             raise DashboardTemplateNotFoundException(id=command.template_id)
+        # Системные шаблоны видны всем; кастомный — только в своём workspace,
+        # иначе бы пользователь A смог склонировать виджеты workspace'а B,
+        # просто зная ID. Отвечаем «не найдено», чтобы не подсказывать
+        # существование чужого шаблона.
+        if not template.is_system and (
+            template.workspace_id is None
+            or str(template.workspace_id) != command.workspace_id
+        ):
+            raise DashboardTemplateNotFoundException(id=command.template_id)
 
         dashboard = Dashboard.create_from_template(
             template_id=template.id,

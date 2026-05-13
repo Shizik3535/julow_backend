@@ -41,6 +41,15 @@ class DeleteTemplateHandler(BaseCommandHandler[DeleteTemplateCommand, None]):
         template = await self._repo.get_by_id(Id.from_string(command.template_id))
         if template is None:
             raise DashboardTemplateNotFoundException(id=command.template_id)
+        # Кастомные шаблоны видны/удаляемы только в своём workspace; чтобы не
+        # подсказывать существование чужого шаблона — отвечаем «не найдено».
+        # Системные шаблоны (workspace_id is None) глобальны и блокируются
+        # ниже через assert_deletable().
+        if not template.is_system and (
+            template.workspace_id is None
+            or str(template.workspace_id) != command.workspace_id
+        ):
+            raise DashboardTemplateNotFoundException(id=command.template_id)
         await self._permission_checker.require_permission(
             user_id=command.caller_id,
             workspace_id=command.workspace_id,
