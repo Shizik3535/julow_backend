@@ -1,6 +1,6 @@
 """add_sso_enforce_and_integration_fields
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: 5cad42b1f3a7
 Revises: b5a09105c9ac
 Create Date: 2026-05-04 23:40:00.000000+00:00
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a1b2c3d4e5f6'
+revision: str = '5cad42b1f3a7'
 down_revision: Union[str, Sequence[str], None] = 'b5a09105c9ac'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

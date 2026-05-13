@@ -35,10 +35,13 @@ class SqlSSOIntegrationRepository(SqlAlchemyRepository[SSOIntegration, SSOIntegr
         return self._mapper.to_domain(orm) if orm else None
 
     async def get_active_by_email_domain(self, email_domain: str) -> SSOIntegration | None:
+        # PostgreSQL `@>` определён только для jsonb. Колонка email_domains имеет тип
+        # JSON, поэтому кастуем обе стороны явно — иначе получим
+        # `operator does not exist: json @> unknown` на каждом login.
         stmt = (
             select(SSOIntegrationORM)
             .where(SSOIntegrationORM.is_active.is_(True))
-            .where(text("email_domains @> :domain_json"))
+            .where(text("email_domains::jsonb @> CAST(:domain_json AS jsonb)"))
             .params(domain_json=f'["{email_domain}"]')
             .limit(1)
         )

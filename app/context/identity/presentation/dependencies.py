@@ -138,8 +138,20 @@ async def get_organization_sso_port(
     session: AsyncSession = Depends(get_db_session),
     container: Container = Depends(get_container),
 ):
-    """Получить OrganizationSSOPort (inboard) из DI-контейнера."""
-    return container.identity_org_sso_port(session=session)
+    """Получить OrganizationSSOPort (inboard) из DI-контейнера.
+
+    `identity_org_sso_port` оборачивает `org_sso_provider`, который, в свою
+    очередь, зависит от двух session-scoped репозиториев. dependency-injector
+    не пробрасывает kwargs во вложенные провайдеры, поэтому пре-резолвим их
+    вручную (как в `get_permission_checker`).
+    """
+    sso_repo = container.sso_integration_repo(session=session)
+    org_repo = container.organization_repo(session=session)
+    org_sso_provider = container.org_sso_provider(
+        sso_repo=sso_repo,
+        org_repo=org_repo,
+    )
+    return container.identity_org_sso_port(org_sso_provider=org_sso_provider)
 
 
 async def get_failed_login_policy(container: Container = Depends(get_container)) -> FailedLoginPolicy:

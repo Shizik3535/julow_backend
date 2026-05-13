@@ -123,9 +123,21 @@ class SqlAlchemyRepository(RepositoryPort[TAggregate], Generic[TAggregate, TORMM
             )
 
         updated_orm = self._mapper.to_orm(aggregate)
+        # Колонки, которыми управляет сам `BaseORMModel` / БД, никогда не
+        # переписываем из мэппера: иначе мэпперы, которые не пробрасывают
+        # эти поля, будут затирать их в `None`. Особенно критично для
+        # `updated_at` — его выставляет `onupdate=` в `BaseORMModel`. Если
+        # мы делаем `setattr(orm_model, "updated_at", None)`, SQLAlchemy
+        # считает, что пользователь явно потребовал NULL, и подавляет
+        # `onupdate`; в SET летит `updated_at = NULL`, и Postgres валит
+        # запрос с `NotNullViolationError: null value in column "updated_at"`.
+        # Это и было причиной 500 на `PATCH /notifications/{id}/read`,
+        # `PATCH /notifications/{id}/archive` и любых других command-handler'ах
+        # для агрегатов, чьи мэпперы не упоминают `updated_at`.
+        managed_columns = ("id", "created_at", "updated_at")
         for column in updated_orm.__table__.columns:
             col_name = column.name
-            if col_name in ("id", "created_at"):
+            if col_name in managed_columns:
                 continue
             setattr(orm_model, col_name, getattr(updated_orm, col_name, None))
 

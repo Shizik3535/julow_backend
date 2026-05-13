@@ -32,6 +32,16 @@ class BaseEntity(ABC):
 
     id: Id = field(default_factory=Id.generate)
 
+    def __post_init__(self) -> None:
+        """
+        Хук инициализации dataclass'а.
+
+        По умолчанию — no-op. Наследники могут переопределить его для валидации
+        обязательных полей и вызывать `super().__post_init__()` в начале,
+        чтобы не нарушать цепочку инициализации (см. Task, Project и т.д.).
+        """
+        return None
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, BaseEntity):
             return NotImplemented

@@ -1,0 +1,4 @@
+# Force LF line endings for shell scripts so Linux containers can execute them
+# even when the repo is checked out on Windows.
+*.sh text eol=lf
+entrypoint.sh text eol=lf
