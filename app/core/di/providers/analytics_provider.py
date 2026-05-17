@@ -41,6 +41,9 @@ from app.context.analytics.application.ports.report_generation.report_generator_
 from app.context.analytics.application.ports.report_generation.report_render_scheduler_port import (
     ReportRenderSchedulerPort,
 )
+from app.context.analytics.application.ports.schema.analytics_schema_port import (
+    AnalyticsSchemaPort,
+)
 from app.context.analytics.domain.repositories.dashboard_repository import (
     DashboardRepository,
 )
@@ -110,6 +113,9 @@ from app.context.analytics.infrastructure.report_generation.report_generator_ada
 )
 from app.context.analytics.infrastructure.report_generation.report_render_scheduler import (
     NoopReportRenderScheduler,
+)
+from app.context.analytics.infrastructure.schema.static_analytics_schema_adapter import (
+    StaticAnalyticsSchemaAdapter,
 )
 from app.context.analytics.infrastructure.query_execution.resolvers.project_analytics_resolver import (
     ProjectAnalyticsResolver,
@@ -357,6 +363,11 @@ def create_report_render_scheduler() -> ReportRenderSchedulerPort:
     воркера рендеринга.
     """
     return NoopReportRenderScheduler()
+
+
+def create_analytics_schema_port() -> AnalyticsSchemaPort:
+    """Создать StaticAnalyticsSchemaAdapter (без состояния, Singleton-совместим)."""
+    return StaticAnalyticsSchemaAdapter()
 
 
 def create_report_generator(

@@ -263,6 +263,11 @@ async def get_analytics_event_bus(container: Container = Depends(get_container))
     return container.analytics_event_bus()
 
 
+async def get_analytics_schema_port(container: Container = Depends(get_container)):
+    """Получить AnalyticsSchemaPort (Singleton, без состояния)."""
+    return container.analytics_schema_port()
+
+
 # ---------------------------------------------------------------------------
 # Auth — текущий пользователь
 # ---------------------------------------------------------------------------

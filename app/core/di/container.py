@@ -55,6 +55,7 @@ from app.core.di.providers.analytics_provider import (
     create_analytics_project_adapter,
     create_analytics_project_analytics_adapter,
     create_analytics_query_executor,
+    create_analytics_schema_port,
     create_analytics_sprint_adapter,
     create_analytics_task_analytics_adapter,
     create_analytics_timetracking_analytics_adapter,
@@ -1283,6 +1284,9 @@ class Container(containers.DeclarativeContainer):
         create_timetracking_analytics_resolver,
         timetracking_port=analytics_timetracking_analytics_port,
     )
+
+    # Analytics BC - Schema (Singleton: static metadata registry, stateless)
+    analytics_schema_port = providers.Singleton(create_analytics_schema_port)
 
     # Analytics BC - Query execution
     # Factory (not Singleton): resolvers depend on Factory-provided adapters
