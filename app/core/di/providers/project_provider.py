@@ -3,7 +3,7 @@ DI-провайдеры для Project BC.
 """
 from __future__ import annotations
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.context.identity.application.ports.integration.outboard.identity_user_provider import (
     IdentityUserProvider,
@@ -47,6 +47,9 @@ from app.context.project.application.ports.integration.outboard.project_provider
 )
 from app.context.project.application.ports.integration.outboard.project_role_provider import (
     ProjectRoleProvider,
+)
+from app.context.project.application.ports.integration.outboard.project_analytics_provider import (
+    ProjectAnalyticsProvider,
 )
 from app.context.project.application.ports.integration.outboard.sprint_provider import (
     SprintProvider,
@@ -98,6 +101,9 @@ from app.context.project.infrastructure.integration.outboard.project_provider_ad
 )
 from app.context.project.infrastructure.integration.outboard.project_role_provider_adapter import (
     ProjectRoleProviderAdapter,
+)
+from app.context.project.infrastructure.integration.outboard.sql_project_analytics_adapter import (
+    SqlProjectAnalyticsAdapter,
 )
 from app.context.project.infrastructure.integration.outboard.sprint_provider_adapter import (
     SprintProviderAdapter,
@@ -284,6 +290,11 @@ def create_epic_provider_adapter(repo: EpicRepository) -> EpicProvider:
 def create_sprint_provider_adapter(repo: SprintRepository) -> SprintProvider:
     """Создать SprintProviderAdapter (outboard)."""
     return SprintProviderAdapter(repo=repo)
+
+
+def create_project_analytics_adapter(session_factory: async_sessionmaker[AsyncSession]) -> ProjectAnalyticsProvider:
+    """Создать SqlProjectAnalyticsAdapter (outboard) для Analytics BC."""
+    return SqlProjectAnalyticsAdapter(session_factory=session_factory)
 
 
 def create_project_membership_provider_adapter(

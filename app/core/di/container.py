@@ -4,6 +4,10 @@ import asyncio
 
 from dependency_injector import containers, providers
 
+from app.context.analytics.application.messaging import (
+    analytics_subscriptions,
+    build_analytics_event_bus,
+)
 from app.context.identity.application.messaging import (
     build_identity_event_bus,
     identity_subscriptions,
@@ -45,6 +49,32 @@ from app.context.filestorage.application.messaging import (
     filestorage_subscriptions,
 )
 from app.core.config.settings import Settings
+from app.core.di.providers.analytics_provider import (
+    create_analytics_file_attachment_adapter,
+    create_analytics_permission_checker,
+    create_analytics_project_adapter,
+    create_analytics_project_analytics_adapter,
+    create_analytics_query_executor,
+    create_analytics_sprint_adapter,
+    create_analytics_task_analytics_adapter,
+    create_analytics_timetracking_analytics_adapter,
+    create_analytics_workspace_adapter,
+    create_analytics_workspace_analytics_adapter,
+    create_dashboard_mapper,
+    create_dashboard_repository,
+    create_dashboard_template_mapper,
+    create_dashboard_template_repository,
+    create_project_analytics_resolver,
+    create_report_generator,
+    create_report_job_mapper,
+    create_report_job_repository,
+    create_report_mapper,
+    create_report_render_scheduler,
+    create_report_repository,
+    create_task_analytics_resolver,
+    create_timetracking_analytics_resolver,
+    create_workspace_analytics_resolver,
+)
 from app.core.di.providers.auth_provider import create_auth_token_adapter, create_password_adapter
 from app.core.di.providers.background_tasks_provider import create_celery_app
 from app.core.di.providers.cache_provider import create_cache_adapter, create_redis_client
@@ -142,6 +172,7 @@ from app.core.di.providers.workspace_provider import (
     create_ws_org_permission_checker_adapter,
     create_ws_organization_adapter,
     create_ws_organization_membership_adapter,
+    create_workspace_analytics_adapter,
     create_workspace_invitation_mapper,
     create_workspace_invitation_repository,
     create_workspace_mapper,
@@ -163,6 +194,7 @@ from app.core.di.providers.project_provider import (
     create_epic_mapper,
     create_epic_provider_adapter,
     create_epic_repository,
+    create_project_analytics_adapter,
     create_project_identity_user_adapter,
     create_project_mapper,
     create_project_membership_mapper,
@@ -201,6 +233,7 @@ from app.core.di.providers.filestorage_provider import (
 from app.core.di.providers.task_provider import (
     create_changelog_mapper,
     create_changelog_repository,
+    create_task_analytics_adapter,
     create_task_board_adapter,
     create_task_epic_adapter,
     create_task_file_attachment_adapter,
@@ -224,6 +257,7 @@ from app.core.di.providers.timetracking_provider import (
     create_time_entry_repository,
     create_time_entry_tag_mapper,
     create_time_entry_tag_repository,
+    create_timetracking_analytics_adapter,
     create_timetracking_epic_adapter,
     create_timetracking_identity_user_adapter,
     create_timetracking_permission_checker,
@@ -658,6 +692,10 @@ class Container(containers.DeclarativeContainer):
         workspace_role_repo=workspace_role_repo,
         workspace_repo=workspace_repo,
     )
+    workspace_analytics_provider = providers.Factory(
+        create_workspace_analytics_adapter,
+        session_factory=db_session_factory,
+    )
 
     # Workspace BC - Authorization
     workspace_permission_checker = providers.Factory(
@@ -770,6 +808,10 @@ class Container(containers.DeclarativeContainer):
     project_role_provider = providers.Factory(
         create_project_role_provider_adapter,
         repo=project_role_repo,
+    )
+    project_analytics_provider = providers.Factory(
+        create_project_analytics_adapter,
+        session_factory=db_session_factory,
     )
 
     # Project BC - Authorization
@@ -900,6 +942,10 @@ class Container(containers.DeclarativeContainer):
         create_task_participant_provider_adapter,
         repo=task_repo,
     )
+    task_analytics_provider = providers.Factory(
+        create_task_analytics_adapter,
+        session_factory=db_session_factory,
+    )
 
     # Task BC - Integration inboard adapters
     task_identity_user_port = providers.Factory(
@@ -992,6 +1038,12 @@ class Container(containers.DeclarativeContainer):
     timetracking_identity_user_port = providers.Factory(
         create_timetracking_identity_user_adapter,
         identity_user_provider=identity_user_provider,
+    )
+
+    # TimeTracking BC - Outboard analytics adapter
+    timetracking_analytics_provider = providers.Factory(
+        create_timetracking_analytics_adapter,
+        session_factory=db_session_factory,
     )
 
     # ==================================================================
@@ -1131,6 +1183,129 @@ class Container(containers.DeclarativeContainer):
         project_provider=project_provider,
     )
 
+    # ==================================================================
+    # Analytics BC
+    # ==================================================================
+
+    # Analytics BC - Event Bus
+    analytics_event_bus = providers.Singleton(
+        build_analytics_event_bus,
+        broker=message_broker_port,
+    )
+
+    # Analytics BC - Mappers (Singleton)
+    dashboard_mapper = providers.Singleton(create_dashboard_mapper)
+    dashboard_template_mapper = providers.Singleton(create_dashboard_template_mapper)
+    report_mapper = providers.Singleton(create_report_mapper)
+    report_job_mapper = providers.Singleton(create_report_job_mapper)
+
+    # Analytics BC - Repositories (Factory with session)
+    dashboard_repo = providers.Factory(
+        create_dashboard_repository,
+        session=db_session_factory,
+        mapper=dashboard_mapper,
+    )
+    dashboard_template_repo = providers.Factory(
+        create_dashboard_template_repository,
+        session=db_session_factory,
+        mapper=dashboard_template_mapper,
+    )
+    report_repo = providers.Factory(
+        create_report_repository,
+        session=db_session_factory,
+        mapper=report_mapper,
+    )
+    report_job_repo = providers.Factory(
+        create_report_job_repository,
+        session=db_session_factory,
+        mapper=report_job_mapper,
+    )
+
+    # Analytics BC - Authorization
+    analytics_permission_checker_port = providers.Factory(
+        create_analytics_permission_checker,
+        workspace_membership_provider=workspace_membership_provider,
+    )
+
+    # Analytics BC - Integration inboard adapters
+    analytics_workspace_port = providers.Factory(
+        create_analytics_workspace_adapter,
+        workspace_provider=workspace_provider,
+        workspace_membership_provider=workspace_membership_provider,
+    )
+    analytics_project_port = providers.Factory(
+        create_analytics_project_adapter,
+        project_provider=project_provider,
+    )
+    analytics_file_attachment_port = providers.Factory(
+        create_analytics_file_attachment_adapter,
+        file_attachment_provider=file_attachment_provider,
+    )
+
+    # Analytics BC - Inboard analytics adapters (data path)
+    analytics_workspace_analytics_port = providers.Factory(
+        create_analytics_workspace_analytics_adapter,
+        workspace_analytics_provider=workspace_analytics_provider,
+    )
+    analytics_project_analytics_port = providers.Factory(
+        create_analytics_project_analytics_adapter,
+        project_analytics_provider=project_analytics_provider,
+    )
+    analytics_task_analytics_port = providers.Factory(
+        create_analytics_task_analytics_adapter,
+        task_analytics_provider=task_analytics_provider,
+    )
+    analytics_timetracking_analytics_port = providers.Factory(
+        create_analytics_timetracking_analytics_adapter,
+        timetracking_analytics_provider=timetracking_analytics_provider,
+    )
+    analytics_sprint_port = providers.Factory(
+        create_analytics_sprint_adapter,
+        sprint_provider=sprint_provider,
+    )
+
+    # Analytics BC - Resolvers
+    workspace_analytics_resolver = providers.Factory(
+        create_workspace_analytics_resolver,
+        workspace_port=analytics_workspace_analytics_port,
+    )
+    project_analytics_resolver = providers.Factory(
+        create_project_analytics_resolver,
+        project_port=analytics_project_analytics_port,
+        task_port=analytics_task_analytics_port,
+    )
+    task_analytics_resolver = providers.Factory(
+        create_task_analytics_resolver,
+        task_port=analytics_task_analytics_port,
+        sprint_port=analytics_sprint_port,
+    )
+    timetracking_analytics_resolver = providers.Factory(
+        create_timetracking_analytics_resolver,
+        timetracking_port=analytics_timetracking_analytics_port,
+    )
+
+    # Analytics BC - Query execution
+    # Factory (not Singleton): resolvers depend on Factory-provided adapters
+    # which hold db_session; a Singleton would freeze stale sessions.
+    analytics_query_executor_port = providers.Factory(
+        create_analytics_query_executor,
+        resolvers=providers.List(
+            workspace_analytics_resolver,
+            project_analytics_resolver,
+            task_analytics_resolver,
+            timetracking_analytics_resolver,
+        ),
+    )
+
+    # Analytics BC - Report generation
+    report_render_scheduler_port = providers.Singleton(create_report_render_scheduler)
+    report_generator_port = providers.Factory(
+        create_report_generator,
+        report_repo=report_repo,
+        job_repo=report_job_repo,
+        render_scheduler=report_render_scheduler_port,
+    )
+
 
 # ------------------------------------------------------------------
 # Messaging wiring — см. wire_messaging() ниже.
@@ -1166,6 +1341,7 @@ async def wire_messaging(container: Container) -> None:
         *notification_subscriptions(container),
         *communication_subscriptions(container),
         *filestorage_subscriptions(container),
+        *analytics_subscriptions(container),
     ]
 
     await asyncio.gather(

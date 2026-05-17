@@ -1,7 +1,7 @@
 """DI-провайдеры для Task BC."""
 from __future__ import annotations
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.context.identity.application.ports.integration.outboard.identity_user_provider import (
     IdentityUserProvider,
@@ -41,6 +41,9 @@ from app.context.task.application.ports.integration.inboard.project_membership_p
 from app.context.task.application.ports.integration.inboard.project_port import ProjectPort
 from app.context.task.application.ports.integration.inboard.sprint_port import SprintPort
 from app.context.task.application.ports.integration.inboard.reminder_window_port import ReminderWindowPort
+from app.context.task.application.ports.integration.outboard.task_analytics_provider import (
+    TaskAnalyticsProvider,
+)
 from app.context.task.application.ports.integration.outboard.task_provider import TaskProvider
 from app.context.task.application.ports.integration.outboard.task_participant_provider import TaskParticipantProvider
 from app.context.task.domain.repositories.changelog_repository import ChangelogRepository
@@ -70,6 +73,9 @@ from app.context.task.infrastructure.integration.inboard.reminder_window_adapter
 )
 from app.context.task.infrastructure.authorization.task_role_based_permission_checker import (
     TaskRoleBasedPermissionChecker,
+)
+from app.context.task.infrastructure.integration.outboard.sql_task_analytics_adapter import (
+    SqlTaskAnalyticsAdapter,
 )
 from app.context.task.infrastructure.integration.outboard.task_provider_adapter import (
     TaskProviderAdapter,
@@ -141,6 +147,11 @@ def create_task_provider_adapter(repo: TaskRepository) -> TaskProvider:
 def create_task_participant_provider_adapter(repo: TaskRepository) -> TaskParticipantProvider:
     """Создать TaskParticipantProviderAdapter (outboard)."""
     return TaskParticipantProviderAdapter(repo=repo)
+
+
+def create_task_analytics_adapter(session_factory: async_sessionmaker[AsyncSession]) -> TaskAnalyticsProvider:
+    """Создать SqlTaskAnalyticsAdapter (outboard) для Analytics BC."""
+    return SqlTaskAnalyticsAdapter(session_factory=session_factory)
 
 
 # --- Inboard adapters ---

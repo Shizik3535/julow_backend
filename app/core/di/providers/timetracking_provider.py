@@ -1,7 +1,7 @@
 """DI-провайдеры для TimeTracking BC."""
 from __future__ import annotations
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.context.identity.application.ports.integration.outboard.identity_user_provider import (
     IdentityUserProvider,
@@ -62,6 +62,12 @@ from app.context.timetracking.infrastructure.persistence.repositories.sql_activi
 )
 from app.context.timetracking.infrastructure.persistence.repositories.sql_time_entry_repository import (
     SqlTimeEntryRepository,
+)
+from app.context.timetracking.application.ports.integration.outboard.timetracking_analytics_provider import (
+    TimeTrackingAnalyticsProvider,
+)
+from app.context.timetracking.infrastructure.integration.outboard.sql_timetracking_analytics_adapter import (
+    SqlTimeTrackingAnalyticsAdapter,
 )
 from app.context.timetracking.infrastructure.persistence.repositories.sql_time_entry_tag_repository import (
     SqlTimeEntryTagRepository,
@@ -146,3 +152,10 @@ def create_timetracking_identity_user_adapter(
     identity_user_provider: IdentityUserProvider,
 ) -> IdentityUserPort:
     return IdentityUserAdapter(identity_user_provider=identity_user_provider)
+
+
+# --- Outboard analytics adapter ---
+
+def create_timetracking_analytics_adapter(session_factory: async_sessionmaker[AsyncSession]) -> TimeTrackingAnalyticsProvider:
+    """Создать SqlTimeTrackingAnalyticsAdapter (outboard) для Analytics BC."""
+    return SqlTimeTrackingAnalyticsAdapter(session_factory=session_factory)

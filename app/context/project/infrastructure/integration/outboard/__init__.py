@@ -16,6 +16,9 @@ from app.context.project.infrastructure.integration.outboard.project_provider_ad
 from app.context.project.infrastructure.integration.outboard.project_role_provider_adapter import (
     ProjectRoleProviderAdapter,
 )
+from app.context.project.infrastructure.integration.outboard.sql_project_analytics_adapter import (
+    SqlProjectAnalyticsAdapter,
+)
 from app.context.project.infrastructure.integration.outboard.sprint_provider_adapter import (
     SprintProviderAdapter,
 )
@@ -27,5 +30,6 @@ __all__ = [
     "ProjectPermissionProviderImpl",
     "ProjectProviderAdapter",
     "ProjectRoleProviderAdapter",
+    "SqlProjectAnalyticsAdapter",
     "SprintProviderAdapter",
 ]

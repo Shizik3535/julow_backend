@@ -1,5 +1,8 @@
 from app.context.project.application.ports.integration.outboard.board_provider import BoardProvider
 from app.context.project.application.ports.integration.outboard.epic_provider import EpicProvider
+from app.context.project.application.ports.integration.outboard.project_analytics_provider import (
+    ProjectAnalyticsProvider,
+)
 from app.context.project.application.ports.integration.outboard.project_membership_provider import ProjectMembershipProvider
 from app.context.project.application.ports.integration.outboard.project_permission_provider import (
     ProjectPermissionProvider,
@@ -11,6 +14,7 @@ from app.context.project.application.ports.integration.outboard.sprint_provider 
 __all__ = [
     "BoardProvider",
     "EpicProvider",
+    "ProjectAnalyticsProvider",
     "ProjectMembershipProvider",
     "ProjectPermissionProvider",
     "ProjectProvider",

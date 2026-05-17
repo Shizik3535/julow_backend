@@ -3,7 +3,7 @@ DI-провайдеры для Workspace BC.
 """
 from __future__ import annotations
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.context.identity.application.ports.integration.outboard.identity_user_provider import (
     IdentityUserProvider,
@@ -47,6 +47,12 @@ from app.context.workspace.infrastructure.integration.inboard.organization_membe
 )
 from app.context.workspace.infrastructure.integration.inboard.organization_permission_checker_adapter import (
     OrganizationPermissionCheckerAdapter,
+)
+from app.context.workspace.application.ports.integration.outboard.workspace_analytics_provider import (
+    WorkspaceAnalyticsProvider,
+)
+from app.context.workspace.infrastructure.integration.outboard.sql_workspace_analytics_adapter import (
+    SqlWorkspaceAnalyticsAdapter,
 )
 from app.context.workspace.infrastructure.integration.outboard.workspace_membership_provider_adapter import (
     WorkspaceMembershipProviderAdapter,
@@ -186,6 +192,13 @@ def create_workspace_membership_provider_adapter(
         workspace_role_repo=workspace_role_repo,
         workspace_repo=workspace_repo,
     )
+
+
+# --- Outboard analytics adapter ---
+
+def create_workspace_analytics_adapter(session_factory: async_sessionmaker[AsyncSession]) -> WorkspaceAnalyticsProvider:
+    """Создать SqlWorkspaceAnalyticsAdapter (outboard) для Analytics BC."""
+    return SqlWorkspaceAnalyticsAdapter(session_factory=session_factory)
 
 
 # --- Authorization ---

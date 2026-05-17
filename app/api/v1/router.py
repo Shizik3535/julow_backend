@@ -228,5 +228,23 @@ _notification_settings_controller = NotificationSettingsController()
 api_v1_router.include_router(_notification_controller.router)
 api_v1_router.include_router(_notification_settings_controller.router)
 
+# Analytics BC
+from app.context.analytics.presentation.controllers import (
+    AnalyticsQueryController,
+    DashboardController,
+    DashboardTemplateController,
+    ReportController,
+)
+
+_analytics_query_controller = AnalyticsQueryController()
+_dashboard_controller = DashboardController()
+_dashboard_template_controller = DashboardTemplateController()
+_report_controller = ReportController()
+
+api_v1_router.include_router(_analytics_query_controller.router)
+api_v1_router.include_router(_dashboard_controller.router)
+api_v1_router.include_router(_dashboard_template_controller.router)
+api_v1_router.include_router(_report_controller.router)
+
 # WebSocket
 api_v1_router.include_router(ws_router)
