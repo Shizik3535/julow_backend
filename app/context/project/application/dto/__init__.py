@@ -2,6 +2,10 @@ from app.context.project.application.dto.board_dto import BoardDTO
 from app.context.project.application.dto.epic_dto import EpicDTO, EpicListDTO
 from app.context.project.application.dto.milestone_dto import MilestoneDTO, MilestoneListDTO
 from app.context.project.application.dto.project_dto import ProjectDTO, ProjectListDTO
+from app.context.project.application.dto.project_invitation_dto import (
+    ProjectInvitationDTO,
+    ProjectInvitationListDTO,
+)
 from app.context.project.application.dto.project_member_dto import ProjectMemberDTO, ProjectMemberListDTO
 from app.context.project.application.dto.project_role_dto import ProjectRoleDTO, ProjectRoleListDTO
 from app.context.project.application.dto.retro_template_dto import RetroTemplateDTO, RetroTemplateListDTO
@@ -15,6 +19,8 @@ __all__ = [
     "MilestoneListDTO",
     "ProjectDTO",
     "ProjectListDTO",
+    "ProjectInvitationDTO",
+    "ProjectInvitationListDTO",
     "ProjectMemberDTO",
     "ProjectMemberListDTO",
     "ProjectRoleDTO",

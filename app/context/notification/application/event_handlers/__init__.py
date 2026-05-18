@@ -61,6 +61,15 @@ from app.context.notification.application.event_handlers.on_email_confirmed_send
 from app.context.notification.application.event_handlers.on_workspace_invitation_sent_notify import (
     OnWorkspaceInvitationSentNotify,
 )
+from app.context.notification.application.event_handlers.on_project_invitation_sent_notify import (
+    OnProjectInvitationSentNotify,
+)
+from app.context.notification.application.event_handlers.on_project_invitation_accepted_notify import (
+    OnProjectInvitationAcceptedNotify,
+)
+from app.context.notification.application.event_handlers.on_project_invitation_declined_notify import (
+    OnProjectInvitationDeclinedNotify,
+)
 
 __all__ = [
     "OnAuthFactorChangedNotify",
@@ -84,4 +93,7 @@ __all__ = [
     "OnEmailConfirmedSendWelcome",
     "OnUserRegisteredCreatePreferences",
     "OnWorkspaceInvitationSentNotify",
+    "OnProjectInvitationSentNotify",
+    "OnProjectInvitationAcceptedNotify",
+    "OnProjectInvitationDeclinedNotify",
 ]

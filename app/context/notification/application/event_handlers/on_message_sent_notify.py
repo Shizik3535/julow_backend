@@ -10,6 +10,7 @@ from typing import Any
 
 from app.shared.application.base_event_handler import BaseEventHandler
 from app.shared.application.messaging.domain_event_bus import DomainEventBus
+from app.shared.application.ports.notification.websocket_port import WebSocketPort
 from app.shared.domain.value_objects.id_vo import Id
 from app.context.notification.application.ports.integration.inboard.chat_members_port import (
     ChatMembersPort,
@@ -28,18 +29,28 @@ from app.context.notification.domain.value_objects.notification_type import (
 
 
 class OnMessageSentNotify(BaseEventHandler[dict[str, Any]]):
-    """Шлёт уведомления участникам чата (кроме отправителя) о новом сообщении."""
+    """Шлёт уведомления участникам чата (кроме отправителя) о новом сообщении.
+
+    Не шлёт notification получателям, которые сейчас активно смотрят этот
+    чат (определяется через ``WebSocketPort.is_user_viewing_chat``): они
+    и так увидят сообщение в ленте через realtime-broadcast
+    ``chat.message.created`` (см. :class:`OnMessageSentBroadcastWs`).
+    Дублировать это persisted notification'ом — лишний шум в bell-badge
+    и notifications panel.
+    """
 
     def __init__(
         self,
         notification_repo: NotificationRepository,
         event_bus: DomainEventBus,
         chat_members_port: ChatMembersPort,
+        websocket_port: WebSocketPort,
     ) -> None:
         super().__init__()
         self._repo = notification_repo
         self._event_bus = event_bus
         self._members_port = chat_members_port
+        self._websocket_port = websocket_port
 
     async def handle(self, event: dict[str, Any]) -> None:
         if event.get("event_type") != "MessageSent":
@@ -55,7 +66,12 @@ class OnMessageSentNotify(BaseEventHandler[dict[str, Any]]):
             return
 
         member_ids = await self._members_port.get_chat_member_ids(chat_id)
-        recipients = [uid for uid in member_ids if uid != sender_id]
+        recipients = [
+            uid
+            for uid in member_ids
+            if uid != sender_id
+            and not self._websocket_port.is_user_viewing_chat(uid, chat_id)
+        ]
         if not recipients:
             return
 

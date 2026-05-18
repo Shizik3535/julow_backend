@@ -59,6 +59,7 @@ from app.context.communication.presentation.dependencies import (
     get_communication_file_attachment_port,
     get_current_user_id,
 )
+from app.context.filestorage.presentation.dependencies import get_file_repository
 from app.context.communication.presentation.schemas.requests.add_comment_reaction_request import (
     AddCommentReactionRequest,
 )
@@ -436,6 +437,7 @@ class CommentController(BaseController):
         ),
         user_id: str = Depends(get_current_user_id),
         repo=Depends(get_comment_repository),
+        file_repo=Depends(get_file_repository),
         file_attachment_port=Depends(get_communication_file_attachment_port),
         target_access=Depends(get_comment_target_access_port),
         event_bus=Depends(get_communication_event_bus),
@@ -444,6 +446,7 @@ class CommentController(BaseController):
         file_data = await file.read()
         handler = AddCommentAttachmentHandler(
             comment_repo=repo,
+            file_repo=file_repo,
             file_attachment_port=file_attachment_port,
             target_access=target_access,
             event_bus=event_bus,

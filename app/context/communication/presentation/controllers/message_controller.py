@@ -49,6 +49,7 @@ from app.context.communication.presentation.dependencies import (
     get_current_user_id,
     get_message_repository,
 )
+from app.context.filestorage.presentation.dependencies import get_file_repository
 from app.context.communication.presentation.schemas.requests.message_requests import (
     AddMessageReactionRequest,
     SendMessageRequest,
@@ -333,6 +334,7 @@ class MessageController(BaseController):
         user_id: str = Depends(get_current_user_id),
         message_repo=Depends(get_message_repository),
         chat_repo=Depends(get_chat_repository),
+        file_repo=Depends(get_file_repository),
         file_attachment_port=Depends(get_communication_file_attachment_port),
         event_bus=Depends(get_communication_event_bus),
     ) -> SuccessResponse[AttachmentResponse]:
@@ -340,6 +342,7 @@ class MessageController(BaseController):
         handler = AddMessageAttachmentHandler(
             message_repo=message_repo,
             chat_repo=chat_repo,
+            file_repo=file_repo,
             file_attachment_port=file_attachment_port,
             event_bus=event_bus,
         )

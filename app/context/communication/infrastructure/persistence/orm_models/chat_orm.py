@@ -24,6 +24,7 @@ class ChatORM(BaseORMModel):
     __table_args__ = (
         Index("ix_chats_workspace", "workspace_id"),
         Index("ix_chats_chat_type", "chat_type"),
+        Index("ix_chats_project_id", "project_id"),
     )
 
     chat_type: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -32,6 +33,7 @@ class ChatORM(BaseORMModel):
     icon: Mapped[str | None] = mapped_column(String(64), nullable=True)
     color: Mapped[str | None] = mapped_column(String(16), nullable=True)
     workspace_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    project_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
 
     last_message_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

@@ -42,6 +42,10 @@ class ChatResponse(BaseModel):
     icon: str | None = Field(default=None, description="Имя иконки")
     color: str | None = Field(default=None, description="HEX-цвет")
     workspace_id: str | None = Field(default=None, description="UUID workspace")
+    project_id: str | None = Field(
+        default=None,
+        description="UUID связанного проекта (для системных проектных чатов)",
+    )
     members: list[ChatMemberResponse] = Field(
         default_factory=list, description="Участники"
     )

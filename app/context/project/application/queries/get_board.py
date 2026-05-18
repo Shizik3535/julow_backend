@@ -11,7 +11,10 @@ from app.context.project.application.ports.authorization.project_permission_chec
     ProjectPermissionCheckerPort,
 )
 from app.context.project.domain.aggregates.board import Board
+from app.context.project.domain.entities.board_column import BoardColumn
+from app.context.project.domain.entities.workflow_status import WorkflowStatus
 from app.context.project.domain.repositories.board_repository import BoardRepository
+from app.context.project.domain.value_objects.workflow_status_category import WorkflowStatusCategory
 
 
 class GetBoardQuery(BaseQuery):
@@ -40,7 +43,32 @@ class GetBoardHandler(BaseQueryHandler[GetBoardQuery, BoardDTO]):
             project_id=board.project_id,
             permission=self.REQUIRED_PERMISSION,
         )
+        # Lazy-миграция: если у доски нет REVIEW-статуса (старые доски были
+        # созданы только с TODO/IN_PROGRESS/DONE) — добавляем его + колонку.
+        # Без этого фронтенд-колонка "Review" не имеет UUID на бэкенде, и
+        # перенос задачи в неё фоллбэчится в IN_PROGRESS, что после reload
+        # возвращает задачу обратно.
+        await self._ensure_review_status(board)
         return self._to_dto(board)
+
+    async def _ensure_review_status(self, board: Board) -> None:
+        has_review = any(
+            ws.category == WorkflowStatusCategory.REVIEW for ws in board.workflow_statuses
+        )
+        if has_review:
+            return
+        next_status_order = max((ws.order for ws in board.workflow_statuses), default=-1) + 1
+        review_status = WorkflowStatus(
+            name="Review", order=next_status_order, category=WorkflowStatusCategory.REVIEW
+        )
+        board.workflow_statuses.append(review_status)
+        # Колонка "Review" — кладём перед "Done", если он есть; иначе в конец.
+        next_col_order = max((c.order for c in board.columns), default=-1) + 1
+        review_col = BoardColumn(
+            name="Review", order=next_col_order, status_mapping=review_status.id
+        )
+        board.columns.append(review_col)
+        await self._board_repo.update(board)
 
     @staticmethod
     def _to_dto(b: Board) -> BoardDTO:

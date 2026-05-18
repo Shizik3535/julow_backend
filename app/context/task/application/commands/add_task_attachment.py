@@ -4,6 +4,8 @@ from app.shared.application.base_command import BaseCommand
 from app.shared.application.base_command_handler import BaseCommandHandler
 from app.shared.application.messaging.domain_event_bus import DomainEventBus
 from app.shared.domain.value_objects.id_vo import Id
+from app.context.filestorage.domain.entities.file_tag import FileTag
+from app.context.filestorage.domain.repositories.file_repository import FileRepository
 from app.context.task.application.ports.authorization.task_permission_checker_port import (
     TaskPermissionCheckerPort,
 )
@@ -55,6 +57,7 @@ class AddTaskAttachmentHandler(BaseCommandHandler[AddTaskAttachmentCommand, str]
     def __init__(
         self,
         task_repo: TaskRepository,
+        file_repo: FileRepository,
         file_attachment_port: FileAttachmentPort,
         project_port: ProjectPort,
         permission_checker: TaskPermissionCheckerPort,
@@ -62,6 +65,7 @@ class AddTaskAttachmentHandler(BaseCommandHandler[AddTaskAttachmentCommand, str]
     ) -> None:
         super().__init__()
         self._task_repo = task_repo
+        self._file_repo = file_repo
         self._file_attachment_port = file_attachment_port
         self._project_port = project_port
         self._permission_checker = permission_checker
@@ -92,6 +96,25 @@ class AddTaskAttachmentHandler(BaseCommandHandler[AddTaskAttachmentCommand, str]
             file_data=command.file_data,
             content_type=command.content_type,
         )
+
+        # Помечаем файл системными тегами:
+        # * ``source:task`` — чтобы UI документов умел фильтровать по
+        #   источнику «Задача».
+        # * ``project:<task.project_id>`` — чтобы файлы попадали в
+        #   фильтр выбранного проекта в сайдбаре документов, не зависимо
+        #   от того, в какой папке лежит сам файл. Без этого тега
+        #   задачные вложения «теряются» при выборе проекта на UI.
+        file = await self._file_repo.get_by_id(Id.from_string(result.file_id))
+        if file is not None:
+            wanted_tags: list[str] = ["source:task", f"project:{str(task.project_id)}"]
+            existing = {tag.name for tag in file.tags}
+            tags_changed = False
+            for name in wanted_tags:
+                if name not in existing:
+                    file.add_tag(FileTag(name=name))
+                    tags_changed = True
+            if tags_changed:
+                await self._file_repo.update(file)
 
         task.add_attachment(
             file_id=Id.from_string(result.file_id),

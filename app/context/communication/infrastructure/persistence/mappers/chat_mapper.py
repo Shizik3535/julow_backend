@@ -55,6 +55,11 @@ class ChatMapper(BaseMapper[Chat, ChatORM]):
                 if orm_model.workspace_id
                 else None
             ),
+            project_id=(
+                self._map_id(orm_model.project_id)
+                if orm_model.project_id
+                else None
+            ),
             members=members,
             threads=threads,
             last_message_at=orm_model.last_message_at,
@@ -74,6 +79,11 @@ class ChatMapper(BaseMapper[Chat, ChatORM]):
             workspace_id=(
                 self._map_uuid(aggregate.workspace_id)
                 if aggregate.workspace_id
+                else None
+            ),
+            project_id=(
+                self._map_uuid(aggregate.project_id)
+                if aggregate.project_id
                 else None
             ),
             last_message_at=aggregate.last_message_at,

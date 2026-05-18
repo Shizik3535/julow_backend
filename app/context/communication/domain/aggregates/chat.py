@@ -45,6 +45,8 @@ class Chat(AggregateRoot):
         icon: Название иконки.
         color: Цвет (из shared kernel).
         workspace_id: Opaque ID workspace (для CHANNEL/ANNOUNCEMENT).
+        project_id: Opaque ID проекта (для системных проектных чатов,
+            создаваемых обработчиками ``project.events``).
         members: Список участников.
         threads: Список тредов.
         last_message_at: Время последнего сообщения.
@@ -59,6 +61,7 @@ class Chat(AggregateRoot):
     icon: str | None = None
     color: Color | None = None
     workspace_id: Id | None = None
+    project_id: Id | None = None
     members: list[ChatMember] = field(default_factory=list)
     threads: list[Thread] = field(default_factory=list)
     last_message_at: datetime | None = None
@@ -107,6 +110,44 @@ class Chat(AggregateRoot):
             ChatMember(user_id=creator_id, role=ChatMemberRole.OWNER),
         ]
         chat._register_event(ChatCreated(chat_id=str(chat.id), chat_type=ChatType.ANNOUNCEMENT))
+        return chat
+
+    @classmethod
+    def create_project_chat(
+        cls,
+        name: str,
+        project_id: Id,
+        workspace_id: Id | None,
+        member_ids: list[Id],
+        owner_id: Id | None = None,
+    ) -> Chat:
+        """
+        Создаёт системный групповой чат для проекта.
+
+        Чат автоматически синхронизируется с участниками проекта через
+        обработчики событий ``project.events`` и не имеет владельца-человека.
+        """
+        chat = cls(
+            chat_type=ChatType.GROUP,
+            name=name,
+            workspace_id=workspace_id,
+            project_id=project_id,
+        )
+        owner = owner_id if owner_id is not None else (member_ids[0] if member_ids else None)
+        members: list[ChatMember] = []
+        seen: set[str] = set()
+        if owner is not None:
+            owner_key = str(owner)
+            members.append(ChatMember(user_id=owner, role=ChatMemberRole.OWNER))
+            seen.add(owner_key)
+        for user_id in member_ids:
+            key = str(user_id)
+            if key in seen:
+                continue
+            members.append(ChatMember(user_id=user_id, role=ChatMemberRole.MEMBER))
+            seen.add(key)
+        chat.members = members
+        chat._register_event(ChatCreated(chat_id=str(chat.id), chat_type=ChatType.GROUP))
         return chat
 
     # --- Инварианты ---
@@ -169,6 +210,24 @@ class Chat(AggregateRoot):
             ChatMemberAdded(chat_id=str(self.id), user_id=str(user_id))
         )
 
+    def system_add_member(self, user_id: Id) -> None:
+        """
+        Идемпотентно добавляет участника от имени системы (без проверки архива).
+
+        Используется обработчиками событий других BC для синхронизации
+        участников проектных чатов.
+        """
+        if self.chat_type == ChatType.DM:
+            return
+        if self._find_member(user_id) is not None:
+            return
+        member = ChatMember(user_id=user_id, role=ChatMemberRole.MEMBER)
+        self.members.append(member)
+        self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            ChatMemberAdded(chat_id=str(self.id), user_id=str(user_id))
+        )
+
     def remove_member(self, user_id: Id) -> None:
         self._assert_not_archived()
         if self.chat_type == ChatType.DM:
@@ -179,6 +238,31 @@ class Chat(AggregateRoot):
         if member.role == ChatMemberRole.OWNER:
             raise CannotRemoveChatOwnerException()
         self.members.remove(member)
+        self.updated_at = datetime.now(tz=timezone.utc)
+        self._register_event(
+            ChatMemberRemoved(chat_id=str(self.id), user_id=str(user_id))
+        )
+
+    def system_remove_member(self, user_id: Id) -> None:
+        """
+        Идемпотентно удаляет участника от имени системы.
+
+        Если участник — единственный владелец, у него меняется только запись
+        о членстве, но владельца назначаем следующему участнику. Этим
+        обеспечивается, что у архивированного чата всегда остаётся хотя бы
+        формальный владелец в истории.
+        """
+        if self.chat_type == ChatType.DM:
+            return
+        member = self._find_member(user_id)
+        if member is None:
+            return
+        was_owner = member.role == ChatMemberRole.OWNER
+        self.members.remove(member)
+        if was_owner:
+            next_owner = next(iter(self.members), None)
+            if next_owner is not None:
+                next_owner.role = ChatMemberRole.OWNER
         self.updated_at = datetime.now(tz=timezone.utc)
         self._register_event(
             ChatMemberRemoved(chat_id=str(self.id), user_id=str(user_id))

@@ -197,6 +197,8 @@ from app.core.di.providers.project_provider import (
     create_epic_repository,
     create_project_analytics_adapter,
     create_project_identity_user_adapter,
+    create_project_invitation_mapper,
+    create_project_invitation_repository,
     create_project_mapper,
     create_project_membership_mapper,
     create_project_membership_provider_adapter,
@@ -723,6 +725,7 @@ class Container(containers.DeclarativeContainer):
     epic_mapper = providers.Singleton(create_epic_mapper)
     sprint_mapper = providers.Singleton(create_sprint_mapper)
     project_membership_mapper = providers.Singleton(create_project_membership_mapper)
+    project_invitation_mapper = providers.Singleton(create_project_invitation_mapper)
     project_role_mapper = providers.Singleton(create_project_role_mapper)
     retro_template_mapper = providers.Singleton(create_retro_template_mapper)
 
@@ -751,6 +754,11 @@ class Container(containers.DeclarativeContainer):
         create_project_membership_repository,
         session=db_session_factory,
         mapper=project_membership_mapper,
+    )
+    project_invitation_repo = providers.Factory(
+        create_project_invitation_repository,
+        session=db_session_factory,
+        mapper=project_invitation_mapper,
     )
     project_role_repo = providers.Factory(
         create_project_role_repository,

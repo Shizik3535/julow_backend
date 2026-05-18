@@ -34,3 +34,7 @@ class WebSocketAdapter(WebSocketPort):
         }
         await self._manager.broadcast(data)
         logger.debug("WebSocket message broadcast", event_type=message.event_type)
+
+    def is_user_viewing_chat(self, user_id: str, chat_id: str) -> bool:
+        """Делегируем менеджеру: смотрит ли юзер чат хотя бы в одной вкладке."""
+        return self._manager.is_user_viewing_chat(user_id, chat_id)

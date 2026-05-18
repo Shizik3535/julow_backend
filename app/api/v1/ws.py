@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 
 from app.core.logging import get_logger
@@ -63,8 +65,32 @@ async def websocket_notifications(
     try:
         while True:
             data = await websocket.receive_text()
+            # Heartbeat — простой текстовый протокол, не JSON.
             if data == "ping":
                 await websocket.send_text("pong")
+                continue
+
+            # Любое другое сообщение от клиента трактуем как JSON-команду.
+            # На сегодня поддерживаем подписку/отписку на чат: пока сокет
+            # «смотрит» чат, бэкенд не создаёт persisted notification про
+            # новые сообщения в этом чате (пользователь и так видит их в
+            # ленте через realtime).
+            try:
+                msg = json.loads(data)
+            except (json.JSONDecodeError, ValueError):
+                continue
+            if not isinstance(msg, dict):
+                continue
+            action = msg.get("action")
+            chat_id = msg.get("chat_id")
+            if not isinstance(action, str) or not isinstance(chat_id, str):
+                continue
+            if action == "chat.subscribe":
+                await manager.subscribe_chat(websocket, chat_id)
+            elif action == "chat.unsubscribe":
+                await manager.unsubscribe_chat(websocket, chat_id)
+            # неизвестные действия молча игнорируем — это упрощает
+            # эволюцию протокола без поломки старых клиентов
     except WebSocketDisconnect:
         await manager.disconnect(user_id, websocket)
     except Exception as e:

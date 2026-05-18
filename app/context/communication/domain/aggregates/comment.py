@@ -26,6 +26,33 @@ from app.context.communication.domain.exceptions.comment_exceptions import (
 )
 
 
+# Жёсткий потолок длины выжимки в `CommentAdded`. Чуть больше типичной
+# UI-карточки уведомления, но не настолько большой, чтобы раздувать
+# payload событий / WebSocket-пуш и хранилище. Подрезка по слову, без
+# середины слова.
+_EXCERPT_MAX_LEN = 200
+
+
+def _build_excerpt(content: RichText | None) -> str:
+    """
+    Получить короткую выжимку текста комментария для использования в
+    событиях/уведомлениях. Не парсим markdown/HTML — это работа UI;
+    здесь нам нужен лишь компактный preview, чтобы уведомление было
+    осмысленным (как минимум начало фразы).
+    """
+    if content is None:
+        return ""
+    text = (content.content or "").strip()
+    if len(text) <= _EXCERPT_MAX_LEN:
+        return text
+    cut = text[:_EXCERPT_MAX_LEN]
+    # Подрезка по последнему пробелу — чтобы не разрывать слово.
+    last_space = cut.rfind(" ")
+    if last_space > 40:
+        cut = cut[:last_space]
+    return cut.rstrip() + "…"
+
+
 @dataclass
 class Comment(AggregateRoot):
     """
@@ -94,6 +121,7 @@ class Comment(AggregateRoot):
                     target_type=target_type,
                     target_id=str(target_id),
                     author_id=str(author_id),
+                    content_excerpt=_build_excerpt(content),
                 )
             )
         return comment
@@ -118,6 +146,7 @@ class Comment(AggregateRoot):
                 target_type=target_type,
                 target_id=str(target_id),
                 author_id="",
+                content_excerpt=_build_excerpt(content),
             )
         )
         return comment

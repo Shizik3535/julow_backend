@@ -1,5 +1,6 @@
 from app.context.project.domain.repositories.board_repository import BoardRepository
 from app.context.project.domain.repositories.epic_repository import EpicRepository
+from app.context.project.domain.repositories.project_invitation_repository import ProjectInvitationRepository
 from app.context.project.domain.repositories.project_membership_repository import ProjectMembershipRepository
 from app.context.project.domain.repositories.project_repository import ProjectRepository
 from app.context.project.domain.repositories.project_role_repository import ProjectRoleRepository
@@ -9,6 +10,7 @@ from app.context.project.domain.repositories.sprint_repository import SprintRepo
 __all__ = [
     "BoardRepository",
     "EpicRepository",
+    "ProjectInvitationRepository",
     "ProjectMembershipRepository",
     "ProjectRepository",
     "ProjectRoleRepository",

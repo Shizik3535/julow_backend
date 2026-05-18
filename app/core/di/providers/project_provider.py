@@ -56,6 +56,9 @@ from app.context.project.application.ports.integration.outboard.sprint_provider 
 )
 from app.context.project.domain.repositories.board_repository import BoardRepository
 from app.context.project.domain.repositories.epic_repository import EpicRepository
+from app.context.project.domain.repositories.project_invitation_repository import (
+    ProjectInvitationRepository,
+)
 from app.context.project.domain.repositories.project_membership_repository import (
     ProjectMembershipRepository,
 )
@@ -110,6 +113,9 @@ from app.context.project.infrastructure.integration.outboard.sprint_provider_ada
 )
 from app.context.project.infrastructure.persistence.mappers.board_mapper import BoardMapper
 from app.context.project.infrastructure.persistence.mappers.epic_mapper import EpicMapper
+from app.context.project.infrastructure.persistence.mappers.project_invitation_mapper import (
+    ProjectInvitationMapper,
+)
 from app.context.project.infrastructure.persistence.mappers.project_mapper import ProjectMapper
 from app.context.project.infrastructure.persistence.mappers.project_membership_mapper import (
     ProjectMembershipMapper,
@@ -126,6 +132,9 @@ from app.context.project.infrastructure.persistence.repositories.sql_board_repos
 )
 from app.context.project.infrastructure.persistence.repositories.sql_epic_repository import (
     SqlEpicRepository,
+)
+from app.context.project.infrastructure.persistence.repositories.sql_project_invitation_repository import (
+    SqlProjectInvitationRepository,
 )
 from app.context.project.infrastructure.persistence.repositories.sql_project_membership_repository import (
     SqlProjectMembershipRepository,
@@ -180,6 +189,11 @@ def create_project_membership_mapper() -> ProjectMembershipMapper:
     return ProjectMembershipMapper()
 
 
+def create_project_invitation_mapper() -> ProjectInvitationMapper:
+    """Создать ProjectInvitationMapper."""
+    return ProjectInvitationMapper()
+
+
 def create_project_role_mapper() -> ProjectRoleMapper:
     """Создать ProjectRoleMapper."""
     return ProjectRoleMapper()
@@ -217,6 +231,13 @@ def create_project_membership_repository(
 ) -> ProjectMembershipRepository:
     """Создать SqlProjectMembershipRepository."""
     return SqlProjectMembershipRepository(session=session, mapper=mapper)
+
+
+def create_project_invitation_repository(
+    session: AsyncSession, mapper: ProjectInvitationMapper,
+) -> ProjectInvitationRepository:
+    """Создать SqlProjectInvitationRepository."""
+    return SqlProjectInvitationRepository(session=session, mapper=mapper)
 
 
 def create_project_role_repository(

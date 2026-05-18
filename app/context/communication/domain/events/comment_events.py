@@ -8,12 +8,26 @@ from app.context.communication.domain.value_objects.comment_target_type import C
 
 @dataclass(frozen=True)
 class CommentAdded(BaseDomainEvent):
-    """Комментарий добавлен."""
+    """
+    Комментарий добавлен.
+
+    Атрибуты:
+        comment_id: ID нового комментария.
+        target_type: Тип сущности, к которой относится комментарий (task/project/…).
+        target_id: ID целевой сущности.
+        author_id: ID автора (пустая строка для системных).
+        content_excerpt: Краткая текстовая выжимка содержимого (первые
+            ~200 символов plain text). Используется потребителями события
+            (например, `OnCommentAddedNotify`), чтобы построить уведомление
+            с реальным текстом комментария — без необходимости позднее
+            загружать сам Comment-агрегат.
+    """
 
     comment_id: str = ""
     target_type: CommentTargetType = CommentTargetType.TASK
     target_id: str = ""
     author_id: str = ""
+    content_excerpt: str = ""
 
 
 @dataclass(frozen=True)

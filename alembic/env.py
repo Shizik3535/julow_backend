@@ -76,6 +76,9 @@ from app.context.project.infrastructure.persistence.orm_models.sprint_orm import
     SprintORM,
     SprintRetroORM,
 )
+from app.context.project.infrastructure.persistence.orm_models.project_invitation_orm import (  # noqa: F401
+    ProjectInvitationORM,
+)
 from app.context.project.infrastructure.persistence.orm_models.project_membership_orm import (  # noqa: F401
     ProjectMemberORM,
     ProjectMembershipORM,

@@ -37,6 +37,13 @@ from app.context.project.domain.events.project_events import (
     ProjectSuspended,
     ProjectVisibilityChanged,
 )
+from app.context.project.domain.events.project_invitation_events import (
+    ProjectInvitationAccepted,
+    ProjectInvitationDeclined,
+    ProjectInvitationLinkGenerated,
+    ProjectInvitationRevoked,
+    ProjectInvitationSent,
+)
 from app.context.project.domain.events.project_membership_events import (
     ProjectMemberJoined,
     ProjectMemberRemoved,
@@ -97,6 +104,11 @@ __all__ = [
     "ProjectRestored",
     "ProjectSuspended",
     "ProjectVisibilityChanged",
+    "ProjectInvitationAccepted",
+    "ProjectInvitationDeclined",
+    "ProjectInvitationLinkGenerated",
+    "ProjectInvitationRevoked",
+    "ProjectInvitationSent",
     "ProjectMemberJoined",
     "ProjectMemberRemoved",
     "ProjectMemberRoleChanged",

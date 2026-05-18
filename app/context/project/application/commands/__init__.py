@@ -61,6 +61,28 @@ from app.context.project.application.commands.change_project_member_role import 
     ChangeProjectMemberRoleHandler,
 )
 
+# --- ProjectInvitation AR ---
+from app.context.project.application.commands.send_project_invitation import (
+    SendProjectInvitationCommand,
+    SendProjectInvitationHandler,
+)
+from app.context.project.application.commands.generate_project_invitation_link import (
+    GenerateProjectInvitationLinkCommand,
+    GenerateProjectInvitationLinkHandler,
+)
+from app.context.project.application.commands.revoke_project_invitation import (
+    RevokeProjectInvitationCommand,
+    RevokeProjectInvitationHandler,
+)
+from app.context.project.application.commands.accept_project_invitation import (
+    AcceptProjectInvitationCommand,
+    AcceptProjectInvitationHandler,
+)
+from app.context.project.application.commands.decline_project_invitation import (
+    DeclineProjectInvitationCommand,
+    DeclineProjectInvitationHandler,
+)
+
 # --- Board AR ---
 from app.context.project.application.commands.add_board_column import AddBoardColumnCommand, AddBoardColumnHandler
 from app.context.project.application.commands.remove_board_column import RemoveBoardColumnCommand, RemoveBoardColumnHandler
@@ -182,6 +204,17 @@ __all__ = [
     "ReactivateProjectMemberHandler",
     "ChangeProjectMemberRoleCommand",
     "ChangeProjectMemberRoleHandler",
+    # ProjectInvitation AR
+    "SendProjectInvitationCommand",
+    "SendProjectInvitationHandler",
+    "GenerateProjectInvitationLinkCommand",
+    "GenerateProjectInvitationLinkHandler",
+    "RevokeProjectInvitationCommand",
+    "RevokeProjectInvitationHandler",
+    "AcceptProjectInvitationCommand",
+    "AcceptProjectInvitationHandler",
+    "DeclineProjectInvitationCommand",
+    "DeclineProjectInvitationHandler",
     # Board AR
     "AddBoardColumnCommand",
     "AddBoardColumnHandler",

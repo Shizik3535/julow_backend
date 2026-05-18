@@ -112,6 +112,23 @@ class AccountController(BaseController):
             },
         )
         self._router.add_api_route(
+            "/users/{user_id}",
+            self.get_user_by_id,
+            methods=["GET"],
+            response_model=SuccessResponse[UserResponse],
+            summary="Получить пользователя по ID",
+            description=(
+                "Возвращает базовые данные пользователя (id, email, status) по UUID. "
+                "Доступно любому авторизованному пользователю — используется UI для "
+                "отображения имени/email коллег по задачам и комментариям."
+            ),
+            responses={
+                200: {"description": "Данные пользователя"},
+                401: {"description": "Не аутентифицирован", "model": ErrorResponse},
+                404: {"description": "Пользователь не найден", "model": ErrorResponse},
+            },
+        )
+        self._router.add_api_route(
             "/me/change-password",
             self.change_password,
             methods=["POST"],
@@ -289,6 +306,25 @@ class AccountController(BaseController):
         user_repo=Depends(get_user_repository),
     ) -> SuccessResponse[UserResponse]:
         """Получить текущего пользователя."""
+        handler = GetUserByIdHandler(user_repo=user_repo)
+        query = GetUserByIdQuery(user_id=user_id)
+        dto = await handler.handle(query)
+        return SuccessResponse(data=UserResponse.model_validate(dto.model_dump()))
+
+    async def get_user_by_id(
+        self,
+        user_id: str,
+        _: str = Depends(get_current_user_id),
+        user_repo=Depends(get_user_repository),
+    ) -> SuccessResponse[UserResponse]:
+        """
+        Получить пользователя по UUID.
+
+        Доступно любому авторизованному пользователю — используется UI для
+        отображения email/имени коллег рядом с UUID assignee/author. Возвращает
+        тот же `UserResponse`, что и `/account/me`. Не раскрывает приватные
+        данные (пароль, 2FA-секреты и т.п. — их нет в `UserDTO`).
+        """
         handler = GetUserByIdHandler(user_repo=user_repo)
         query = GetUserByIdQuery(user_id=user_id)
         dto = await handler.handle(query)

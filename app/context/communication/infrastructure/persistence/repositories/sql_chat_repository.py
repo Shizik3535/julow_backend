@@ -56,6 +56,11 @@ class SqlChatRepository(
             if aggregate.workspace_id
             else None
         )
+        orm_model.project_id = (
+            self._mapper._map_uuid(aggregate.project_id)
+            if aggregate.project_id
+            else None
+        )
         orm_model.last_message_at = aggregate.last_message_at
         orm_model.is_archived = aggregate.is_archived
         orm_model.updated_at = aggregate.updated_at
@@ -119,6 +124,18 @@ class SqlChatRepository(
         )
         result = await self._session.execute(stmt)
         return [self._mapper.to_domain(orm) for orm in result.scalars().all()]
+
+    async def get_by_project_id(self, project_id: Id) -> Chat | None:
+        project_uuid = self._mapper._map_uuid(project_id)
+        stmt = (
+            select(ChatORM)
+            .where(ChatORM.project_id == project_uuid)
+            .order_by(ChatORM.created_at.asc())
+            .limit(1)
+        )
+        result = await self._session.execute(stmt)
+        orm = result.scalars().first()
+        return self._mapper.to_domain(orm) if orm else None
 
     async def get_by_type(self, chat_type: ChatType) -> list[Chat]:
         stmt = (

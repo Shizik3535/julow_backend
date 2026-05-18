@@ -1,5 +1,8 @@
 from app.context.project.infrastructure.persistence.mappers.board_mapper import BoardMapper
 from app.context.project.infrastructure.persistence.mappers.epic_mapper import EpicMapper
+from app.context.project.infrastructure.persistence.mappers.project_invitation_mapper import (
+    ProjectInvitationMapper,
+)
 from app.context.project.infrastructure.persistence.mappers.project_mapper import ProjectMapper
 from app.context.project.infrastructure.persistence.mappers.project_membership_mapper import (
     ProjectMembershipMapper,
@@ -15,6 +18,7 @@ from app.context.project.infrastructure.persistence.mappers.sprint_mapper import
 __all__ = [
     "BoardMapper",
     "EpicMapper",
+    "ProjectInvitationMapper",
     "ProjectMapper",
     "ProjectMembershipMapper",
     "ProjectRoleMapper",

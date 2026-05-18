@@ -1,5 +1,8 @@
 from app.context.project.infrastructure.persistence.repositories.sql_board_repository import SqlBoardRepository
 from app.context.project.infrastructure.persistence.repositories.sql_epic_repository import SqlEpicRepository
+from app.context.project.infrastructure.persistence.repositories.sql_project_invitation_repository import (
+    SqlProjectInvitationRepository,
+)
 from app.context.project.infrastructure.persistence.repositories.sql_project_membership_repository import (
     SqlProjectMembershipRepository,
 )
@@ -17,6 +20,7 @@ from app.context.project.infrastructure.persistence.repositories.sql_sprint_repo
 __all__ = [
     "SqlBoardRepository",
     "SqlEpicRepository",
+    "SqlProjectInvitationRepository",
     "SqlProjectMembershipRepository",
     "SqlProjectRepository",
     "SqlProjectRoleRepository",

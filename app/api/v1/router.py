@@ -99,6 +99,7 @@ from app.context.project.presentation.controllers import (
     MyProjectsController,
     ProjectBoardController,
     ProjectController,
+    ProjectInvitationController,
     ProjectMemberController,
     ProjectRoleController,
     RetroTemplateController,
@@ -110,6 +111,7 @@ _my_projects_controller = MyProjectsController()
 _project_controller = ProjectController()
 _project_member_controller = ProjectMemberController()
 _project_role_controller = ProjectRoleController()
+_project_invitation_controller = ProjectInvitationController()
 _sprint_controller = SprintController()
 _epic_controller = EpicController()
 _project_board_controller = ProjectBoardController()
@@ -120,6 +122,7 @@ api_v1_router.include_router(_my_projects_controller.router)
 api_v1_router.include_router(_project_controller.router)
 api_v1_router.include_router(_project_member_controller.router)
 api_v1_router.include_router(_project_role_controller.router)
+api_v1_router.include_router(_project_invitation_controller.router)
 api_v1_router.include_router(_sprint_controller.router)
 api_v1_router.include_router(_epic_controller.router)
 api_v1_router.include_router(_project_board_controller.router)

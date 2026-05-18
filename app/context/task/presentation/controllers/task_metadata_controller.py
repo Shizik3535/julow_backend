@@ -60,6 +60,7 @@ from app.context.task.presentation.dependencies import (
     get_task_project_port,
     get_task_repository,
 )
+from app.context.filestorage.presentation.dependencies import get_file_repository
 from app.context.task.presentation.schemas.requests.add_task_label_request import AddTaskLabelRequest
 from app.context.task.presentation.schemas.requests.add_task_watcher_request import AddTaskWatcherRequest
 from app.context.task.presentation.schemas.requests.set_task_custom_field_request import SetTaskCustomFieldRequest
@@ -335,6 +336,7 @@ class TaskMetadataController(BaseController):
         file: UploadFile,
         caller_id: str = Depends(get_current_user_id),
         task_repo=Depends(get_task_repository),
+        file_repo=Depends(get_file_repository),
         permission_checker=Depends(get_task_permission_checker),
         file_attachment_port=Depends(get_task_file_attachment_port),
         project_port=Depends(get_task_project_port),
@@ -344,6 +346,7 @@ class TaskMetadataController(BaseController):
         file_data = await file.read()
         handler = AddTaskAttachmentHandler(
             task_repo=task_repo,
+            file_repo=file_repo,
             file_attachment_port=file_attachment_port,
             project_port=project_port,
             permission_checker=permission_checker,

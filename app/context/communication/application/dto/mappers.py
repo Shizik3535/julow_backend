@@ -88,6 +88,7 @@ def chat_to_dto(chat: Chat) -> ChatDTO:
         icon=chat.icon,
         color=chat.color.value if chat.color else None,
         workspace_id=str(chat.workspace_id) if chat.workspace_id else None,
+        project_id=str(chat.project_id) if chat.project_id else None,
         members=[chat_member_to_dto(m) for m in chat.members],
         threads=[thread_to_dto(t) for t in chat.threads],
         last_message_at=chat.last_message_at,

@@ -29,3 +29,13 @@ class IdentityUserAdapter(IdentityUserPort):
     async def user_exists(self, user_id: str) -> bool:
         dto = await self._provider.get_user(user_id)
         return dto is not None
+
+    async def get_user_by_email(self, email: str) -> dict[str, Any] | None:
+        dto = await self._provider.get_user_by_email(email)
+        if dto is None:
+            return None
+        return {
+            "id": dto.id,
+            "email": dto.email,
+            "status": dto.status,
+        }

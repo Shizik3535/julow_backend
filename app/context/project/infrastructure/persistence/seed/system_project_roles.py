@@ -31,6 +31,7 @@ SYSTEM_PROJECT_ROLES: list[dict[str, object]] = [
         "project_id": None,
         "name": "admin",
         "permissions": [
+            "project.read",
             "project.settings.*",
             "members.*",
             "roles.*",
@@ -48,7 +49,9 @@ SYSTEM_PROJECT_ROLES: list[dict[str, object]] = [
         "project_id": None,
         "name": "manager",
         "permissions": [
+            "project.read",
             "members.read",
+            "roles.read",
             "workflow.*",
             "sprints.*",
             "epics.*",
@@ -64,6 +67,9 @@ SYSTEM_PROJECT_ROLES: list[dict[str, object]] = [
         "project_id": None,
         "name": "member",
         "permissions": [
+            "project.read",
+            "members.read",
+            "roles.read",
             "sprints.read",
             "views.read",
             "tasks.create",
@@ -80,6 +86,9 @@ SYSTEM_PROJECT_ROLES: list[dict[str, object]] = [
         "project_id": None,
         "name": "guest",
         "permissions": [
+            "project.read",
+            "members.read",
+            "roles.read",
             "views.read",
             "tasks.read",
             "tasks.update_own",

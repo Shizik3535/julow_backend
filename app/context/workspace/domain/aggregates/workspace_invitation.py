@@ -75,9 +75,11 @@ class WorkspaceInvitation(AggregateRoot):
         )
         invitation._register_event(
             InvitationSent(
+                invitation_id=str(invitation.id),
                 workspace_id=str(workspace_id),
                 email=str(email),
                 role_id=str(role_id),
+                invited_by=str(invited_by),
             )
         )
         return invitation

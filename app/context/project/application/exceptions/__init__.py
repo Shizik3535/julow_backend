@@ -5,6 +5,10 @@ from app.context.project.application.exceptions.board_app_exceptions import (
     BoardNotFoundException,
     WorkflowStatusHasTasksException,
 )
+from app.context.project.application.exceptions.invitation_app_exceptions import (
+    DuplicateInvitationForEmailException,
+    InvitationAlreadyAcceptedException,
+)
 from app.context.project.application.exceptions.membership_app_exceptions import (
     MemberAlreadyExistsException,
     MemberNotInProjectException,
@@ -28,6 +32,8 @@ __all__ = [
     "InsufficientProjectPermissionsException",
     "BoardNotFoundException",
     "WorkflowStatusHasTasksException",
+    "DuplicateInvitationForEmailException",
+    "InvitationAlreadyAcceptedException",
     "MemberAlreadyExistsException",
     "MemberNotInProjectException",
     "MemberNotInWorkspaceException",

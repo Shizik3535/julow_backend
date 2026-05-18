@@ -80,17 +80,20 @@ class Board(AggregateRoot):
         """Создаёт доску с дефолтными колонками и статусами по методологии."""
         board = cls(project_id=project_id)
 
-        # Дефолтные статусы
+        # Дефолтные статусы (4 колонки: To Do / In Progress / Review / Done).
+        # Категории матчатся с фронтенд-ключами (todo/in_progress/review/done).
         todo = WorkflowStatus(name="To Do", order=0, is_default=True, category=WorkflowStatusCategory.TODO)
         in_progress = WorkflowStatus(name="In Progress", order=1, category=WorkflowStatusCategory.IN_PROGRESS)
-        done = WorkflowStatus(name="Done", order=2, category=WorkflowStatusCategory.DONE)
-        board.workflow_statuses = [todo, in_progress, done]
+        review = WorkflowStatus(name="Review", order=2, category=WorkflowStatusCategory.REVIEW)
+        done = WorkflowStatus(name="Done", order=3, category=WorkflowStatusCategory.DONE)
+        board.workflow_statuses = [todo, in_progress, review, done]
 
         # Дефолтные колонки
         board.columns = [
             BoardColumn(name="To Do", order=0, status_mapping=todo.id),
             BoardColumn(name="In Progress", order=1, status_mapping=in_progress.id),
-            BoardColumn(name="Done", order=2, status_mapping=done.id),
+            BoardColumn(name="Review", order=2, status_mapping=review.id),
+            BoardColumn(name="Done", order=3, status_mapping=done.id),
         ]
 
         return board

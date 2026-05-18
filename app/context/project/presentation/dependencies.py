@@ -86,6 +86,14 @@ async def get_project_membership_repository(
     return container.project_membership_repo(session=session)
 
 
+async def get_project_invitation_repository(
+    session: AsyncSession = Depends(get_db_session),
+    container: Container = Depends(get_container),
+):
+    """Получить ProjectInvitationRepository из DI-контейнера."""
+    return container.project_invitation_repo(session=session)
+
+
 async def get_project_role_repository(
     session: AsyncSession = Depends(get_db_session),
     container: Container = Depends(get_container),

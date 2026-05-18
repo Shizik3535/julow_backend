@@ -113,11 +113,17 @@ class SqlTaskAnalyticsAdapter(TaskAnalyticsProvider):
                 labels.append("date_bucket")
                 continue
             if field == "assignee_id":
-                # assignee_ids — JSONB-массив; группировка через jsonb_array_elements_text.
-                # MVP: пропускаем эту группировку (требует cross-product unnesting).
-                raise ValueError(
-                    "group_by=assignee_id пока не поддерживается (требует unnest JSONB)"
-                )
+                # assignee_ids — JSONB-массив. Раскрываем его set-returning
+                # функцией `jsonb_array_elements_text(...)`: PostgreSQL
+                # обрабатывает её как implicit lateral cross join, поэтому
+                # каждая задача с N исполнителями превращается в N строк, где
+                # каждая строка содержит один assignee — это ровно то, что
+                # нужно для group-by «топ-исполнителей».
+                bucket = func.jsonb_array_elements_text(TaskORM.assignee_ids)
+                select_cols.append(bucket.label("assignee_id"))
+                group_exprs.append(bucket)
+                labels.append("assignee_id")
+                continue
             col = _GROUP_FIELD_TO_COLUMN.get(field)
             if col is None:
                 raise ValueError(f"Unsupported group_by field: {field}")

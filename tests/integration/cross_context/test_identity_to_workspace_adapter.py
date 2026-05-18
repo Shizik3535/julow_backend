@@ -45,6 +45,25 @@ class _RealIdentityUserProvider(IdentityUserProvider):
                 results.append(dto)
         return results
 
+    async def get_user_by_email(self, email: str) -> UserDTO | None:
+        from app.shared.domain.value_objects.email_vo import Email
+        try:
+            normalized = Email(email)
+        except Exception:  # noqa: BLE001
+            return None
+        user = await self._user_repo.get_by_email(normalized)
+        if user is None:
+            return None
+        return UserDTO(
+            id=str(user.id),
+            email=str(user.email),
+            status=user.status.value if hasattr(user.status, "value") else str(user.status),
+            role_ids=[],
+            is_email_confirmed=True,
+            created_at=datetime.now(tz=timezone.utc),
+            updated_at=datetime.now(tz=timezone.utc),
+        )
+
 
 @pytest.mark.integration
 class TestIdentityUserAdapterCrossContext:

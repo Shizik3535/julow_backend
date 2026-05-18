@@ -137,11 +137,18 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_org_invitation(session: AsyncSession) -> MessageHandlerFn:
         notification_repo = container.notification_repo(session=session)
-        preferences_repo = container.notification_preferences_repo(session=session)
+        organization_repo = container.organization_repo(session=session)
+        organization_provider_inst = container.org_provider(repo=organization_repo)
+        user_repo_inst = container.user_repo(session=session)
+        identity_user_provider_inst = container.identity_user_provider(user_repo=user_repo_inst)
+        identity_port = container.notification_identity_user_port(
+            identity_user_provider=identity_user_provider_inst,
+        )
         handler = OnOrgInvitationSentNotify(
             notification_repo=notification_repo,
             event_bus=container.notification_event_bus(),
-            preferences_repo=preferences_repo,
+            identity_port=identity_port,
+            organization_provider=organization_provider_inst,
         )
 
         async def _run(message: dict[str, Any]) -> None:
@@ -157,7 +164,19 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
 
     def _build_on_workspace_invitation(session: AsyncSession) -> MessageHandlerFn:
         repo = container.notification_repo(session=session)
-        handler = OnWorkspaceInvitationSentNotify(notification_repo=repo, event_bus=container.notification_event_bus())
+        workspace_repo = container.workspace_repo(session=session)
+        workspace_provider_inst = container.workspace_provider(repo=workspace_repo)
+        user_repo_inst = container.user_repo(session=session)
+        identity_user_provider_inst = container.identity_user_provider(user_repo=user_repo_inst)
+        identity_port = container.notification_identity_user_port(
+            identity_user_provider=identity_user_provider_inst,
+        )
+        handler = OnWorkspaceInvitationSentNotify(
+            notification_repo=repo,
+            event_bus=container.notification_event_bus(),
+            identity_port=identity_port,
+            workspace_provider=workspace_provider_inst,
+        )
 
         async def _run(message: dict[str, Any]) -> None:
             await handler.handle(message)
@@ -180,6 +199,15 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
     )
     from app.context.notification.application.event_handlers.on_project_overdue_notify import (
         OnProjectOverdueNotify,
+    )
+    from app.context.notification.application.event_handlers.on_project_invitation_sent_notify import (
+        OnProjectInvitationSentNotify,
+    )
+    from app.context.notification.application.event_handlers.on_project_invitation_accepted_notify import (
+        OnProjectInvitationAcceptedNotify,
+    )
+    from app.context.notification.application.event_handlers.on_project_invitation_declined_notify import (
+        OnProjectInvitationDeclinedNotify,
     )
 
     def _build_on_project_member_joined(session: AsyncSession) -> MessageHandlerFn:
@@ -243,6 +271,72 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
 
         return _run
 
+    def _build_on_project_invitation_sent(session: AsyncSession) -> MessageHandlerFn:
+        # Получаем outboard ProjectProvider напрямую — для обогащения
+        # уведомления названием проекта (тот же приём, что и в
+        # OnCommentAddedNotify).
+        repo = container.notification_repo(session=session)
+        project_repo = container.project_repo(session=session)
+        project_provider_inst = container.project_provider(repo=project_repo)
+        user_repo_inst = container.user_repo(session=session)
+        identity_user_provider_inst = container.identity_user_provider(user_repo=user_repo_inst)
+        identity_port = container.notification_identity_user_port(
+            identity_user_provider=identity_user_provider_inst,
+        )
+        handler = OnProjectInvitationSentNotify(
+            notification_repo=repo,
+            event_bus=container.notification_event_bus(),
+            identity_port=identity_port,
+            project_provider=project_provider_inst,
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_project_invitation_accepted(session: AsyncSession) -> MessageHandlerFn:
+        repo = container.notification_repo(session=session)
+        project_repo = container.project_repo(session=session)
+        project_provider_inst = container.project_provider(repo=project_repo)
+        user_repo_inst = container.user_repo(session=session)
+        identity_user_provider_inst = container.identity_user_provider(user_repo=user_repo_inst)
+        identity_port = container.notification_identity_user_port(
+            identity_user_provider=identity_user_provider_inst,
+        )
+        handler = OnProjectInvitationAcceptedNotify(
+            notification_repo=repo,
+            event_bus=container.notification_event_bus(),
+            identity_port=identity_port,
+            project_provider=project_provider_inst,
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_project_invitation_declined(session: AsyncSession) -> MessageHandlerFn:
+        repo = container.notification_repo(session=session)
+        project_repo = container.project_repo(session=session)
+        project_provider_inst = container.project_provider(repo=project_repo)
+        user_repo_inst = container.user_repo(session=session)
+        identity_user_provider_inst = container.identity_user_provider(user_repo=user_repo_inst)
+        identity_port = container.notification_identity_user_port(
+            identity_user_provider=identity_user_provider_inst,
+        )
+        handler = OnProjectInvitationDeclinedNotify(
+            notification_repo=repo,
+            event_bus=container.notification_event_bus(),
+            identity_port=identity_port,
+            project_provider=project_provider_inst,
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
     # --- Task BC ---
 
     from app.context.notification.application.event_handlers.on_task_assigned_notify import (
@@ -265,6 +359,9 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
     )
     from app.context.notification.application.event_handlers.on_message_sent_notify import (
         OnMessageSentNotify,
+    )
+    from app.context.notification.application.event_handlers.on_message_sent_broadcast import (
+        OnMessageSentBroadcastWs,
     )
     from app.context.notification.application.event_handlers.on_task_deadline_approaching_notify import (
         OnTaskDeadlineApproachingNotify,
@@ -323,11 +420,18 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
             project_membership_provider=project_membership_provider,
             project_provider=project_provider_inst,
         )
+        # Outboard providers нужны хэндлеру для построения «осмысленного»
+        # тела уведомления (title задачи + name проекта). Не создаём
+        # отдельные inboard-порты на одном файле — этот handler — единственный
+        # потребитель в Notification BC.
+        task_provider_inst = container.task_provider(repo=task_repo)
         handler = OnCommentAddedNotify(
             notification_repo=repo,
             event_bus=container.notification_event_bus(),
             task_participant_port=task_participant_port,
             project_member_port=project_member_port,
+            task_provider=task_provider_inst,
+            project_provider=project_provider_inst,
         )
 
         async def _run(message: dict[str, Any]) -> None:
@@ -368,9 +472,41 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
         chat_members_port = container.notification_chat_members_port(
             chat_members_provider=chat_members_provider,
         )
+        # WebSocketPort нужен handler'у, чтобы НЕ создавать persisted
+        # notification получателям, которые сейчас активно смотрят чат
+        # (мы и так пушим им `chat.message.created` через WS — см.
+        # `OnMessageSentBroadcastWs`).
+        websocket_port = container.websocket_port()
         handler = OnMessageSentNotify(
             notification_repo=repo,
             event_bus=container.notification_event_bus(),
+            chat_members_port=chat_members_port,
+            websocket_port=websocket_port,
+        )
+
+        async def _run(message: dict[str, Any]) -> None:
+            await handler.handle(message)
+
+        return _run
+
+    def _build_on_message_sent_broadcast(session: AsyncSession) -> MessageHandlerFn:
+        """Гарантированный realtime-broadcast сообщения по WebSocket.
+
+        Подписан на тот же ``MessageSent``, что и ``OnMessageSentNotify``,
+        но через отдельный consumer group, чтобы оба обработчика отрабатывали
+        независимо. Шлёт WS-кадр ``chat.message.created`` всем участникам чата
+        без учёта prefs/DND — это нужно, чтобы лента активного чата на
+        клиенте обновлялась в реальном времени даже если IN_APP отключён в
+        настройках.
+        """
+        chat_repo = container.chat_repo(session=session)
+        chat_members_provider = container.chat_members_provider(repo=chat_repo)
+        chat_members_port = container.notification_chat_members_port(
+            chat_members_provider=chat_members_provider,
+        )
+        websocket_port = container.websocket_port()
+        handler = OnMessageSentBroadcastWs(
+            websocket_port=websocket_port,
             chat_members_port=chat_members_port,
         )
 
@@ -562,6 +698,21 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
             group_id="notification-bc--project-overdue",
             build_handler=_build_on_project_overdue,
         ),
+        Subscription(
+            topic=PROJECT_EVENTS_TOPIC,
+            group_id="notification-bc--project-invitation-sent",
+            build_handler=_build_on_project_invitation_sent,
+        ),
+        Subscription(
+            topic=PROJECT_EVENTS_TOPIC,
+            group_id="notification-bc--project-invitation-accepted",
+            build_handler=_build_on_project_invitation_accepted,
+        ),
+        Subscription(
+            topic=PROJECT_EVENTS_TOPIC,
+            group_id="notification-bc--project-invitation-declined",
+            build_handler=_build_on_project_invitation_declined,
+        ),
         # Task BC
         Subscription(
             topic=TASK_EVENTS_TOPIC,
@@ -598,6 +749,11 @@ def notification_subscriptions(container: "Container") -> list[Subscription]:
             topic=COMMUNICATION_EVENTS_TOPIC,
             group_id="notification-bc--message-sent",
             build_handler=_build_on_message_sent,
+        ),
+        Subscription(
+            topic=COMMUNICATION_EVENTS_TOPIC,
+            group_id="notification-bc--message-sent-broadcast",
+            build_handler=_build_on_message_sent_broadcast,
         ),
         Subscription(
             topic=TASK_EVENTS_TOPIC,

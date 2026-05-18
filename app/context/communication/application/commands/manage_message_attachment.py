@@ -7,6 +7,8 @@ from app.shared.application.base_command_handler import BaseCommandHandler
 from app.shared.application.messaging.domain_event_bus import DomainEventBus
 from app.shared.domain.value_objects.id_vo import Id
 from app.shared.domain.value_objects.url_vo import Url
+from app.context.filestorage.domain.entities.file_tag import FileTag
+from app.context.filestorage.domain.repositories.file_repository import FileRepository
 
 from app.context.communication.application.dto.attachment_dto import AttachmentDTO
 from app.context.communication.application.dto.mappers import attachment_to_dto
@@ -66,12 +68,14 @@ class AddMessageAttachmentHandler(
         self,
         message_repo: MessageRepository,
         chat_repo: ChatRepository,
+        file_repo: FileRepository,
         file_attachment_port: FileAttachmentPort,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
         self._repo = message_repo
         self._chat_repo = chat_repo
+        self._file_repo = file_repo
         self._file_attachment_port = file_attachment_port
         self._event_bus = event_bus
 
@@ -98,6 +102,23 @@ class AddMessageAttachmentHandler(
             file_data=command.file_data,
             content_type=command.content_type,
         )
+
+        # Помечаем файл системными тегами, чтобы UI документов мог
+        # отфильтровать его по источнику (чат) и по проекту, не зная
+        # деталей вложений сообщений.
+        file = await self._file_repo.get_by_id(Id.from_string(result.file_id))
+        if file is not None:
+            wanted_tags: list[str] = ["source:chat"]
+            if chat.project_id is not None:
+                wanted_tags.append(f"project:{chat.project_id}")
+            existing = {tag.name for tag in file.tags}
+            tags_changed = False
+            for name in wanted_tags:
+                if name not in existing:
+                    file.add_tag(FileTag(name=name))
+                    tags_changed = True
+            if tags_changed:
+                await self._file_repo.update(file)
 
         attachment = Attachment(
             id=Id.from_string(result.file_id),

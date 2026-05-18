@@ -25,6 +25,12 @@ class _StubIdentityUserProvider(IdentityUserProvider):
     async def get_users(self, user_ids: list[str]) -> list[UserDTO]:
         return [self._users[uid] for uid in user_ids if uid in self._users]
 
+    async def get_user_by_email(self, email: str) -> UserDTO | None:
+        for dto in self._users.values():
+            if dto.email == email:
+                return dto
+        return None
+
 
 def _make_user_dto(user_id: str, email: str = "user@test.com", status: str = "active") -> UserDTO:
     from datetime import datetime, timezone

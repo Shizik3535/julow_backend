@@ -8,6 +8,9 @@ from app.context.project.infrastructure.persistence.orm_models.board_orm import 
     WorkflowTransitionORM,
 )
 from app.context.project.infrastructure.persistence.orm_models.epic_orm import EpicORM
+from app.context.project.infrastructure.persistence.orm_models.project_invitation_orm import (
+    ProjectInvitationORM,
+)
 from app.context.project.infrastructure.persistence.orm_models.project_membership_orm import (
     ProjectMemberORM,
     ProjectMembershipORM,
@@ -37,6 +40,7 @@ __all__ = [
     "EpicORM",
     "MilestoneORM",
     "ProjectCustomFieldORM",
+    "ProjectInvitationORM",
     "ProjectMemberORM",
     "ProjectMembershipORM",
     "ProjectORM",

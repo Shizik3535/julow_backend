@@ -134,3 +134,16 @@ class CommentTargetAccessAdapter(CommentTargetAccessPort):
             return None
         workspace_id = getattr(project, "workspace_id", None)
         return str(workspace_id) if workspace_id else None
+
+    async def resolve_project_id(
+        self,
+        target_type: CommentTargetType,
+        target_id: str,
+    ) -> str | None:
+        """Публичный фасад над ``_resolve_project_id`` для внешних потребителей.
+
+        Нужен, например, для маркировки вложений комментариев тегом
+        ``project:<id>`` — UI документов использует этот тег для фильтра
+        по проекту.
+        """
+        return await self._resolve_project_id(target_type, target_id)

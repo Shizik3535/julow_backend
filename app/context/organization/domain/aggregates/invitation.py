@@ -76,9 +76,11 @@ class Invitation(AggregateRoot):
         )
         invitation._register_event(
             InvitationSent(
+                invitation_id=str(invitation.id),
                 org_id=str(org_id),
                 email=str(email),
                 role_id=str(role_id),
+                invited_by=str(invited_by),
             )
         )
         return invitation

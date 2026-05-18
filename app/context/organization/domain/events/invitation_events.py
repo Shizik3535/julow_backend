@@ -7,11 +7,23 @@ from app.shared.domain.base_domain_event import BaseDomainEvent
 
 @dataclass(frozen=True)
 class InvitationSent(BaseDomainEvent):
-    """Приглашение отправлено."""
+    """Приглашение отправлено.
 
+    Атрибуты:
+        invitation_id: ID агрегата Invitation. Нужен `OnOrgInvitationSentNotify`,
+            чтобы передать его в `data.invitation_id` уведомления — фронт
+            затем вызывает `POST /invitations/{id}/accept|decline`.
+        org_id: ID организации.
+        email: Email приглашаемого.
+        role_id: ID роли.
+        invited_by: ID отправителя приглашения.
+    """
+
+    invitation_id: str = ""
     org_id: str = ""
     email: str = ""
     role_id: str = ""
+    invited_by: str = ""
 
 
 @dataclass(frozen=True)

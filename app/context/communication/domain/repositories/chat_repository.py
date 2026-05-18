@@ -25,6 +25,10 @@ class ChatRepository(RepositoryPort[Chat]):
         """Найти чаты workspace."""
 
     @abstractmethod
+    async def get_by_project_id(self, project_id: Id) -> Chat | None:
+        """Найти проектный чат по идентификатору проекта."""
+
+    @abstractmethod
     async def get_by_type(self, chat_type: ChatType) -> list[Chat]:
         """Найти чаты по типу."""
 

@@ -38,3 +38,21 @@ class IdentityUserProvider(ABC):
         Возвращает:
             Список UserDTO.
         """
+
+    @abstractmethod
+    async def get_user_by_email(self, email: str) -> UserDTO | None:
+        """
+        Найти пользователя по email.
+
+        Используется для маршрутизации уведомлений на email-приглашения:
+        когда приглашение шлётся на адрес уже зарегистрированного user'а,
+        мы хотим положить ему in-app notification с кнопками «принять/
+        отклонить», а не только email-ссылку.
+
+        Аргументы:
+            email: Email-адрес (без нормализации; реализация может
+                выполнить trim/lowercase согласно Email VO).
+
+        Возвращает:
+            UserDTO или None, если пользователь не найден.
+        """

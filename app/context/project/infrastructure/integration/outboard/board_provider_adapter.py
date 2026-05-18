@@ -58,6 +58,11 @@ class BoardProviderAdapter(BoardProvider):
         board = await self._repo.get_by_project_id(Id.from_string(project_id))
         if board is None:
             return False
+        # Permissive fallback: если у board'а нет явно настроенных transitions —
+        # разрешаем любые переходы. Как только админ добавит хотя бы один
+        # transition, workflow становится строгим (whitelist).
+        if not board.workflow_transitions:
+            return True
         for t in board.workflow_transitions:
             if str(t.from_status_id) == from_status_id and str(t.to_status_id) == to_status_id:
                 return True

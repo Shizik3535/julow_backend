@@ -51,6 +51,7 @@ class ChatDTO(BaseDTO):
     icon: str | None = None
     color: str | None = None
     workspace_id: str | None = None
+    project_id: str | None = None
     members: list[ChatMemberDTO] = []
     threads: list[ThreadDTO] = []
     last_message_at: datetime | None = None

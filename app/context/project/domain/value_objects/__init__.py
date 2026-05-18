@@ -6,6 +6,8 @@ from app.context.project.domain.value_objects.custom_field_definition import Cus
 from app.context.project.domain.value_objects.custom_field_type import CustomFieldType
 from app.context.project.domain.value_objects.epic_status import EpicStatus
 from app.context.project.domain.value_objects.filter_operator import FilterOperator
+from app.context.project.domain.value_objects.invitation_status import InvitationStatus
+from app.context.project.domain.value_objects.invitation_token import InvitationToken
 from app.context.project.domain.value_objects.methodology import Methodology
 from app.context.project.domain.value_objects.methodology_capabilities import MethodologyCapabilities
 from app.context.project.domain.value_objects.membership_type import MembershipType
@@ -34,6 +36,8 @@ __all__ = [
     "CustomFieldType",
     "EpicStatus",
     "FilterOperator",
+    "InvitationStatus",
+    "InvitationToken",
     "Methodology",
     "MethodologyCapabilities",
     "MembershipType",
