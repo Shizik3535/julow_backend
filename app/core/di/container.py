@@ -357,6 +357,7 @@ class Container(containers.DeclarativeContainer):
         client_kwargs=s3_client_kwargs,
         bucket_name=settings.provided.s3.bucket_name,
         public_url_base=settings.provided.s3.endpoint_url,
+        presigned_url_base=settings.provided.s3.public_endpoint_url,
     )
 
     # Antivirus (ClamAV в production, NoOp в dev/test)

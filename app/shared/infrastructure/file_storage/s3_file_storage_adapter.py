@@ -32,11 +32,14 @@ class S3FileStorageAdapter(FileStoragePort):
         client_kwargs: dict[str, Any],
         bucket_name: str,
         public_url_base: str = "",
+        presigned_url_base: str = "",
     ) -> None:
         self._session = session
         self._client_kwargs = client_kwargs
         self._bucket_name = bucket_name
         self._public_url_base = public_url_base
+        self._presigned_url_base = presigned_url_base
+        self._internal_endpoint = client_kwargs.get("endpoint_url", "")
 
     async def ensure_bucket(self) -> None:
         """Создать бакет, если он не существует."""
@@ -105,5 +108,7 @@ class S3FileStorageAdapter(FileStoragePort):
                 Params={"Bucket": self._bucket_name, "Key": key},
                 ExpiresIn=expires_in,
             )
+            if self._presigned_url_base and self._internal_endpoint:
+                url = url.replace(self._internal_endpoint, self._presigned_url_base, 1)
             logger.debug("Presigned URL generated", key=key, expires_in=expires_in)
             return url

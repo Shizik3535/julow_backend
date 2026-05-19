@@ -156,6 +156,7 @@ class NotificationController(BaseController):
             port=settings.app.port,
             api_prefix=settings.app.api_prefix,
             debug=settings.app.debug,
+            base_url=settings.app.base_url,
         )
         query = GetConnectionInfoQuery(user_id=user_id)
         dto = await handler.handle(query)

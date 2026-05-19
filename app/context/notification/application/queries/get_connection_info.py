@@ -30,10 +30,15 @@ class GetConnectionInfoHandler(BaseQueryHandler[GetConnectionInfoQuery, Connecti
 
     HEARTBEAT_INTERVAL_SEC: int = 30
 
-    def __init__(self, *, host: str, port: int, api_prefix: str, debug: bool = False) -> None:
+    def __init__(self, *, host: str, port: int, api_prefix: str, debug: bool = False, base_url: str = "") -> None:
         super().__init__()
-        scheme = "ws" if debug else "wss"
-        self._websocket_url = f"{scheme}://{host}:{port}{api_prefix}/ws/notifications"
+        if base_url:
+            # Derive WS URL from public base_url (e.g. https://backend.julow.ru → wss://backend.julow.ru)
+            ws_base = base_url.replace("https://", "wss://").replace("http://", "ws://")
+            self._websocket_url = f"{ws_base}{api_prefix}/ws/notifications"
+        else:
+            scheme = "ws" if debug else "wss"
+            self._websocket_url = f"{scheme}://{host}:{port}{api_prefix}/ws/notifications"
 
     async def handle(self, query: GetConnectionInfoQuery) -> ConnectionInfoDTO:
         return ConnectionInfoDTO(

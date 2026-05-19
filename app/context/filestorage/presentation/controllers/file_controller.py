@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import Depends, File, Form, Query, UploadFile
+from fastapi.responses import Response
 
 from app.shared.presentation.base_controller import BaseController
 from app.shared.presentation.responses import (
@@ -143,6 +144,9 @@ class FileController(BaseController):
             response_model=SuccessResponse[FileResponse], summary="Получить файл")
         self._router.add_api_route("/{file_id}/download", self.get_download_url, methods=["GET"],
             response_model=SuccessResponse[FileDownloadUrlResponse], summary="Presigned URL")
+        self._router.add_api_route("/{file_id}/content", self.get_content, methods=["GET"],
+            summary="Содержимое файла (binary)",
+            responses={200: {"content": {"application/octet-stream": {}}}, 404: {"model": ErrorResponse}})
         self._router.add_api_route("/{file_id}/rename", self.rename, methods=["PATCH"],
             response_model=SuccessResponse[FileResponse], summary="Переименовать")
         self._router.add_api_route("/{file_id}/move", self.move, methods=["POST"],
@@ -277,6 +281,35 @@ class FileController(BaseController):
             file_id=file_id, caller_id=user_id, expires_in=expires_in,
         ))
         return SuccessResponse(data=FileDownloadUrlResponse.model_validate(result))
+
+    async def get_content(
+        self,
+        file_id: str,
+        user_id: str = Depends(get_current_user_id),
+        file_repo=Depends(get_file_repository),
+        permission_checker=Depends(get_fs_workspace_permission_checker),
+        file_storage=Depends(get_file_storage_port),
+    ) -> Response:
+        """Отдать содержимое файла (бинарные данные) напрямую."""
+        from app.shared.domain.value_objects.id_vo import Id
+        from app.context.filestorage.domain.value_objects.file_status import FileStatus
+
+        file = await file_repo.get_by_id(Id.from_string(file_id))
+        if file is None:
+            return Response(status_code=404, content=b'{"error":"File not found"}')
+        if file.status in (FileStatus.TRASHED, FileStatus.DELETED):
+            return Response(status_code=404, content=b'{"error":"File not found"}')
+        await permission_checker.require_permission(
+            user_id=user_id,
+            workspace_id=str(file.workspace_id),
+            permission="files.read",
+        )
+        data = await file_storage.download(key=file.storage_path)
+        return Response(
+            content=data,
+            media_type=file.mime_type or "application/octet-stream",
+            headers={"Content-Disposition": f'inline; filename="{file.name}"'},
+        )
 
     async def rename(
         self, file_id: str, body: RenameFileRequest,

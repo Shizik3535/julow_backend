@@ -89,8 +89,27 @@ async def get_fs_workspace_permission_checker(
         workspace_role_repo=ws_role_repo,
         workspace_repo=ws_repo,
     )
+
+    # Каскад: project-membership → files.read
+    project_repo = container.project_repo(session=session)
+    project_membership_repo = container.project_membership_repo(session=session)
+
+    async def _is_project_member_in_workspace(user_id: str, workspace_id: str) -> bool:
+        from app.shared.domain.value_objects.id_vo import Id
+
+        projects = await project_repo.get_by_workspace(Id.from_string(workspace_id))
+        for project in projects:
+            member = await project_membership_repo.get_member_by_project_and_user(
+                project_id=project.id,
+                user_id=Id.from_string(user_id),
+            )
+            if member is not None and member.is_active:
+                return True
+        return False
+
     return container.fs_workspace_permission_checker_port(
         workspace_membership_provider=workspace_membership_provider,
+        project_membership_checker=_is_project_member_in_workspace,
     )
 
 

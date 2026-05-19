@@ -10,6 +10,7 @@ class S3Settings(BaseSettings):
     )
 
     endpoint_url: str = "http://localhost:9000"
+    public_endpoint_url: str = ""
     access_key: str = "minioadmin"
     secret_key: str = "minioadmin"
     bucket_name: str = "julow"

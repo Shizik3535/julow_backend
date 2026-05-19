@@ -99,10 +99,12 @@ def create_storage_repository(
 
 def create_fs_workspace_permission_checker(
     workspace_membership_provider: WorkspaceMembershipProvider,
+    project_membership_checker=None,
 ) -> WorkspacePermissionCheckerPort:
     """Создать WorkspacePermissionCheckerAdapter для FileStorage BC."""
     return WorkspacePermissionCheckerAdapter(
         workspace_membership_provider=workspace_membership_provider,
+        project_membership_checker=project_membership_checker,
     )
 
 
