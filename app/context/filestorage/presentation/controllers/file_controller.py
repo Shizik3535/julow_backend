@@ -59,6 +59,10 @@ from app.context.filestorage.application.queries.get_file import (
     GetFileHandler,
     GetFileQuery,
 )
+from app.context.filestorage.application.queries.get_file_content import (
+    GetFileContentHandler,
+    GetFileContentQuery,
+)
 from app.context.filestorage.application.queries.get_file_download_url import (
     GetFileDownloadUrlHandler,
     GetFileDownloadUrlQuery,
@@ -115,6 +119,7 @@ class FileController(BaseController):
         GET    /files/trashed                          — файлы в корзине workspace
         GET    /files/{id}                             — получить файл
         GET    /files/{id}/download                    — получить presigned URL
+        GET    /files/{id}/content                     — стримить содержимое файла
         PATCH  /files/{id}/rename                      — переименовать
         POST   /files/{id}/move                        — переместить
         PATCH  /files/{id}/description                 — обновить описание
@@ -147,8 +152,13 @@ class FileController(BaseController):
         self._router.add_api_route("/{file_id}/download", self.get_download_url, methods=["GET"],
             response_model=SuccessResponse[FileDownloadUrlResponse], summary="Presigned URL")
         self._router.add_api_route("/{file_id}/content", self.get_content, methods=["GET"],
-            summary="Содержимое файла (binary)",
-            responses={200: {"content": {"application/octet-stream": {}}}, 404: {"model": ErrorResponse}})
+            summary="Сырое содержимое файла (bytes)",
+            responses={
+                200: {"content": {"application/octet-stream": {}}},
+                401: {"model": ErrorResponse},
+                403: {"model": ErrorResponse},
+                404: {"model": ErrorResponse},
+            })
         self._router.add_api_route("/{file_id}/rename", self.rename, methods=["PATCH"],
             response_model=SuccessResponse[FileResponse], summary="Переименовать")
         self._router.add_api_route("/{file_id}/move", self.move, methods=["POST"],
@@ -291,27 +301,39 @@ class FileController(BaseController):
         file_repo=Depends(get_file_repository),
         permission_checker=Depends(get_fs_workspace_permission_checker),
         file_storage=Depends(get_file_storage_port),
+        event_bus=Depends(get_filestorage_event_bus),
+        block_pending_downloads: bool = Depends(get_block_pending_downloads),
     ) -> Response:
-        """Отдать содержимое файла (бинарные данные) напрямую."""
-        from app.shared.domain.value_objects.id_vo import Id
-        from app.context.filestorage.domain.value_objects.file_status import FileStatus
+        """Стримить сырое содержимое файла через API.
 
-        file = await file_repo.get_by_id(Id.from_string(file_id))
-        if file is None:
-            return Response(status_code=404, content=b'{"error":"File not found"}')
-        if file.status in (FileStatus.TRASHED, FileStatus.DELETED):
-            return Response(status_code=404, content=b'{"error":"File not found"}')
-        await permission_checker.require_permission(
-            user_id=user_id,
-            workspace_id=str(file.workspace_id),
-            permission="files.read",
+        Используется клиентами, у которых нет сетевого доступа к S3/MinIO
+        напрямую (например, мобильные приложения за NAT, или web-фронтенд,
+        ходящий через server-side proxy с Bearer-токеном). Возвращает
+        ``application/octet-stream`` с заголовком ``Content-Disposition: inline``,
+        чтобы браузеры умели открывать картинки/видео прямо в `<img>`/`<video>`.
+        """
+        handler = GetFileContentHandler(
+            file_repo=file_repo, permission_checker=permission_checker,
+            file_storage=file_storage, event_bus=event_bus,
+            block_pending_downloads=block_pending_downloads,
         )
-        data = await file_storage.download(key=file.storage_path)
+        result = await handler.handle(GetFileContentQuery(
+            file_id=file_id, caller_id=user_id,
+        ))
+        # RFC 5987 — кодируем имя файла, чтобы кириллица/пробелы не ломали заголовок.
+        encoded_name = quote(result.name, safe="")
         return Response(
-            content=data,
-            media_type=file.mime_type or "application/octet-stream",
+            content=result.data,
+            media_type=result.mime_type or "application/octet-stream",
             headers={
-                "Content-Disposition": f"inline; filename*=UTF-8''{quote(file.name)}",
+                "Content-Disposition": (
+                    f'inline; filename="{encoded_name}"; '
+                    f"filename*=UTF-8''{encoded_name}"
+                ),
+                "Content-Length": str(result.size_bytes),
+                # Кэшируем приватно на короткое время — содержимое файла иммутабельно
+                # для одного storage_path; обновление файла создаёт новую версию.
+                "Cache-Control": "private, max-age=300",
             },
         )
 
