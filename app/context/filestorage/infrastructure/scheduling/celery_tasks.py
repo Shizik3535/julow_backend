@@ -30,23 +30,29 @@ def scan_file_for_virus_task(file_id: str) -> None:
         container = Container()
         session_factory = container.db_session_factory()
 
-        async with session_factory() as session:
-            try:
-                file_repo = container.file_repo(session=session)
-                file_storage = container.file_storage_port()
-                virus_scanner = container.virus_scanner_port()
-                event_bus = container.filestorage_event_bus()
+        broker = container.message_broker_port()
+        await broker.start()
 
-                service = ScanFileService(
-                    file_repo=file_repo,
-                    file_storage=file_storage,
-                    virus_scanner=virus_scanner,
-                    event_bus=event_bus,
-                )
-                await service.scan(file_id=file_id)
-                await session.commit()
-            except Exception:
-                await session.rollback()
-                raise
+        try:
+            async with session_factory() as session:
+                try:
+                    file_repo = container.file_repo(session=session)
+                    file_storage = container.file_storage_port()
+                    virus_scanner = container.virus_scanner_port()
+                    event_bus = container.filestorage_event_bus()
+
+                    service = ScanFileService(
+                        file_repo=file_repo,
+                        file_storage=file_storage,
+                        virus_scanner=virus_scanner,
+                        event_bus=event_bus,
+                    )
+                    await service.scan(file_id=file_id)
+                    await session.commit()
+                except Exception:
+                    await session.rollback()
+                    raise
+        finally:
+            await broker.stop()
 
     asyncio.run(_run())

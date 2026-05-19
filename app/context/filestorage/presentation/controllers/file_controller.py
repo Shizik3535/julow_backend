@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from fastapi import Depends, File, Form, Query, UploadFile
 from fastapi.responses import Response
 
@@ -308,7 +310,9 @@ class FileController(BaseController):
         return Response(
             content=data,
             media_type=file.mime_type or "application/octet-stream",
-            headers={"Content-Disposition": f'inline; filename="{file.name}"'},
+            headers={
+                "Content-Disposition": f"inline; filename*=UTF-8''{quote(file.name)}",
+            },
         )
 
     async def rename(
