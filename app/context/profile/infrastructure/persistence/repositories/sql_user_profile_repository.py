@@ -82,6 +82,7 @@ class SqlUserProfileRepository(SqlAlchemyRepository[UserProfile, UserProfileORM]
             }
 
         orm_model.user_id = self._mapper._map_uuid(aggregate.user_id)
+        orm_model.display_name = aggregate.display_name
         orm_model.avatar_url = str(aggregate.avatar_url) if aggregate.avatar_url else None
         orm_model.bio = aggregate.bio
         orm_model.job_title = aggregate.job_title

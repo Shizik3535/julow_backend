@@ -1,0 +1,25 @@
+# LiveKit Server configuration (development)
+# Документация: https://docs.livekit.io/realtime/self-hosting/deployment/
+port: 7880
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 7100
+  port_range_end: 7110
+  # Для работы в Docker обязателен: без этого флага LiveKit
+  # отправляет внутренний IP контейнера, и WebRTC ICE не может
+  # добраться до сервера снаружи.
+  use_external_ip: true
+
+keys:
+  devkey: secret1234567890secret1234567890
+
+# TURN позволяет WebRTC-трафику пробиться через строгие NAT/файрволы,
+# маскируясь под обычный TCP/TLS. В dev-режиме не нужен.
+# turn:
+#   enabled: true
+#   tls_port: 5349
+#   udp_port: 3478
+
+logging:
+  level: info

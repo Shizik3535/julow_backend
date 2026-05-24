@@ -96,7 +96,7 @@ class Meeting(AggregateRoot):
     def create(
         cls,
         title: str,
-        scheduled_at: datetime,
+        scheduled_at: datetime | None,
         workspace_id: Id,
         organizer_id: Id,
         meeting_type: MeetingType,
@@ -113,7 +113,7 @@ class Meeting(AggregateRoot):
         """Создаёт совещание. Организатор автоматически добавляется как participant."""
         meeting = cls(
             title=title,
-            scheduled_at=scheduled_at,
+            scheduled_at=scheduled_at or datetime.now(tz=timezone.utc),
             workspace_id=workspace_id,
             organizer_id=organizer_id,
             meeting_type=meeting_type,

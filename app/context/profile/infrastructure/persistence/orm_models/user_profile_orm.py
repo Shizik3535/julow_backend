@@ -22,6 +22,7 @@ class UserProfileORM(BaseORMModel):
     user_id: Mapped[uuid.UUID] = mapped_column(
         nullable=False, unique=True, index=True,
     )
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     job_title: Mapped[str | None] = mapped_column(String(255), nullable=True)

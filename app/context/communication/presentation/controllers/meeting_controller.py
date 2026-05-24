@@ -67,6 +67,7 @@ from app.context.communication.presentation.dependencies import (
     get_conference_provider_registry,
     get_current_user_id,
     get_meeting_repository,
+    get_profile_user_provider,
 )
 from app.context.communication.presentation.schemas.requests.meeting_requests import (
     AddActionItemRequest,
@@ -418,11 +419,13 @@ class MeetingController(BaseController):
         repo=Depends(get_meeting_repository),
         registry=Depends(get_conference_provider_registry),
         event_bus=Depends(get_communication_event_bus),
+        profile_provider=Depends(get_profile_user_provider),
     ) -> SuccessResponse[MeetingJoinResponse]:
         handler = JoinMeetingHandler(
             meeting_repo=repo,
             provider_registry=registry,
             event_bus=event_bus,
+            profile_provider=profile_provider,
         )
         dto = await handler.handle(
             JoinMeetingCommand(caller_id=user_id, meeting_id=meeting_id)

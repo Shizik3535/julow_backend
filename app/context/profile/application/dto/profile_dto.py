@@ -33,6 +33,7 @@ class ProfileDTO(BaseDTO):
 
     id: str
     user_id: str
+    display_name: str | None = None
     avatar_url: str | None = None
     bio: str | None = None
     job_title: str | None = None

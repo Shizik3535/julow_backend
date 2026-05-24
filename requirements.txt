@@ -41,3 +41,6 @@ cryptography
 # ── SSO ───────────────────────────────────────
 python3-saml
 ldap3
+
+# ── Video conferencing (LiveKit) ──────────────
+livekit-api

@@ -62,6 +62,7 @@ class UserProfile(AggregateRoot):
     """
 
     user_id: Id = field(default_factory=Id.generate)
+    display_name: str | None = None
     avatar_url: Url | None = None
     bio: str | None = None
     job_title: str | None = None
@@ -99,9 +100,17 @@ class UserProfile(AggregateRoot):
 
     # --- Персональные данные ---
 
-    def update_personal_info(self, bio: str | None = None, job_title: str | None = None) -> None:
+    def update_personal_info(
+        self,
+        display_name: str | None = None,
+        bio: str | None = None,
+        job_title: str | None = None,
+    ) -> None:
         """Изменяет только переданные персональные поля."""
         changed: list[str] = []
+        if display_name is not None and self.display_name != display_name:
+            self.display_name = display_name
+            changed.append("display_name")
         if bio is not None and self.bio != bio:
             self.bio = bio
             changed.append("bio")

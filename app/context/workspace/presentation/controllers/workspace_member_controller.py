@@ -44,6 +44,7 @@ from app.context.workspace.application.queries.get_workspace_member import (
 )
 from app.context.workspace.presentation.dependencies import (
     get_current_user_id,
+    get_profile_user_provider,
     get_workspace_event_bus,
     get_workspace_membership_repository,
     get_workspace_permission_checker,
@@ -214,6 +215,7 @@ class WorkspaceMemberController(BaseController):
         membership_repo=Depends(get_workspace_membership_repository),
         ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
+        profile_provider=Depends(get_profile_user_provider),
     ) -> PaginatedResponse[WorkspaceMemberResponse]:
         """Список участников workspace."""
         handler = GetWorkspaceMembersHandler(
@@ -223,7 +225,26 @@ class WorkspaceMemberController(BaseController):
         )
         query = GetWorkspaceMembersQuery(caller_id=caller_id, workspace_id=ws_id)
         dto = await handler.handle(query)
-        items = [WorkspaceMemberResponse.model_validate(item.model_dump()) for item in dto.items]
+
+        # Enrich: if workspace-level display_name is empty, fallback to Profile BC.
+        missing_ids = [item.user_id for item in dto.items if not item.display_name]
+        profile_names: dict[str, str] = {}
+        if missing_ids and profile_provider:
+            try:
+                profiles = await profile_provider.get_profiles(missing_ids)
+                for p in profiles:
+                    if p.display_name:
+                        profile_names[p.user_id] = p.display_name
+            except Exception:
+                pass  # best-effort
+
+        items = []
+        for item in dto.items:
+            data = item.model_dump()
+            if not data.get("display_name") and data["user_id"] in profile_names:
+                data["display_name"] = profile_names[data["user_id"]]
+            items.append(WorkspaceMemberResponse.model_validate(data))
+
         page = (offset // max(limit, 1)) + 1
         return PaginatedResponse(items=items, total=dto.total, page=page, page_size=limit)
 
@@ -235,6 +256,7 @@ class WorkspaceMemberController(BaseController):
         membership_repo=Depends(get_workspace_membership_repository),
         ws_repo=Depends(get_workspace_repository),
         permission_checker=Depends(get_workspace_permission_checker),
+        profile_provider=Depends(get_profile_user_provider),
     ) -> SuccessResponse[WorkspaceMemberResponse]:
         """Получить участника workspace."""
         handler = GetWorkspaceMemberHandler(
@@ -244,7 +266,15 @@ class WorkspaceMemberController(BaseController):
         )
         query = GetWorkspaceMemberQuery(caller_id=caller_id, workspace_id=ws_id, user_id=user_id)
         dto = await handler.handle(query)
-        return SuccessResponse(data=WorkspaceMemberResponse.model_validate(dto.model_dump()))
+        data = dto.model_dump()
+        if not data.get("display_name") and profile_provider:
+            try:
+                p = await profile_provider.get_profile(data["user_id"])
+                if p and p.display_name:
+                    data["display_name"] = p.display_name
+            except Exception:
+                pass
+        return SuccessResponse(data=WorkspaceMemberResponse.model_validate(data))
 
     async def add_member(
         self,

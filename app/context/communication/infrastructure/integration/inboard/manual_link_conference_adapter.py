@@ -37,6 +37,7 @@ class ManualLinkConferenceAdapter(ConferenceProviderPort):
         manual_url: str | None,
         user_id: str,
         is_organizer: bool,
+        user_display_name: str | None = None,
     ) -> ConferenceJoinTokenDTO:
         if not manual_url:
             raise ValueError(

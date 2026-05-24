@@ -19,6 +19,7 @@ class UpdatePersonalInfoCommand(BaseCommand):
     """
 
     user_id: str
+    display_name: str | None = None
     bio: str | None = None
     job_title: str | None = None
 
@@ -42,6 +43,7 @@ class UpdatePersonalInfoHandler(BaseCommandHandler[UpdatePersonalInfoCommand, No
             raise ProfileNotFoundException(command.user_id)
 
         profile.update_personal_info(
+            display_name=command.display_name,
             bio=command.bio,
             job_title=command.job_title,
         )

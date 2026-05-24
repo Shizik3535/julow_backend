@@ -38,6 +38,7 @@ class GetProfileHandler(BaseQueryHandler[GetProfileQuery, ProfileDTO]):
         return ProfileDTO(
             id=str(profile.id),
             user_id=str(profile.user_id),
+            display_name=profile.display_name,
             avatar_url=str(profile.avatar_url) if profile.avatar_url else None,
             bio=profile.bio,
             job_title=profile.job_title,

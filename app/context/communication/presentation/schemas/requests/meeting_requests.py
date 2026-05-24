@@ -9,7 +9,7 @@ class CreateMeetingRequest(BaseModel):
     """Тело запроса на создание совещания."""
 
     title: str = Field(..., min_length=1, max_length=255)
-    scheduled_at: datetime
+    scheduled_at: datetime | None = None
     workspace_id: str
     meeting_type: str = Field(default="video_call", description="in_person/video_call/phone_call/hybrid")
     conference_provider: str = Field(

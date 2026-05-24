@@ -39,9 +39,13 @@ from app.context.communication.infrastructure.integration.inboard.comment_target
 from app.context.communication.infrastructure.integration.inboard.conference_provider_registry import (
     ConferenceProviderRegistry,
 )
+from app.context.communication.infrastructure.integration.inboard.livekit_conference_adapter import (
+    LiveKitConferenceAdapter,
+)
 from app.context.communication.infrastructure.integration.inboard.manual_link_conference_adapter import (
     ManualLinkConferenceAdapter,
 )
+from app.core.config.livekit_settings import LiveKitSettings
 from app.context.communication.infrastructure.persistence.mappers.chat_mapper import (
     ChatMapper,
 )
@@ -144,12 +148,20 @@ def create_meeting_repository(
 def create_conference_provider_registry() -> ConferenceProviderRegistry:
     """Собрать реестр адаптеров ConferenceProviderPort.
 
-    В MVP зарегистрирован только ``MANUAL``. INTERNAL/Zoom/Telemost/...
-    будут добавлены по мере реализации соответствующих адаптеров.
+    Зарегистрированы:
+        - MANUAL — пользовательская ссылка (Zoom/Teams/...).
+        - INTERNAL — встроенный WebRTC через LiveKit SFU.
     """
+    lk = LiveKitSettings()
     return ConferenceProviderRegistry(
         adapters={
             ConferenceProvider.MANUAL: ManualLinkConferenceAdapter(),
+            ConferenceProvider.INTERNAL: LiveKitConferenceAdapter(
+                livekit_url=lk.url,
+                api_key=lk.api_key,
+                api_secret=lk.api_secret,
+                public_url=lk.public_url,
+            ),
         }
     )
 

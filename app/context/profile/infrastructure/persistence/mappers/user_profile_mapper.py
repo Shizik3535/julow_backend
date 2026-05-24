@@ -121,6 +121,7 @@ class UserProfileMapper(BaseMapper[UserProfile, UserProfileORM]):
         return UserProfile(
             id=self._map_id(orm_model.id),
             user_id=self._map_id(orm_model.user_id),
+            display_name=orm_model.display_name,
             avatar_url=Url(orm_model.avatar_url) if orm_model.avatar_url else None,
             bio=orm_model.bio,
             job_title=orm_model.job_title,
@@ -152,6 +153,7 @@ class UserProfileMapper(BaseMapper[UserProfile, UserProfileORM]):
         orm = UserProfileORM(
             id=self._map_uuid(aggregate.id),
             user_id=self._map_uuid(aggregate.user_id),
+            display_name=aggregate.display_name,
             avatar_url=str(aggregate.avatar_url) if aggregate.avatar_url else None,
             bio=aggregate.bio,
             job_title=aggregate.job_title,

@@ -15,12 +15,19 @@ class UpdatePersonalInfoRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
+                "display_name": "Иван Петров",
                 "bio": "Backend-разработчик, люблю DDD и чистую архитектуру",
                 "job_title": "Senior Software Engineer",
             },
         },
     )
 
+    display_name: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Отображаемое имя пользователя",
+        examples=["Иван Петров"],
+    )
     bio: str | None = Field(
         default=None,
         max_length=500,

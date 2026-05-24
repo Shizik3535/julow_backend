@@ -539,6 +539,7 @@ class ProfileController(BaseController):
         handler = UpdatePersonalInfoHandler(profile_repo=profile_repo, event_bus=event_bus)
         command = UpdatePersonalInfoCommand(
             user_id=user_id,
+            display_name=body.display_name,
             bio=body.bio,
             job_title=body.job_title,
         )

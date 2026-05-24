@@ -60,7 +60,7 @@ class CreateMeetingCommand(BaseCommand):
     caller_id: str
     workspace_id: str
     title: str
-    scheduled_at: datetime
+    scheduled_at: datetime | None = None
     meeting_type: str = "video_call"
     conference_provider: str = "manual"
     manual_url: str | None = None

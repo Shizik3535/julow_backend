@@ -34,6 +34,11 @@ class ProfileResponse(BaseModel):
         description="UUID пользователя (из Identity BC)",
         examples=["660e8400-e29b-41d4-a716-446655440001"],
     )
+    display_name: str | None = Field(
+        default=None,
+        description="Отображаемое имя пользователя",
+        examples=["Иван Петров"],
+    )
     avatar_url: str | None = Field(
         default=None,
         description="URL аватара",

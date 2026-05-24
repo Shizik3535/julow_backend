@@ -75,6 +75,7 @@ class ConferenceProviderPort(ABC):
         manual_url: str | None,
         user_id: str,
         is_organizer: bool,
+        user_display_name: str | None = None,
     ) -> ConferenceJoinTokenDTO:
         """
         Сгенерировать токен/URL для подключения пользователя.
@@ -84,6 +85,7 @@ class ConferenceProviderPort(ABC):
             manual_url: Сохранённый URL (используется для MANUAL).
             user_id: ID подключающегося пользователя.
             is_organizer: Является ли пользователь организатором.
+            user_display_name: Отображаемое имя пользователя (для отображения в UI).
         """
 
     @abstractmethod

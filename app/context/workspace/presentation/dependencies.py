@@ -174,6 +174,21 @@ async def get_ws_organization_port(
 
 
 # ---------------------------------------------------------------------------
+# Profile BC — Integration (outboard)
+# ---------------------------------------------------------------------------
+
+
+async def get_profile_user_provider(
+    session: AsyncSession = Depends(get_db_session),
+    container: Container = Depends(get_container),
+):
+    """Получить ProfileUserProvider для разрешения display_name из Profile BC."""
+    profile_mapper = container.profile_mapper()
+    profile_repo = container.profile_repo(session=session, mapper=profile_mapper)
+    return container.profile_user_provider(profile_repo=profile_repo)
+
+
+# ---------------------------------------------------------------------------
 # Shared ports
 # ---------------------------------------------------------------------------
 

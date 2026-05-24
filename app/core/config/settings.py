@@ -6,6 +6,7 @@ from app.core.config.cors_settings import CorsSettings
 from app.core.config.encryption_settings import EncryptionSettings
 from app.core.config.database_settings import DatabaseSettings
 from app.core.config.kafka_settings import KafkaSettings
+from app.core.config.livekit_settings import LiveKitSettings
 from app.core.config.ntfy_settings import NtfySettings
 from app.core.config.oauth_settings import OAuthSettings
 from app.core.config.redis_settings import RedisSettings
@@ -28,6 +29,7 @@ class Settings:
         self.ntfy = NtfySettings()
         self.oauth = OAuthSettings()
         self.clamav = ClamAvSettings()
+        self.livekit = LiveKitSettings()
 
 
 settings = Settings()
