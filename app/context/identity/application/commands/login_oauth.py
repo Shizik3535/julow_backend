@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from app.shared.application.base_command import BaseCommand
 from app.shared.application.base_command_handler import BaseCommandHandler
 from app.shared.application.messaging.domain_event_bus import DomainEventBus
@@ -175,6 +177,13 @@ class LoginOAuthHandler(BaseCommandHandler[LoginOAuthCommand, AuthResultDTO]):
             refresh_expires_in=token_pair.refresh_expires_in,
         )
 
+    def _build_fallback_email(self, provider: AuthProvider, provider_user_id: str) -> Email:
+        provider_label = provider.value.replace("_", "-")
+        local_part = re.sub(r"[^a-zA-Z0-9._%+-]+", "-", provider_user_id).strip(".-")
+        if not local_part:
+            local_part = "oauth-user"
+        return Email(f"{local_part}@{provider_label}.invalid")
+
     async def _auto_register(
         self,
         user_info,
@@ -182,7 +191,11 @@ class LoginOAuthHandler(BaseCommandHandler[LoginOAuthCommand, AuthResultDTO]):
         command: LoginOAuthCommand,
     ) -> AuthResultDTO:
         """Авто-регистрация нового пользователя через OAuth."""
-        email = Email(user_info.email) if user_info.email else Email(f"{user_info.provider_user_id}@{provider.value}")
+        email = (
+            Email(user_info.email)
+            if user_info.email
+            else self._build_fallback_email(provider, user_info.provider_user_id)
+        )
 
         user = User.register_via_oauth(email=email, auth_provider=provider)
 

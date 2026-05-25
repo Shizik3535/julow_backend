@@ -66,6 +66,31 @@ class TestHttpxOAuthAdapter:
         assert info.email == "user@github.com"
         assert info.display_name == "github-user"
 
+    @respx.mock
+    async def test_get_user_info_github_uses_emails_endpoint_when_email_is_missing(
+        self, adapter: HttpxOAuthAdapter
+    ) -> None:
+        respx.get("https://api.github.com/user").mock(
+            return_value=Response(200, json={
+                "id": 12345,
+                "email": None,
+                "login": "github-user",
+            })
+        )
+        respx.get("https://api.github.com/user/emails").mock(
+            return_value=Response(200, json=[
+                {
+                    "email": "user@github.com",
+                    "primary": True,
+                    "verified": True,
+                }
+            ])
+        )
+        info = await adapter.get_user_info("oauth_github", "access-token")
+        assert info.provider_user_id == "12345"
+        assert info.email == "user@github.com"
+        assert info.display_name == "github-user"
+
     # ── Error cases ───────────────────────────────────────────────────────
 
     @respx.mock

@@ -25,6 +25,7 @@ _PROVIDER_CONFIG: dict[str, dict[str, Any]] = {
         "authorize_url": "https://github.com/login/oauth/authorize",
         "token_url": "https://github.com/login/oauth/access_token",
         "userinfo_url": "https://api.github.com/user",
+        "emails_url": "https://api.github.com/user/emails",
         "scope": "user:email",
         "id_field": "id",
         "email_field": "email",
@@ -76,6 +77,49 @@ class HttpxOAuthAdapter(OAuthPort):
 
         return f"{config['authorize_url']}?{urlencode(params)}"
 
+    async def _get_github_email(
+        self, client: httpx.AsyncClient, access_token: str
+    ) -> str | None:
+        try:
+            resp = await client.get(
+                _PROVIDER_CONFIG["oauth_github"]["emails_url"],
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/json",
+                },
+            )
+            resp.raise_for_status()
+        except httpx.HTTPError:
+            logger.warning("GitHub emails lookup failed", provider="oauth_github")
+            return None
+
+        data = resp.json()
+        if not isinstance(data, list):
+            return None
+
+        for email_item in data:
+            if (
+                isinstance(email_item, dict)
+                and email_item.get("primary")
+                and email_item.get("verified")
+                and email_item.get("email")
+            ):
+                return str(email_item["email"])
+
+        for email_item in data:
+            if (
+                isinstance(email_item, dict)
+                and email_item.get("verified")
+                and email_item.get("email")
+            ):
+                return str(email_item["email"])
+
+        for email_item in data:
+            if isinstance(email_item, dict) and email_item.get("email"):
+                return str(email_item["email"])
+
+        return None
+
     async def exchange_code(
         self, provider: str, code: str, redirect_uri: str
     ) -> str:
@@ -120,8 +164,11 @@ class HttpxOAuthAdapter(OAuthPort):
             resp.raise_for_status()
             data = resp.json()
 
+            email = data.get(config["email_field"])
+            if provider == "oauth_github" and not email:
+                email = await self._get_github_email(client, access_token)
+
         provider_user_id = str(data.get(config["id_field"], ""))
-        email = data.get(config["email_field"])
         display_name = data.get(config["name_field"])
 
         logger.info("OAuth user_info fetched", provider=provider, provider_user_id=provider_user_id)
