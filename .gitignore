@@ -20,6 +20,7 @@ env/
 
 # Environment variables
 .env
+livekit.yaml
 
 # Testing
 .pytest_cache/

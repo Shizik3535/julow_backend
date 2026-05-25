@@ -106,8 +106,8 @@ class GetFileContentHandler(BaseQueryHandler[GetFileContentQuery, FileContentRes
             permission=self.REQUIRED_PERMISSION,
         )
         data = await self._file_storage.download(key=file.storage_path)
-        await self._event_bus.publish(
-            FileDownloaded(file_id=str(file.id), downloader_id=query.caller_id)
+        await self._event_bus.publish_all(
+            [FileDownloaded(file_id=str(file.id), downloader_id=query.caller_id)]
         )
         return FileContentResult(
             data=data,

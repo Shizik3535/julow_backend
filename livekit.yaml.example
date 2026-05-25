@@ -1,5 +1,6 @@
 # LiveKit Server configuration (development)
 # Документация: https://docs.livekit.io/realtime/self-hosting/deployment/
+# Скопируйте в livekit.yaml и заполните реальные значения.
 port: 7880
 
 rtc:
@@ -10,10 +11,10 @@ rtc:
   # Если STUN возвращает IP NAT-шлюза, а не IP сервера,
   # задайте node_ip явно. Должен совпадать с DNS-записью.
   use_external_ip: false
-  node_ip: 194.247.190.183
+  node_ip: YOUR_SERVER_PUBLIC_IP
 
 keys:
-  API8c80aa3b459db27b: 7zIFR9cSo9uIFb5jEJgmCrpX3G80tml8LQryqxXDEPY
+  YOUR_LIVEKIT_API_KEY: YOUR_LIVEKIT_API_SECRET
 
 # TURN позволяет WebRTC-трафику пробиться через строгие NAT/файрволы,
 # маскируясь под обычный TCP/TLS. В dev-режиме не нужен.

@@ -83,8 +83,8 @@ class GetFileDownloadUrlHandler(BaseQueryHandler[GetFileDownloadUrlQuery, dict])
         url = await self._file_storage.get_url(
             key=file.storage_path, expires_in=query.expires_in
         )
-        await self._event_bus.publish(
-            FileDownloaded(file_id=str(file.id), downloader_id=query.caller_id)
+        await self._event_bus.publish_all(
+            [FileDownloaded(file_id=str(file.id), downloader_id=query.caller_id)]
         )
         return {
             "url": url,
