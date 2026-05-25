@@ -107,16 +107,6 @@ class CreateProjectHandler(BaseCommandHandler[CreateProjectCommand, ProjectDTO])
             methodology=methodology,
         )
 
-        membership = ProjectMembership.create(
-            project_id=project.id,
-            owner_id=owner_id,
-        )
-
-        board = Board.create(
-            project_id=project.id,
-            methodology=methodology,
-        )
-
         system_roles = [
             ProjectRole.create_system(
                 name=str(template["name"]),
@@ -126,12 +116,26 @@ class CreateProjectHandler(BaseCommandHandler[CreateProjectCommand, ProjectDTO])
             )
             for template in SYSTEM_PROJECT_ROLES
         ]
+        owner_role = next((role for role in system_roles if role.name == "owner"), None)
+        if owner_role is None:
+            raise ValueError("System project role 'owner' is not configured")
+
+        membership = ProjectMembership.create(
+            project_id=project.id,
+            owner_id=owner_id,
+            owner_role_id=owner_role.id,
+        )
+
+        board = Board.create(
+            project_id=project.id,
+            methodology=methodology,
+        )
 
         await self._project_repo.add(project)
-        await self._membership_repo.add(membership)
-        await self._board_repo.add(board)
         for role in system_roles:
             await self._project_role_repo.add(role)
+        await self._membership_repo.add(membership)
+        await self._board_repo.add(board)
         await self._event_bus.publish_all(project.clear_domain_events())
         await self._event_bus.publish_all(membership.clear_domain_events())
         for role in system_roles:

@@ -25,6 +25,10 @@ class CreateMeetingRequest(BaseModel):
     description_format: str = "markdown"
     location: str | None = None
     project_id: str | None = None
+    participant_ids: list[str] = Field(
+        default_factory=list,
+        description="UUID списка участников. Организатор добавляется автоматически.",
+    )
     recurrence_pattern: str | None = Field(
         default=None, description="daily/weekly/monthly/..."
     )

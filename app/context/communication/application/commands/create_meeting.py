@@ -70,6 +70,7 @@ class CreateMeetingCommand(BaseCommand):
     description_format: str = "markdown"
     location: str | None = None
     project_id: str | None = None
+    participant_ids: list[str] = []
     recurrence_pattern: str | None = None
     recurrence_interval: int = 1
 
@@ -142,6 +143,20 @@ class CreateMeetingHandler(BaseCommandHandler[CreateMeetingCommand, MeetingDTO])
             url=Url(value=room.join_url) if room.join_url else None,
             room_id=room.external_id,
         )
+
+        # Регистрируем дополнительных участников. Делаем это ДО `repo.add`,
+        # чтобы маппер сразу записал их в `meeting_participants`. Дубликаты
+        # и сам организатор фильтруются — `add_participant` бросает ValueError
+        # на дубль, поэтому ловим аккуратно.
+        for pid in command.participant_ids:
+            if not pid or pid == command.caller_id:
+                continue
+            try:
+                meeting.add_participant(Id.from_string(pid))
+            except ValueError:
+                # Игнорируем дубликаты / некорректные id — приглашение
+                # участника не должно валить создание встречи.
+                continue
 
         await self._repo.add(meeting)
         await self._event_bus.publish_all(meeting.clear_domain_events())

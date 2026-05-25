@@ -80,6 +80,10 @@ class ProjectRoleBasedPermissionChecker(ProjectPermissionCheckerPort):
     async def _has_project_permission(
         self, user_id: Id, project_id: Id, permission: str
     ) -> bool:
+        project = await self._project_repo.get_by_id(project_id)
+        if project is not None and any(owner_id == user_id for owner_id in project.owner_ids):
+            return True
+
         member = await self._membership_repo.get_member_by_project_and_user(
             project_id, user_id
         )

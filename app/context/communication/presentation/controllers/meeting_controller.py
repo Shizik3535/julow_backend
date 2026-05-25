@@ -62,11 +62,17 @@ from app.context.communication.application.queries.get_my_meetings import (
     GetMyMeetingsHandler,
     GetMyMeetingsQuery,
 )
+from app.context.communication.application.exceptions.authorization_exceptions import (
+    InsufficientMeetingCreatePermissionsException,
+)
 from app.context.communication.presentation.dependencies import (
     get_communication_event_bus,
     get_conference_provider_registry,
     get_current_user_id,
     get_meeting_repository,
+    get_project_membership_repository,
+    get_project_repository,
+    get_project_role_repository,
     get_profile_user_provider,
 )
 from app.context.communication.presentation.schemas.requests.meeting_requests import (
@@ -82,6 +88,14 @@ from app.context.communication.presentation.schemas.responses.meeting_response i
     MeetingListResponse,
     MeetingResponse,
 )
+from app.context.project.domain.repositories.project_membership_repository import (
+    ProjectMembershipRepository,
+)
+from app.context.project.domain.repositories.project_repository import ProjectRepository
+from app.context.project.domain.repositories.project_role_repository import (
+    ProjectRoleRepository,
+)
+from app.shared.domain.value_objects.id_vo import Id
 
 
 class MeetingController(BaseController):
@@ -269,9 +283,32 @@ class MeetingController(BaseController):
         body: CreateMeetingRequest,
         user_id: str = Depends(get_current_user_id),
         repo=Depends(get_meeting_repository),
+        project_repo: ProjectRepository = Depends(get_project_repository),
+        project_membership_repo: ProjectMembershipRepository = Depends(
+            get_project_membership_repository
+        ),
+        project_role_repo: ProjectRoleRepository = Depends(get_project_role_repository),
         registry=Depends(get_conference_provider_registry),
         event_bus=Depends(get_communication_event_bus),
     ) -> SuccessResponse[MeetingResponse]:
+        if body.project_id:
+            project = await project_repo.get_by_id(Id.from_string(body.project_id))
+            member = await project_membership_repo.get_member_by_project_and_user(
+                Id.from_string(body.project_id),
+                Id.from_string(user_id),
+            )
+            is_owner = any(str(owner_id) == user_id for owner_id in (project.owner_ids if project else []))
+            if (member is None or not member.is_active) and not is_owner:
+                raise InsufficientMeetingCreatePermissionsException(body.project_id)
+
+            if is_owner:
+                role_name = "owner"
+            else:
+                role = await project_role_repo.get_by_id(member.role_id)
+                role_name = (getattr(role, "name", "") or "").lower() if role else ""
+            if role_name not in {"owner", "admin", "manager"}:
+                raise InsufficientMeetingCreatePermissionsException(body.project_id)
+
         handler = CreateMeetingHandler(
             meeting_repo=repo,
             provider_registry=registry,
@@ -292,6 +329,7 @@ class MeetingController(BaseController):
                 description_format=body.description_format,
                 location=body.location,
                 project_id=body.project_id,
+                participant_ids=body.participant_ids,
                 recurrence_pattern=body.recurrence_pattern,
                 recurrence_interval=body.recurrence_interval,
             )
@@ -386,9 +424,14 @@ class MeetingController(BaseController):
         meeting_id: str,
         user_id: str = Depends(get_current_user_id),
         repo=Depends(get_meeting_repository),
+        registry=Depends(get_conference_provider_registry),
         event_bus=Depends(get_communication_event_bus),
     ) -> MessageResponse:
-        handler = CompleteMeetingHandler(meeting_repo=repo, event_bus=event_bus)
+        handler = CompleteMeetingHandler(
+            meeting_repo=repo,
+            provider_registry=registry,
+            event_bus=event_bus,
+        )
         await handler.handle(
             CompleteMeetingCommand(caller_id=user_id, meeting_id=meeting_id)
         )

@@ -38,16 +38,21 @@ class ProjectMembership(AggregateRoot):
     updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
 
     @classmethod
-    def create(cls, project_id: Id, owner_id: Id) -> ProjectMembership:
+    def create(
+        cls,
+        project_id: Id,
+        owner_id: Id,
+        owner_role_id: Id | None = None,
+    ) -> ProjectMembership:
         """Создаёт членство проекта с владельцем."""
         membership = cls(project_id=project_id)
-        owner_member = ProjectMember(user_id=owner_id)
+        owner_member = ProjectMember(user_id=owner_id, role_id=owner_role_id or Id.generate())
         membership.members.append(owner_member)
         membership._register_event(
             ProjectMemberJoined(
                 project_id=str(project_id),
                 user_id=str(owner_id),
-                role_id="",
+                role_id=str(owner_member.role_id),
             )
         )
         return membership

@@ -60,10 +60,12 @@ class CompleteMeetingHandler(BaseCommandHandler[CompleteMeetingCommand, None]):
     def __init__(
         self,
         meeting_repo: MeetingRepository,
+        provider_registry: ConferenceProviderRegistry,
         event_bus: DomainEventBus,
     ) -> None:
         super().__init__()
         self._repo = meeting_repo
+        self._registry = provider_registry
         self._event_bus = event_bus
 
     async def handle(self, command: CompleteMeetingCommand) -> None:
@@ -74,6 +76,12 @@ class CompleteMeetingHandler(BaseCommandHandler[CompleteMeetingCommand, None]):
         meeting.complete()
         await self._repo.update(meeting)
         await self._event_bus.publish_all(meeting.clear_domain_events())
+
+        try:
+            adapter = self._registry.get(meeting.conference_provider)
+            await adapter.delete_room(meeting.conference_room_id)
+        except Exception:
+            pass
 
 
 class CancelMeetingCommand(BaseCommand):

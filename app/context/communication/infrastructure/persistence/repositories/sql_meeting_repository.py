@@ -129,6 +129,10 @@ class SqlMeetingRepository(
         return [self._mapper.to_domain(orm) for orm in result.scalars().all()]
 
     async def get_upcoming_by_participant(self, user_id: Id) -> list[Meeting]:
+        # NB: метод исторически назван "upcoming", но возвращает ВСЕ встречи
+        # пользователя — фильтрация по статусу делается на frontend
+        # (active/upcoming/history). Это нужно, чтобы пользователи видели
+        # завершённые встречи в истории и могли пересмотреть прошедшие.
         u = self._mapper._map_uuid(user_id)
         stmt = (
             select(MeetingORM)
@@ -136,11 +140,8 @@ class SqlMeetingRepository(
                 MeetingParticipantORM,
                 MeetingParticipantORM.meeting_id == MeetingORM.id,
             )
-            .where(
-                MeetingParticipantORM.user_id == u,
-                MeetingORM.status.in_(("scheduled", "in_progress")),
-            )
-            .order_by(MeetingORM.scheduled_at.asc())
+            .where(MeetingParticipantORM.user_id == u)
+            .order_by(MeetingORM.scheduled_at.desc())
         )
         result = await self._session.execute(stmt)
         return [self._mapper.to_domain(orm) for orm in result.scalars().unique().all()]

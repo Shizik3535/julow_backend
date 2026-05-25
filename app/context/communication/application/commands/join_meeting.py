@@ -17,6 +17,7 @@ from app.context.communication.domain.events.meeting_events import (
     MeetingJoinRequested,
 )
 from app.context.communication.domain.exceptions.meeting_exceptions import (
+    MeetingAlreadyCompletedException,
     MeetingNotFoundException,
 )
 from app.context.communication.domain.repositories.meeting_repository import (
@@ -25,6 +26,7 @@ from app.context.communication.domain.repositories.meeting_repository import (
 from app.context.communication.domain.value_objects.conference_provider import (
     ConferenceProvider,
 )
+from app.context.communication.domain.value_objects.meeting_status import MeetingStatus
 from app.context.communication.infrastructure.integration.inboard.conference_provider_registry import (
     ConferenceProviderRegistry,
 )
@@ -84,6 +86,9 @@ class JoinMeetingHandler(BaseCommandHandler[JoinMeetingCommand, MeetingJoinDTO])
         meeting = await self._repo.get_by_id(Id.from_string(command.meeting_id))
         if meeting is None:
             raise MeetingNotFoundException(command.meeting_id)
+
+        if meeting.status in (MeetingStatus.COMPLETED, MeetingStatus.CANCELLED):
+            raise MeetingAlreadyCompletedException()
 
         if not meeting.is_participant(Id.from_string(command.caller_id)):
             raise NotMeetingParticipantException()

@@ -100,3 +100,17 @@ class CommentTargetForbiddenException(ApplicationException):
         super().__init__(
             f"Нет доступа к комментариям сущности {target_type}={target_id}{suffix}"
         )
+
+
+class InsufficientMeetingCreatePermissionsException(ApplicationException):
+    """Только OWNER/ADMIN/MANAGER проекта могут создавать совещания."""
+
+    http_status_code = 403
+    error_code = "INSUFFICIENT_MEETING_CREATE_PERMISSIONS"
+
+    def __init__(self, project_id: str) -> None:
+        self.project_id = project_id
+        super().__init__(
+            "Недостаточно прав для создания совещания: требуется роль owner/admin/manager "
+            f"в проекте {project_id}"
+        )
