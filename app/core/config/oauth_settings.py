@@ -13,3 +13,5 @@ class OAuthSettings(BaseSettings):
     google_client_secret: str = ""
     github_client_id: str = ""
     github_client_secret: str = ""
+    yandex_client_id: str = ""
+    yandex_client_secret: str = ""

@@ -469,10 +469,12 @@ class Container(containers.DeclarativeContainer):
         client_id_map=providers.Dict(
             oauth_google=settings.provided.oauth.google_client_id,
             oauth_github=settings.provided.oauth.github_client_id,
+            oauth_yandex=settings.provided.oauth.yandex_client_id,
         ),
         client_secret_map=providers.Dict(
             oauth_google=settings.provided.oauth.google_client_secret,
             oauth_github=settings.provided.oauth.github_client_secret,
+            oauth_yandex=settings.provided.oauth.yandex_client_secret,
         ),
     )
     identity_notification_port = providers.Singleton(

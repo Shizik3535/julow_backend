@@ -14,8 +14,16 @@ class TestHttpxOAuthAdapter:
     @pytest.fixture
     def adapter(self) -> HttpxOAuthAdapter:
         return HttpxOAuthAdapter(
-            client_id_map={"oauth_google": "google-client-id", "oauth_github": "github-client-id"},
-            client_secret_map={"oauth_google": "google-secret", "oauth_github": "github-secret"},
+            client_id_map={
+                "oauth_google": "google-client-id",
+                "oauth_github": "github-client-id",
+                "oauth_yandex": "yandex-client-id",
+            },
+            client_secret_map={
+                "oauth_google": "google-secret",
+                "oauth_github": "github-secret",
+                "oauth_yandex": "yandex-secret",
+            },
         )
 
     # ── Google ────────────────────────────────────────────────────────────
@@ -90,6 +98,30 @@ class TestHttpxOAuthAdapter:
         assert info.provider_user_id == "12345"
         assert info.email == "user@github.com"
         assert info.display_name == "github-user"
+
+    # ── Yandex ────────────────────────────────────────────────────────────
+
+    @respx.mock
+    async def test_exchange_code_yandex(self, adapter: HttpxOAuthAdapter) -> None:
+        respx.post("https://oauth.yandex.com/token").mock(
+            return_value=Response(200, json={"access_token": "yandex-access-789"})
+        )
+        token = await adapter.exchange_code("oauth_yandex", "auth-code", "julowmobile://oauth/callback")
+        assert token == "yandex-access-789"
+
+    @respx.mock
+    async def test_get_user_info_yandex(self, adapter: HttpxOAuthAdapter) -> None:
+        respx.get("https://login.yandex.ru/info").mock(
+            return_value=Response(200, json={
+                "id": "yandex-user-1",
+                "default_email": "user@yandex.ru",
+                "display_name": "Yandex User",
+            })
+        )
+        info = await adapter.get_user_info("oauth_yandex", "access-token")
+        assert info.provider_user_id == "yandex-user-1"
+        assert info.email == "user@yandex.ru"
+        assert info.display_name == "Yandex User"
 
     # ── Error cases ───────────────────────────────────────────────────────
 

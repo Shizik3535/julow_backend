@@ -159,6 +159,11 @@ async def get_failed_login_policy(container: Container = Depends(get_container))
     return container.failed_login_policy()
 
 
+async def get_cache_port(container: Container = Depends(get_container)):
+    """Получить CachePort (Redis) из DI-контейнера."""
+    return container.cache_port()
+
+
 async def get_permission_checker(
     session: AsyncSession = Depends(get_db_session),
     container: Container = Depends(get_container),

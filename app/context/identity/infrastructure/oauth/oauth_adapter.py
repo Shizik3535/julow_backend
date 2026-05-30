@@ -31,6 +31,16 @@ _PROVIDER_CONFIG: dict[str, dict[str, Any]] = {
         "email_field": "email",
         "name_field": "login",
     },
+    "oauth_yandex": {
+        "authorize_url": "https://oauth.yandex.com/authorize",
+        "token_url": "https://oauth.yandex.com/token",
+        "userinfo_url": "https://login.yandex.ru/info",
+        "scope": "login:email login:info",
+        "id_field": "id",
+        "email_field": "default_email",
+        "name_field": "display_name",
+        "userinfo_auth_scheme": "OAuth",
+    },
 }
 
 
@@ -152,12 +162,17 @@ class HttpxOAuthAdapter(OAuthPort):
 
     async def get_user_info(self, provider: str, access_token: str) -> OAuthUserInfo:
         config = self._get_config(provider)
+        auth_scheme = config.get("userinfo_auth_scheme", "Bearer")
+        userinfo_params: dict[str, str] = {}
+        if provider == "oauth_yandex":
+            userinfo_params["format"] = "json"
 
         async with httpx.AsyncClient() as client:
             resp = await client.get(
                 config["userinfo_url"],
+                params=userinfo_params or None,
                 headers={
-                    "Authorization": f"Bearer {access_token}",
+                    "Authorization": f"{auth_scheme} {access_token}",
                     "Accept": "application/json",
                 },
             )
@@ -165,11 +180,15 @@ class HttpxOAuthAdapter(OAuthPort):
             data = resp.json()
 
             email = data.get(config["email_field"])
+            if provider == "oauth_yandex" and not email:
+                emails = data.get("emails")
+                if isinstance(emails, list) and emails:
+                    email = emails[0]
             if provider == "oauth_github" and not email:
                 email = await self._get_github_email(client, access_token)
 
         provider_user_id = str(data.get(config["id_field"], ""))
-        display_name = data.get(config["name_field"])
+        display_name = data.get(config["name_field"]) or data.get("real_name") or data.get("login")
 
         logger.info("OAuth user_info fetched", provider=provider, provider_user_id=provider_user_id)
         return OAuthUserInfo(

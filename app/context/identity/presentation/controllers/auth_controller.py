@@ -25,6 +25,14 @@ from app.context.identity.application.commands.login_user import (
     LoginUserCommand,
     LoginUserHandler,
 )
+from app.context.identity.application.commands.qr_login import (
+    ConfirmQrLoginCommand,
+    ConfirmQrLoginHandler,
+    CreateQrLoginCommand,
+    CreateQrLoginHandler,
+    PollQrLoginHandler,
+    PollQrLoginQuery,
+)
 from app.context.identity.application.commands.refresh_session import (
     RefreshSessionCommand,
     RefreshSessionHandler,
@@ -43,6 +51,7 @@ from app.context.identity.application.commands.reset_password import (
 )
 from app.context.identity.presentation.dependencies import (
     get_auth_token_port,
+    get_cache_port,
     get_current_user_id,
     get_failed_login_policy,
     get_identity_event_bus,
@@ -55,6 +64,12 @@ from app.context.identity.presentation.dependencies import (
     get_sso_port,
     get_user_auth_repository,
     get_user_repository,
+)
+from app.context.identity.presentation.schemas.requests.confirm_qr_login_request import (
+    ConfirmQrLoginRequest,
+)
+from app.context.identity.presentation.schemas.requests.create_qr_login_request import (
+    CreateQrLoginRequest,
 )
 from app.context.identity.presentation.schemas.requests.refresh_session_request import (
     RefreshSessionRequest,
@@ -74,6 +89,10 @@ from app.context.identity.presentation.schemas.requests.password_reset_request i
 )
 from app.context.identity.presentation.schemas.requests.register_request import RegisterRequest
 from app.context.identity.presentation.schemas.responses.login_response import LoginResponse
+from app.context.identity.presentation.schemas.responses.qr_login_responses import (
+    QrLoginCreatedResponse,
+    QrLoginPollResponse,
+)
 from app.context.identity.presentation.schemas.responses.oauth_authorize_response import OAuthAuthorizeResponse
 from app.context.identity.presentation.schemas.responses.sso_authorize_response import SSOAuthorizeResponse
 from app.context.identity.presentation.schemas.responses.user_response import UserResponse
@@ -94,6 +113,9 @@ class AuthController(BaseController):
         POST /auth/confirm-email               — Подтверждение email-адреса
         POST /auth/password-reset/request      — Запрос сброса пароля
         POST /auth/password-reset/confirm      — Подтверждение сброса пароля
+        POST /auth/qr/create                   — Создать QR-сессию (веб)
+        POST /auth/qr/confirm                  — Подтвердить вход с телефона
+        GET  /auth/qr/poll/{qr_token}          — Опрос статуса QR (веб)
     """
 
     def __init__(self) -> None:
@@ -269,6 +291,41 @@ class AuthController(BaseController):
                 200: {"description": "Пароль успешно изменён"},
                 400: {"description": "Невалидный или просроченный токен", "model": ErrorResponse},
             },
+        )
+        self._router.add_api_route(
+            "/qr/create",
+            self.create_qr_login,
+            methods=["POST"],
+            response_model=SuccessResponse[QrLoginCreatedResponse],
+            summary="Создать QR-сессию для входа с веба",
+            description=(
+                "Генерирует одноразовый токен (TTL ~5 мин) для отображения в QR на странице входа. "
+                "Мобильное приложение сканирует код и подтверждает через POST /auth/qr/confirm."
+            ),
+        )
+        self._router.add_api_route(
+            "/qr/confirm",
+            self.confirm_qr_login,
+            methods=["POST"],
+            response_model=MessageResponse,
+            summary="Подтвердить QR-вход (мобильный клиент)",
+            description=(
+                "Требует Bearer access-токен авторизованного пользователя. "
+                "Создаёт веб-сессию после подтверждения на телефоне."
+            ),
+            responses={
+                200: {"description": "Подтверждено"},
+                401: {"description": "Не аутентифицирован", "model": ErrorResponse},
+                404: {"description": "QR не найден", "model": ErrorResponse},
+            },
+        )
+        self._router.add_api_route(
+            "/qr/poll/{qr_token}",
+            self.poll_qr_login,
+            methods=["GET"],
+            response_model=SuccessResponse[QrLoginPollResponse],
+            summary="Опрос статуса QR-входа",
+            description="Веб-клиент опрашивает до status=confirmed, затем получает токены один раз.",
         )
 
     async def oauth_authorize(
@@ -549,3 +606,59 @@ class AuthController(BaseController):
         )
         await handler.handle(command)
         return SuccessResponse(data={"message": "Пароль успешно изменён"})
+
+    async def create_qr_login(
+        self,
+        request: Request,
+        body: CreateQrLoginRequest = CreateQrLoginRequest(),
+        cache_port=Depends(get_cache_port),
+    ) -> SuccessResponse[QrLoginCreatedResponse]:
+        """Создать QR-токен для веб-входа."""
+        handler = CreateQrLoginHandler(cache_port=cache_port)
+        command = CreateQrLoginCommand(
+            ip=request.client.host if request.client else "127.0.0.1",
+            user_agent=request.headers.get("user-agent", "unknown"),
+            web_origin=body.web_origin,
+        )
+        dto = await handler.handle(command)
+        return SuccessResponse(data=QrLoginCreatedResponse.model_validate(dto.model_dump()))
+
+    async def confirm_qr_login(
+        self,
+        body: ConfirmQrLoginRequest,
+        request: Request,
+        user_id: str = Depends(get_current_user_id),
+        cache_port=Depends(get_cache_port),
+        user_repo=Depends(get_user_repository),
+        user_auth_repo=Depends(get_user_auth_repository),
+        session_repo=Depends(get_session_repository),
+        auth_token_port=Depends(get_auth_token_port),
+        event_bus=Depends(get_identity_event_bus),
+    ) -> MessageResponse:
+        """Подтвердить QR-вход с мобильного устройства."""
+        handler = ConfirmQrLoginHandler(
+            cache_port=cache_port,
+            user_repo=user_repo,
+            user_auth_repo=user_auth_repo,
+            session_repo=session_repo,
+            auth_token_port=auth_token_port,
+            event_bus=event_bus,
+        )
+        command = ConfirmQrLoginCommand(
+            qr_token=body.qr_token,
+            approver_user_id=user_id,
+            ip=request.client.host if request.client else "127.0.0.1",
+            user_agent=request.headers.get("user-agent", "julow-mobile"),
+        )
+        await handler.handle(command)
+        return SuccessResponse(data={"message": "Вход на веб подтверждён"})
+
+    async def poll_qr_login(
+        self,
+        qr_token: str = Path(..., description="Токен из QR"),
+        cache_port=Depends(get_cache_port),
+    ) -> SuccessResponse[QrLoginPollResponse]:
+        """Опрос статуса QR-входа."""
+        handler = PollQrLoginHandler(cache_port=cache_port)
+        dto = await handler.handle(PollQrLoginQuery(qr_token=qr_token))
+        return SuccessResponse(data=QrLoginPollResponse.model_validate(dto.model_dump()))
